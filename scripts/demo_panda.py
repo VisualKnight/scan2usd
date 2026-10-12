@@ -98,7 +98,9 @@ class Arm:
         return q, float(np.linalg.norm(ep))
 
 
-def build_scene(asset, collision: str, work: Path) -> mujoco.MjModel:
+def build_scene(asset, collision: str, work: Path, mug_pos=MUG_POS, mug_quat=(1, 0, 0, 0), extras=(),
+                extra_xml: str = "") -> mujoco.MjModel:
+    """Panda + scanned mug (+ optional extra MjAsset bodies and raw worldbody XML, e.g. cameras)."""
     if work.exists():
         shutil.rmtree(work)
     shutil.copytree(PANDA, work)
@@ -112,15 +114,16 @@ def build_scene(asset, collision: str, work: Path) -> mujoco.MjModel:
     text = text.replace('gainprm="0.01568627451 0 0" biasprm="0 -100 -10"',
                         'gainprm="0.31372549 0 0" biasprm="0 -2000 -60"')
     panda_xml.write_text(text)
-    body = asset_body(asset, "mug", pos=tuple(MUG_POS), collision=collision)
-    for name, data in body.files.items():
-        (work / "assets" / name).write_bytes(data)
-    tx, ty = MUG_POS[:2] + PLACE_SHIFT[:2]
+    bodies = [asset_body(asset, "mug", pos=tuple(mug_pos), quat=tuple(mug_quat), collision=collision), *extras]
+    for b in bodies:
+        for name, data in b.files.items():
+            (work / "assets" / name).write_bytes(data)
+    tx, ty = np.asarray(mug_pos)[:2] + PLACE_SHIFT[:2]
     scene = f"""<mujoco model="panda_pick">
   <include file="panda.xml"/>
   <option timestep="0.001" integrator="implicitfast" cone="elliptic" impratio="10"/>
   <visual><global offwidth="960" offheight="720"/><quality shadowsize="4096"/></visual>
-  <asset>{body.assets_xml}
+  <asset>{"".join(b.assets_xml for b in bodies)}
     <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="0.80 0.84 0.90" width="512" height="512"/>
     <texture name="grid" type="2d" builtin="checker" rgb1=".82 .82 .80" rgb2=".74 .74 .72" width="512" height="512"/>
     <material name="grid" texture="grid" texrepeat="14 14"/>
@@ -130,26 +133,16 @@ def build_scene(asset, collision: str, work: Path) -> mujoco.MjModel:
     <light pos="-0.6 0.6 1.4" dir="0.4 -0.4 -1" diffuse="0.35 0.35 0.35" castshadow="false"/>
     <geom name="floor" type="plane" size="2 2 0.05" material="grid" solref="0.005 1" friction="0.8 0.005 0.0001"/>
     <site name="target" pos="{tx} {ty} 0.001" size="0.05 0.0015" type="cylinder" rgba="0.1 0.6 0.25 0.5"/>
-    {body.body_xml}
+    {"".join(b.body_xml for b in bodies)}
+    {extra_xml}
   </worldbody>
 </mujoco>"""
     (work / "pick_scene.xml").write_text(scene)
     return mujoco.MjModel.from_xml_path(str(work / "pick_scene.xml"))
 
 
-def run(asset, collision: str, fps: int = 30, size=(480, 640)):
-    model = build_scene(asset, collision, ROOT / "data" / "work" / f"panda_{collision}")
-    arm = Arm(model)
-    data = mujoco.MjData(model)
-    key = model.key("home").id
-    mujoco.mj_resetDataKeyframe(model, data, key)
-    mug_free = model.joint(model.body("mug").jntadr[0]).qposadr[0]
-    data.qpos[mug_free: mug_free + 3] = MUG_POS
-    for fj in ("finger_joint1", "finger_joint2"):
-        data.qpos[model.joint(fj).qposadr[0]] = 0.022
-    mujoco.mj_forward(model, data)
-
-    grasp, radial = rim_grasp(asset.render_mesh, MUG_POS)
+def plan_pick(model, arm: Arm, grasp, radial):
+    """Joint-space waypoints for rim grasp, lift, carry by PLACE_SHIFT, place, release."""
     up = np.array([0, 0, 0.12])
     # Open just enough to straddle the wall (ctrl 0..255 maps to 0..40 mm per finger).
     straddle = 255 * 0.022 / 0.04
@@ -175,14 +168,20 @@ def run(asset, collision: str, fps: int = 30, size=(480, 640)):
         q, err = arm.ik(pos, rot, q_prev, iters=1500, damping=0.02)
         plan.append((q, grip, dur, err))
         q_prev = q
+    return plan
 
-    renderer = mujoco.Renderer(model, *size)
-    cam = mujoco.MjvCamera()
-    cam.lookat[:] = (0.48, 0.0, 0.16)
-    cam.distance, cam.elevation, cam.azimuth = 1.15, -22, 205
+
+def execute(model, arm: Arm, data, plan, render=None, fps: int = 30, settle: float = 0.6):
+    """Track the plan with the position servos (gravity compensated). render(data) -> frame or None."""
     mug = model.body("mug").id
     frames, q_from, grip_from = [], HOME.copy(), 255 * 0.022 / 0.04
     lifted = 0.0
+
+    def step():
+        mujoco.mj_step(model, data)
+        if render is not None and len(frames) <= data.time * fps:
+            frames.append(render(data))
+
     for q_to, grip_to, dur, _ in plan:
         n = int(dur / model.opt.timestep)
         for i in range(n):
@@ -190,20 +189,42 @@ def run(asset, collision: str, fps: int = 30, size=(480, 640)):
             data.ctrl[:7] = q_from + (q_to - q_from) * s
             data.ctrl[7] = grip_from + (grip_to - grip_from) * min(1.0, 2 * (i + 1) / n)
             data.qfrc_applied[arm.dadr] = data.qfrc_bias[arm.dadr]  # gravity compensation
-            mujoco.mj_step(model, data)
+            step()
             lifted = max(lifted, float(data.xipos[mug][2]))
-            if len(frames) <= data.time * fps:
-                renderer.update_scene(data, camera=cam)
-                frames.append(renderer.render().copy())
         q_from, grip_from = q_to, float(grip_to)
-    for _ in range(int(0.6 / model.opt.timestep)):
+    for _ in range(int(settle / model.opt.timestep)):
         data.ctrl[:7] = q_from
         data.qfrc_applied[arm.dadr] = data.qfrc_bias[arm.dadr]
-        mujoco.mj_step(model, data)
-        if len(frames) <= data.time * fps:
-            renderer.update_scene(data, camera=cam)
-            frames.append(renderer.render().copy())
+        step()
+    return frames, lifted
 
+
+def run(asset, collision: str, fps: int = 30, size=(480, 640)):
+    model = build_scene(asset, collision, ROOT / "data" / "work" / f"panda_{collision}")
+    arm = Arm(model)
+    data = mujoco.MjData(model)
+    key = model.key("home").id
+    mujoco.mj_resetDataKeyframe(model, data, key)
+    mug_free = model.joint(model.body("mug").jntadr[0]).qposadr[0]
+    data.qpos[mug_free: mug_free + 3] = MUG_POS
+    for fj in ("finger_joint1", "finger_joint2"):
+        data.qpos[model.joint(fj).qposadr[0]] = 0.022
+    mujoco.mj_forward(model, data)
+
+    grasp, radial = rim_grasp(asset.render_mesh, MUG_POS)
+    plan = plan_pick(model, arm, grasp, radial)
+
+    renderer = mujoco.Renderer(model, *size)
+    cam = mujoco.MjvCamera()
+    cam.lookat[:] = (0.48, 0.0, 0.16)
+    cam.distance, cam.elevation, cam.azimuth = 1.15, -22, 205
+    mug = model.body("mug").id
+
+    def render(d):
+        renderer.update_scene(d, camera=cam)
+        return renderer.render().copy()
+
+    frames, lifted = execute(model, arm, data, plan, render, fps)
     final = data.xpos[mug]
     target = MUG_POS + PLACE_SHIFT
     up_axis = data.xmat[mug].reshape(3, 3)[:, 2]
