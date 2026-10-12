@@ -52,6 +52,10 @@ class "Scan2UsdUncertaintyAPI" (
     float2 scan2usd:uncertainty:dynamicFriction = (0, 0) (
         doc = "Dynamic friction interval."
     )
+    asset[] scan2usd:uncertainty:geometryHypotheses (
+        doc = """Alternative shapes for regions no camera saw (e.g. './<asset>_carved.usda': sealed
+        openings carved out). Same frame and prim names as this asset."""
+    )
     float2 scan2usd:uncertainty:mass = (0, 0) (
         doc = "Mass interval (kg)."
     )

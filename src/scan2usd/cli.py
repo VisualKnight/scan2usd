@@ -279,6 +279,22 @@ def cmd_library(args) -> int:
     return 0
 
 
+def cmd_uncertainty(args) -> int:
+    from .uncertainty import analyze_asset
+
+    r = analyze_asset(args.usd, args.workspace, material=args.material, scale_source=args.scale_source,
+                      scale_precision=args.scale_precision, measured_mass=args.mass, wall=args.wall)
+    u, f = r.uncertainty, r.field
+    print(f"observed surface: {f.observed_fraction * 100:.0f}%  ("
+          + ", ".join(f"{k} {v * 100:.0f}%" for k, v in f.label_area.items()) + " of area)")
+    print(f"sealed volume (no camera saw into it): {r.sealed_fraction * 100:.0f}%"
+          + (f" -> geometry hypothesis {r.carved_path.name}" if r.carved_path else ""))
+    print(f"mass {u.mass[0] * 1000:.0f}-{u.mass[1] * 1000:.0f} g ({u.mass_source}), scale {u.scale[0]:.3f}-{u.scale[1]:.3f} "
+          f"({u.scale_source}), dynamic friction {u.dynamic_friction[0]:.2f}-{u.dynamic_friction[1]:.2f}")
+    print(f"wrote Scan2UsdUncertaintyAPI + primvars:scan2usd:observed to {args.usd}")
+    return 0
+
+
 def cmd_grasps(args) -> int:
     from .schemas import read_grasps
 
@@ -397,6 +413,17 @@ def main(argv: list[str] | None = None) -> int:
     gr.add_argument("--prim", help="asset prim inside a larger stage (e.g. /Library/ceramic_mug)")
     gr.add_argument("--gripper", choices=["panda", "shadow_hand", "generic_parallel"])
     gr.set_defaults(func=cmd_grasps)
+
+    un = sub.add_parser("uncertainty", help="store what the scan saw: observation confidence, geometry "
+                                            "hypotheses and property intervals (Scan2UsdUncertaintyAPI)")
+    un.add_argument("usd", type=Path, help="asset built from a reconstruction")
+    un.add_argument("--workspace", type=Path, required=True, help="the reconstruct/scan workspace (object_points.ply)")
+    un.add_argument("--material", help="default: the material the asset was built with")
+    un.add_argument("--scale-source", default="ruler", choices=["ruler", "chart", "assumed"])
+    un.add_argument("--scale-precision", type=float, default=0.001, help="ruler precision (m)")
+    un.add_argument("--mass", type=float, help="measured mass (kg): narrows the mass interval")
+    un.add_argument("--wall", type=float, default=0.003, help="min. wall kept behind observed surface (m)")
+    un.set_defaults(func=cmd_uncertainty)
 
     args = parser.parse_args(argv)
     return args.func(args)
