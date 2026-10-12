@@ -8,7 +8,7 @@
 - **Physics-ready:** convex decomposition, mass and inertia, articulated joints. A Franka Panda picks a scanned mug that it can't pick when the mug has a single convex hull.
 - **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets finds the object in **100%** of 67 real photos, and drives a perception-to-grasp loop (10/10 picks).
 
-> Personal R&D project · Oct 2026 · visual overview: [docs/overview.html](docs/overview.html) · benchmark: [docs/benchmark.md](docs/benchmark.md) · interactive 3D gallery: [docs/gallery/](docs/gallery/index.html) (`python -m http.server -d docs`, then open `/gallery/`)
+> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · benchmark: [docs/benchmark.md](docs/benchmark.md)
 
 ## What it does
 
