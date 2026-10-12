@@ -62,6 +62,7 @@ class BuildOptions:
     gltf: bool = True
     run_sim: bool = True
     preview: bool = True
+    bake_texture: int = 0  # texture size; >0 bakes vertex colors of the dense scan into a UV texture
 
 
 @dataclass
@@ -141,8 +142,16 @@ def build_asset(input_path: str | Path, out_dir: str | Path, opts: BuildOptions)
     raw = load_mesh(input_path)
     t = lap("load", t)
     mesh, clean = clean_mesh(raw, opts.min_component_ratio)
+    dense = mesh
     mesh, decimate_notes = decimate(mesh, opts.target_faces)
     clean.notes += decimate_notes
+    if opts.bake_texture and has_vertex_colors(dense) and len(dense.faces) > len(mesh.faces):
+        from .bake import bake_color
+
+        mesh, _, bake_stats = bake_color(dense, mesh, size=opts.bake_texture)
+        clean.notes.append(f"baked {len(dense.faces):,}-triangle vertex colors into a "
+                           f"{opts.bake_texture}px texture ({bake_stats['atlas_coverage'] * 100:.0f}% atlas coverage)")
+    del dense
     mesh, scale = orient_and_scale(mesh, opts.up_axis, opts.units, opts.scale_to, opts.scale_axis)
     t = lap("process", t)
 

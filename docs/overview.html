@@ -56,7 +56,7 @@
   <div class="card kpi"><b>±1.4%</b><span>size from the ColorChecker alone, no ruler (worst of 6 objects)</span></div>
   <div class="card kpi"><b>9 / 9</b><span>assets load unmodified in Isaac Sim 6 and settle in PhysX</span></div>
   <div class="card kpi"><b><span class="good">pick</span> vs <span class="bad">fail</span></b><span>Franka Panda picks the scanned mug: convex decomposition vs. one hull</span></div>
-  <div class="card kpi"><b>68 tests</b><span>plus 33 automated checks on every asset</span></div>
+  <div class="card kpi"><b>70 tests</b><span>plus 33 automated checks on every asset</span></div>
 </div>
 
 <h2>Architecture</h2>
@@ -78,6 +78,11 @@
     <p class="cap">A fake phone capture rendered in Blender: 78 photos in 3 rings plus top views, warm light, ColorChecker in the scene, known camera poses and shape.</p></div>
   <div class="card"><img src="figures/texture_matters.jpg" alt="Dark plain glaze vs speckled glaze reconstruction">
     <p class="cap">Same mug, two glazes. Photogrammetry needs surface texture: the plain dark glaze leaves holes; the speckled one reconstructs to 0.8 mm.</p></div>
+</div>
+<div class="card" style="margin-top:12px">
+  <h3>Texture baking: 1.3M → 50k triangles, same look</h3>
+  <img src="figures/texture_bake.jpg" alt="Texture bake">
+  <p class="cap">The dense vertex-colored reconstruction is decimated, unwrapped into a UV atlas (xatlas), and its color baked into a 1K texture with padded islands. 26× fewer triangles for rendering and simulation.</p>
 </div>
 <div class="card" style="margin-top:12px">
   <h3>Real photos: 67 shots of a stone Buddha head (AliceVision dataset, CC-BY 4.0)</h3>

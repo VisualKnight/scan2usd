@@ -72,6 +72,8 @@ def _add_build_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--no-gltf", action="store_true")
     p.add_argument("--no-sim", action="store_true", help="skip MuJoCo drop tests")
     p.add_argument("--no-preview", action="store_true", help="skip preview.png")
+    p.add_argument("--bake-texture", type=int, default=0, metavar="PX",
+                   help="bake the dense scan's vertex colors into a PX x PX UV texture on the decimated mesh")
 
 
 def _options(args, name: str):
@@ -85,6 +87,7 @@ def _options(args, name: str):
         chart_corners=args.chart_corners, gray_card_image=args.gray_card_image,
         gray_card_box=args.gray_card_box, gray_reflectance=args.gray_reflectance, ccm_path=args.ccm, usda=args.usda,
         gltf=not args.no_gltf, run_sim=not args.no_sim, preview=not args.no_preview,
+        bake_texture=args.bake_texture,
     )
 
 

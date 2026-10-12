@@ -209,6 +209,11 @@ def _mesh_from_prim(prim: Usd.Prim, root: Usd.Prim, cache: UsdGeom.XformCache) -
 
             rgb8 = np.round(linear_to_srgb(lin) * 255).astype(np.uint8)
             tm.visual = trimesh.visual.ColorVisuals(tm, vertex_colors=np.c_[rgb8, np.full(len(rgb8), 255, np.uint8)])
+    st = UsdGeom.PrimvarsAPI(prim).GetPrimvar("st")
+    if st and st.HasValue() and st.GetInterpolation() == UsdGeom.Tokens.vertex:
+        uv = np.asarray(st.Get(), dtype=np.float64)
+        if len(uv) == len(tm.vertices):
+            tm._scan2usd_st = uv  # attached as a texture once the image path is known
     return tm
 
 
@@ -260,6 +265,10 @@ def read_usd(path: str | Path) -> AssetData:
     if not render_meshes:
         raise ValueError(f"{path} contains no render mesh")
     render = trimesh.util.concatenate(render_meshes) if len(render_meshes) > 1 else render_meshes[0]
+    if len(render_meshes) == 1 and textures and textures[0].exists() and hasattr(render, "_scan2usd_st"):
+        from PIL import Image
+
+        render.visual = trimesh.visual.TextureVisuals(uv=render._scan2usd_st, image=Image.open(textures[0]))
 
     mass = com = diag = axes = None
     if root.HasAPI(UsdPhysics.MassAPI):

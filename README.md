@@ -11,7 +11,7 @@
 | Stage | What happens | Module |
 |---|---|---|
 | Reconstruct | COLMAP structure-from-motion + multi-view stereo; the table plane becomes z = 0 (Z-up); the object is isolated as the densest footprint above the table; screened Poisson surface; flat base | `reconstruct.py` |
-| Clean | Debris removed, holes filled, meters / Z-up, origin at the base, topology-preserving decimation | `mesh_ops.py` |
+| Clean | Debris removed, holes filled, meters / Z-up, origin at the base, topology-preserving decimation, optional texture bake (xatlas UV atlas, nearest-neighbor color transfer, island padding) | `mesh_ops.py`, `bake.py` |
 | Color | 3×3 color-correction matrix from a ColorChecker (or gray card) applied to the albedo; CIEDE2000 reported. The chart is found automatically in the photos (OpenCV mcc) | `color.py`, `chart.py` |
 | Scale | Metric scale without a ruler: the chart's patch centers are triangulated with COLMAP's camera poses (RANSAC over views) and compared with its physical patch pitch; **0.35–1.4% error** on the benchmark | `chart.py` |
 | Physics | CoACD convex decomposition; mass, center of mass and principal inertia from volume × density or a measured mass; voxel-fill solids for scans with holes | `physics.py` |
@@ -46,6 +46,7 @@
 | | |
 |---|---|
 | ![Texture matters](docs/figures/texture_matters.jpg) | Photogrammetry needs surface texture: the same mug with a plain dark glaze leaves holes; with a speckled glaze it reconstructs to 0.8 mm. |
+| ![Bake](docs/figures/texture_bake.jpg) | **Texture baking** (`--bake-texture 1024`): the 1.3M-triangle vertex-colored reconstruction becomes a 50k-triangle mesh with an xatlas UV atlas and a baked texture, visually identical and 26× lighter. |
 | ![Buddha](docs/figures/buddha_real.jpg) | **Real photos.** AliceVision's Buddha dataset (67 photos, CC-BY 4.0): all registered, marker board removed automatically, watertight head with 21 convex colliders (20 cm height assumed; the dataset gives no size). |
 
 **Robotics demos** (MuJoCo, and Isaac Sim 6 with PhysX + Replicator):
@@ -66,7 +67,7 @@ Python 3.10–3.12, with [uv](https://docs.astral.sh/uv/):
 uv venv --python 3.11
 uv pip install -e ".[dev]"
 .venv\Scripts\scan2usd demo            # synthetic mug -> output\demo\ (see preview.png)
-.venv\Scripts\python -m pytest         # 68 tests
+.venv\Scripts\python -m pytest         # 70 tests
 ```
 
 Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (CUDA build): unzip it to `tools\colmap\` or set `SCAN2USD_COLMAP`.
@@ -132,7 +133,7 @@ Articulated assets put one such body per part under a root with `PhysicsArticula
 ## Known limitations
 
 - Plain, dark or glossy surfaces and deep textureless cavities don't reconstruct well (see the benchmark); a measured `--mass` corrects mass when the volume is off.
-- Textured meshes aren't decimated (the UV layout would break); export a decimated, re-baked mesh from the reconstruction tool.
+- Already-textured meshes (e.g. RealityScan exports) aren't decimated, since their UV layout would break; vertex-colored scans can be decimated and re-baked with `--bake-texture`.
 - Part splitting for articulation is manual (plane + hinge line).
 - Windows with Smart App Control: `usd-core` warns that `pxr.Ts` (splines, unused) is blocked. Isaac Sim 5.1's RTX renderer crashed on driver 617; 6.0 works.
 
