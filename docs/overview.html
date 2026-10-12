@@ -56,7 +56,7 @@
   <div class="card kpi"><b>±1.4%</b><span>size from the ColorChecker alone, no ruler (worst of 6 objects)</span></div>
   <div class="card kpi"><b>9 / 9</b><span>assets load unmodified in Isaac Sim 6 and settle in PhysX</span></div>
   <div class="card kpi"><b><span class="good">pick</span> vs <span class="bad">fail</span></b><span>Franka Panda picks the scanned mug: convex decomposition vs. one hull</span></div>
-  <div class="card kpi"><b>66 tests</b><span>plus 33 automated checks on every asset</span></div>
+  <div class="card kpi"><b>68 tests</b><span>plus 33 automated checks on every asset</span></div>
 </div>
 
 <h2>Architecture</h2>
@@ -127,7 +127,7 @@
   <div class="card"><h3>Rim grasp, minimal gripper</h3><img src="figures/grasp_demo.webp" alt="Grasp demo">
     <p class="cap">Same comparison with a simple two-finger gripper: 25 convex pieces lift the mug 11.6 cm, one convex hull 0 cm.</p></div>
   <div class="card"><h3>Isaac Sim 6 · Replicator dataset</h3><img src="figures/isaac_dataset.jpg" alt="Isaac Sim synthetic data">
-    <p class="cap">All 9 assets (incl. the real-photo Buddha) referenced unmodified, settled by PhysX, then rendered with random cameras and lights: RGB, tight 2D boxes, segmentation, depth (12 frames in 9 s).</p></div>
+    <p class="cap">All 9 assets (incl. the real-photo Buddha) referenced unmodified, settled by PhysX, then rendered with random cameras and lights: RGB, tight 2D boxes, semantic + instance segmentation, depth (12 frames in 9 s), exported to <b>COCO</b> for detector training (86 instance masks).</p></div>
   <div class="card"><h3>Bin of scanned objects</h3><img src="figures/clutter_demo.webp" alt="Clutter demo">
     <p class="cap">14 objects, 392 convex colliders: all end in the tote and settle; resting penetration 0.08 mm.</p></div>
   <div class="card"><h3>Articulated asset</h3><img src="figures/articulation_demo.webp" alt="Hinged box demo">

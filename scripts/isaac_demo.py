@@ -157,7 +157,8 @@ for _ in range(60):  # let materials and textures finish loading
     app.update()
 writer = rep.WriterRegistry.get("BasicWriter")
 writer.initialize(output_dir=os.path.join(args.out, "dataset"), rgb=True, semantic_segmentation=True,
-                  colorize_semantic_segmentation=True, bounding_box_2d_tight=True, distance_to_camera=True)
+                  colorize_semantic_segmentation=True, instance_segmentation=True,
+                  colorize_instance_segmentation=False, bounding_box_2d_tight=True, distance_to_camera=True)
 writer.attach([rp])
 
 with rep.trigger.on_frame():
