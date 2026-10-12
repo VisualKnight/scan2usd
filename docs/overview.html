@@ -102,7 +102,8 @@
 <tr><td>Android figure toy*</td><td>0.78 / 3.08</td><td>0.96</td><td>0.872</td><td>0.894</td><td>+1.4%</td><td>7.7 → 1.38</td></tr>
 <tr><td>Lion figure</td><td>0.60 / 2.41</td><td>0.62</td><td>0.941</td><td>0.935</td><td>+8.2%</td><td>8.0 → 1.29</td></tr>
 <tr><td>Boat shoe</td><td>1.73 / 7.20</td><td>2.53</td><td>0.747</td><td>0.739</td><td>+32.2%</td><td>8.9 → 1.31</td></tr>
-</table><ul class="small" style="margin-top:10px"><li><b>Textured objects</b> (figures, speckled glaze) reconstruct to 0.6–0.8 mm mean error, F-score 0.87–0.94, volume within 1–12%.</li><li><b>Printed mug:</b> its plain white interior is never matched, so the cup is sealed partway down (+191% volume).</li><li><b>Bowl:</b> thin, lightly textured walls come out ~2–3 mm too thick in the stereo point cloud itself (finer meshing didn't help).</li><li><b>Shoe:</b> the opening and inside aren't observed and get sealed (+32%).</li><li>Fixes: a measured <code>--mass</code>, more top-down photos into cavities, and (future) visibility-based carving.</li></ul>
+</table><ul class="small" style="margin-top:10px"><li><b>Textured objects</b> (figures, speckled glaze) reconstruct to 0.6–0.8 mm mean error, F-score 0.87–0.94, volume within 1–12%.</li><li><b>Printed mug:</b> its plain white interior is never matched, so the cup is sealed partway down (+191% volume).</li><li><b>Bowl:</b> its underside, between the foot and the rim's overhang, is never seen from above, and Poisson fills it into a solid pedestal. The walls also come out ~2–3 mm thick.</li><li><b>Shoe:</b> the opening and inside aren't observed and get sealed (+32%).</li><li><b>Visibility carving</b> (removing space cameras saw through) only reaches +175% / +74% / +29%: the sealed parts were never observed (cross-sections below). Fix it in the capture: top-down shots into cavities, or flip the object for a second pass. A measured <code>--mass</code> keeps physics right meanwhile.</li></ul>
+  <img src="figures/carving_study.png" alt="Carving cross-sections" style="margin-top:8px">
   <p class="cap">Each object: 78 rendered photos → COLMAP → Scan2USD with one ruler measurement (height). Accuracy = reconstruction to true surface; F-score = share of both surfaces within 2 mm. Ground truth: Google Scanned Objects (CC-BY 4.0) and a procedural mug. *The GSO model id says "Triceratops" but contains an Android figure.</p>
 </div>
 <div class="grid g2" style="margin-top:12px">
@@ -234,6 +235,7 @@
   <li><b>Labels can be wrong too.</b> Replicator's instance masks sometimes dropped or shrank an object; the converter now trusts the box annotator and keeps a mask only when it agrees.</li>
   <li><b>Know your camera model.</b> Back-projected depth was 3 cm off because MuJoCo's scene stores two stereo eye cameras; a mono render uses their average. One line fixed it.</li>
   <li><b>Some things can't be observed.</b> With the handle hidden from both cameras, the mug's yaw has no answer. Design the action not to need it: the rim grasp works at any yaw.</li>
+  <li><b>Look at a cross-section before believing an explanation.</b> I had blamed the bowl's +82% volume on thick walls; slicing the solid showed it was mostly an unseen underside filled into a pedestal. And carving can't help where no camera looked.</li>
 </ul>
 
 <h2>Capture guide</h2>

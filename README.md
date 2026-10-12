@@ -44,9 +44,11 @@
 
 - **Textured objects** (figures, speckled glaze) reconstruct to 0.6–0.8 mm mean error, F-score 0.87–0.94, volume within 1–12%.
 - **Printed mug:** its plain white interior is never matched, so the cup is sealed partway down (+191% volume).
-- **Bowl:** thin, lightly textured walls come out ~2–3 mm too thick in the stereo point cloud itself (finer meshing didn't help).
+- **Bowl:** its underside, between the foot and the rim's overhang, is never seen from above; Poisson fills it into a solid pedestal (see the cross-section below). The walls also come out ~2–3 mm thick in the stereo point cloud.
 - **Shoe:** the opening and inside aren't observed and get sealed (+32%).
-- Fixes: a measured `--mass`, more top-down photos into cavities, and (future) visibility-based carving.
+- **Visibility carving** (removing space that cameras saw through, using COLMAP's per-point visibility) only gets these to +175%, +74% and +29%: the sealed regions were never observed, so no line of sight proves them empty. The fix is in the capture: top-down shots into cavities, or flipping the object for a second pass. Meanwhile a measured `--mass` keeps physics right. `scripts/study_carving.py`
+
+![Carving study](docs/figures/carving_study.png)
 
 **How many photos?** On the lion figure: 12 photos fail (only 8 register, F-score 0.10); 20 give 0.80 mm / F 0.90; 39 give 0.61 mm; 78 give 0.60 mm / F 0.94. **Metric scale from the ColorChecker** (no ruler): 0.35–1.43% error across all six objects. Details in [docs/benchmark.md](docs/benchmark.md).
 
@@ -132,6 +134,7 @@ Build outputs: `<name>.usd(a)`, `<name>.glb`, `textures/`, `color_calibration.js
 | `demo_grasp.py`, `demo_clutter.py`, `demo_articulation.py` | MuJoCo robotics demos (animations in `docs/figures/`) |
 | `demo_perception_pick.py` | Detect (synthetic-trained detector) → fit the scanned mesh to RGB-D → Panda picks at the estimated pose; needs `train_detector.py` output |
 | `study_robustness.py` | Pick success vs. collision variant, friction, mass, scan size error and grasp error (93 MuJoCo trials in parallel, ~10 s) |
+| `study_carving.py` | Visibility-carving experiment and cross-sections of the sealed benchmark objects |
 | `isaac_library.py`, `make_catalog.py` | USD library in Isaac Sim (all collision variants in PhysX) and the web catalog `docs/library/` |
 | `isaac_demo.py`, `make_isaac_figure.py` | Isaac Sim 6: PhysX settle test + Replicator dataset (run with Isaac Sim's Python) |
 | `replicator_to_coco.py` | Replicator output → COCO (boxes from the bbox annotator, instance masks where they agree; multi-part assets merged per object) |

@@ -1,0 +1,32 @@
+{
+  "ace_coffee_mug_kristen_16_oz_cup": {
+    "label": "Printed mug",
+    "rays": 1652860,
+    "removed_pct": 5.7,
+    "volume_error_before_pct": 191.5,
+    "volume_error_after_pct": 174.9,
+    "deepest_observed_point_vox": 14.8,
+    "sealed_depth_vox": 45.1,
+    "seconds": 53
+  },
+  "cole_hardware_bowl_scirocco_yellowblue": {
+    "label": "Ceramic bowl",
+    "rays": 1529379,
+    "removed_pct": 4.2,
+    "volume_error_before_pct": 82.0,
+    "volume_error_after_pct": 74.3,
+    "deepest_observed_point_vox": 10.6,
+    "sealed_depth_vox": 16.0,
+    "seconds": 60
+  },
+  "womens_bluefish_2eye_boat_shoe_in_tan": {
+    "label": "Boat shoe",
+    "rays": 819860,
+    "removed_pct": 2.7,
+    "volume_error_before_pct": 32.2,
+    "volume_error_after_pct": 28.6,
+    "deepest_observed_point_vox": 6.7,
+    "sealed_depth_vox": 21.5,
+    "seconds": 42
+  }
+}
