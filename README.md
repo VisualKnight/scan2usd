@@ -56,6 +56,8 @@
 | ![Panda](docs/figures/panda_demo.jpg) | **Franka Panda pick-and-place** ([animation](docs/figures/panda_demo.webp)). The MuJoCo Menagerie Panda rim-grasps the scanned mug (one finger inside the cup), lifts it 14 cm and places it 25 cm away (11 mm placement error). With a single convex hull the inner finger lands on a phantom "lid" and the pick fails. `scripts/demo_panda.py` |
 | ![Grasp](docs/figures/grasp_demo.jpg) | **Rim grasp, minimal gripper.** Same comparison with a two-finger gripper: decomposition lifts the mug 11.6 cm, one hull lifts it 0 cm. `scripts/demo_grasp.py` |
 | ![Isaac](docs/figures/isaac_dataset.jpg) | **Isaac Sim 6.** 9 assets (incl. the real-photo Buddha) referenced unmodified, settled by PhysX, rendered by Replicator with random cameras and lights: RGB, tight 2D boxes, semantic + instance segmentation, depth; exported to COCO for detector training. `scripts/isaac_demo.py`, `scripts/replicator_to_coco.py` |
+| ![Synthetic data](docs/figures/isaac_synth_dataset.jpg) | **Domain-randomized training data.** Every frame re-samples which assets appear and where, table color, lights and camera, plus unlabeled distractors (primitives, flat "marker" cards, background panels). 1,000 labeled frames in ~3.5 min on one RTX 4090. `scripts/isaac_synthdata.py` |
+| ![Sim-to-real](docs/figures/sim2real_compare.jpg) | **Sim-to-real detection.** Faster R-CNN fine-tuned only on synthetic frames (900 images, 5.5 min), then run on the 67 real Buddha photos it never saw. Objects-only data: top detection is the Buddha in 88% of photos, but markers and lab clutter trigger 4.3 false detections per photo. Adding distractors: **100% top-1, 0.69 false positives per photo (−84%)**. `scripts/train_detector.py` |
 | ![Bin](docs/figures/clutter_demo.jpg) | **Bin of scanned objects.** 14 objects, 392 convex colliders; all settle in the tote, resting penetration 0.08 mm. `scripts/demo_clutter.py` |
 | ![Hinge](docs/figures/articulation_demo.jpg) | **Articulated asset.** A closed box scan + seam plane + hinge line → base and lid with a revolute joint (0–105°); the lid opens, a scanned toy drops in, the lid closes. `scripts/demo_articulation.py` |
 
@@ -67,7 +69,7 @@ Python 3.10–3.12, with [uv](https://docs.astral.sh/uv/):
 uv venv --python 3.11
 uv pip install -e ".[dev]"
 .venv\Scripts\scan2usd demo            # synthetic mug -> output\demo\ (see preview.png)
-.venv\Scripts\python -m pytest         # 70 tests
+.venv\Scripts\python -m pytest         # 71 tests
 ```
 
 Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (CUDA build): unzip it to `tools\colmap\` or set `SCAN2USD_COLMAP`.
@@ -115,7 +117,9 @@ Build outputs: `<name>.usd(a)`, `<name>.glb`, `textures/`, `color_calibration.js
 | `demo_panda.py` | Franka Panda (MuJoCo Menagerie) pick-and-place of a scanned mug; needs `git clone --depth 1 --filter=blob:none --sparse https://github.com/google-deepmind/mujoco_menagerie data\external\menagerie` then `git -C data\external\menagerie sparse-checkout set franka_emika_panda` |
 | `demo_grasp.py`, `demo_clutter.py`, `demo_articulation.py` | MuJoCo robotics demos (animations in `docs/figures/`) |
 | `isaac_demo.py`, `make_isaac_figure.py` | Isaac Sim 6: PhysX settle test + Replicator dataset (run with Isaac Sim's Python) |
-| `replicator_to_coco.py` | Replicator output → COCO instance segmentation (multi-part assets merged per object) |
+| `replicator_to_coco.py` | Replicator output → COCO (boxes from the bbox annotator, instance masks where they agree; multi-part assets merged per object) |
+| `isaac_synthdata.py` | Isaac Sim 6: domain-randomized detection dataset (`--frames 1000 --distractors 12 --panels 5`) |
+| `train_detector.py`, `make_coco_figure.py` | Train Faster R-CNN on the synthetic COCO set (needs `torch`/`torchvision`), score on held-out synthetic frames and on real photos |
 | `blender_inspect.py` | Open a build in Blender: raw input, asset, colliders |
 | `make_gallery.py` | Interactive web gallery (glTF + model-viewer) with a collision toggle → `docs/gallery/` |
 

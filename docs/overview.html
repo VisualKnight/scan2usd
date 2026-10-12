@@ -56,7 +56,7 @@
   <div class="card kpi"><b>±1.4%</b><span>size from the ColorChecker alone, no ruler (worst of 6 objects)</span></div>
   <div class="card kpi"><b>9 / 9</b><span>assets load unmodified in Isaac Sim 6 and settle in PhysX</span></div>
   <div class="card kpi"><b><span class="good">pick</span> vs <span class="bad">fail</span></b><span>Franka Panda picks the scanned mug: convex decomposition vs. one hull</span></div>
-  <div class="card kpi"><b>70 tests</b><span>plus 33 automated checks on every asset</span></div>
+  <div class="card kpi"><b>88% → 100%</b><span>real photos where a detector trained only on our synthetic Isaac Sim data finds the object</span></div>
 </div>
 
 <h2>Architecture</h2>
@@ -68,7 +68,7 @@
   <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M1 · Pipeline core</h3><p class="small muted">Clean, color-calibrate, collide, weigh, export, validate.</p></div>
   <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M2 · Photos → USD</h3><p class="small muted">COLMAP reconstruction, table removal, scoring on synthetic captures. <b>Waiting on your phone photos.</b></p></div>
   <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M3 · Articulation</h3><p class="small muted">Split a scan into parts, USD revolute joint with limits.</p></div>
-  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M4 · Simulators</h3><p class="small muted">Isaac Sim 6 PhysX + Replicator dataset; MuJoCo grasp, bin, hinge.</p></div>
+  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M4 · Simulators</h3><p class="small muted">Isaac Sim 6 PhysX + randomized synthetic data → sim-to-real detector; MuJoCo Panda, grasp, bin, hinge.</p></div>
   <div class="card ms m-next"><span class="pill next">next</span><h3 style="margin-top:6px">M5 · Showcase</h3><p class="small muted">Real captures, video, public repo, resume line.</p></div>
 </div>
 
@@ -139,6 +139,24 @@
     <p class="cap">One closed scan + a seam plane + a hinge line → base and lid with a USD revolute joint (0–105°). The lid opens, a scanned toy drops in, the lid closes.</p></div>
 </div>
 
+<h2>Sim-to-real perception</h2>
+<div class="card" style="margin-bottom:12px">
+  <h3>Train on synthetic images, test on real photos</h3>
+  <img src="figures/sim2real_compare.jpg" alt="Detector on real photos: objects-only vs. with distractors">
+  <p class="cap">A Faster R-CNN detector trained <b>only</b> on Isaac Sim renders of our scanned assets, run on the 67 real Buddha photos it never saw. Green: the Buddha. Red: false detections. Trained without distractors, the detector calls markers and lab clutter "mugs".</p>
+</div>
+<div class="grid g2">
+  <div class="card"><h3>The training data</h3><img src="figures/isaac_synth_dataset.jpg" alt="Domain-randomized synthetic frames">
+    <p class="cap">Each frame randomizes which of the 9 assets appear and where, the table, lights and camera, plus unlabeled distractors. 1,000 labeled frames in 3.5 min.</p></div>
+  <div class="card"><h3>Results</h3>
+    <table>
+      <tr><th>Training data</th><th>Synthetic mAP@0.5</th><th>Real: Buddha is top detection</th><th>Real: false positives / photo</th></tr>
+      <tr><td>Objects only</td><td>1.00</td><td class="bad">59/67 (88%)</td><td class="bad">4.30</td></tr>
+      <tr><td>+&nbsp;distractors</td><td>1.00</td><td class="good">67/67 (100%)</td><td class="good">0.69</td></tr>
+    </table>
+    <p class="cap">Synthetic validation saturates either way: it's from the same distribution, so it can't show the gap. Only real photos do. The remaining false positives are mostly a second partial Buddha box or a marker card. 900 training images, 6 epochs, 5.5 min on an RTX 4090.</p></div>
+</div>
+
 <h2>Color calibration</h2>
 <div class="grid" style="grid-template-columns: 1.6fr 1fr">
   <div class="card"><img src="figures/color_chart.svg" alt="ColorChecker before/after"><p class="cap">Each patch: as captured · corrected · reference, with ΔE2000.</p></div>
@@ -176,9 +194,9 @@
   <details><summary>Articulations in USD <span>· lids, doors, laptops</span></summary>
     <p>Each part is its own rigid body; a <code>UsdPhysics.RevoluteJoint</code> joins them with a hinge axis and angle limits, under an <code>ArticulationRootAPI</code> so PhysX solves them as one mechanism.</p>
     <p class="where"><code>articulation.py</code> · <code>scan2usd articulate</code></p></details>
-  <details><summary>Synthetic data <span>· Replicator</span></summary>
-    <p>Robots learn perception from labeled images. Simulators render perfect labels for free; randomizing cameras and lighting (domain randomization) helps the model transfer to the real world.</p>
-    <p class="where"><code>scripts/isaac_demo.py</code></p></details>
+  <details><summary>Synthetic data &amp; sim-to-real <span>· Replicator, domain randomization</span></summary>
+    <p>Robots learn perception from labeled images. Simulators render perfect labels for free. The catch is the <b>sim-to-real gap</b>: a model that's perfect on renders can still fail on photos. <b>Domain randomization</b> varies everything that shouldn't matter (lights, colors, camera, junk objects) so the model learns only what does. Here, distractors cut false positives on real photos by 84%.</p>
+    <p class="where"><code>scripts/isaac_synthdata.py</code> · <code>scripts/train_detector.py</code></p></details>
 </div>
 
 <h2>Lessons so far</h2>
@@ -191,6 +209,8 @@
   <li><b>Fast + thin = tunneling.</b> At PhysX's default 60 Hz, a dropped mug moved 4.5 cm per step and passed through a 2 cm table; a thicker slab and 240 Hz fixed it.</li>
   <li><b>Versions matter.</b> Isaac Sim 5.1's renderer crashed on this driver; 6.0 works.</li>
   <li><b>Robot models need realistic actuators.</b> The Panda's stock gripper servo squeezes ~0.5 N on a thin cup wall, so the mug slipped; a real Panda hand reaches 70 N, and a stiffer servo (~9 N) made the pick work.</li>
+  <li><b>Test on real data, not just synthetic.</b> The detector scored a perfect 1.00 on held-out renders and still made 4.3 false detections per real photo. Teaching it what to ignore (unlabeled distractors) fixed most of it.</li>
+  <li><b>Labels can be wrong too.</b> Replicator's instance masks sometimes dropped or shrank an object; the converter now trusts the box annotator and keeps a mask only when it agrees.</li>
 </ul>
 
 <h2>Next: your capture</h2>
