@@ -8,7 +8,7 @@
 - **Physics-ready:** convex decomposition, mass and inertia, articulated joints. A Franka Panda picks a scanned mug that it can't pick when the mug has a single convex hull.
 - **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets finds the object in **100%** of 67 real photos, and drives a perception-to-grasp loop (10/10 picks).
 
-> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · benchmark: [docs/benchmark.md](docs/benchmark.md)
+> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
 
 ## What it does
 
@@ -23,6 +23,7 @@
 | Physics | CoACD convex decomposition; mass, center of mass and principal inertia from volume × density or a measured mass; voxel-fill solids for scans with holes | `physics.py` |
 | Articulation | Split a scan by a seam plane, one rigid body per part, `UsdPhysics.RevoluteJoint` with limits under an articulation root | `articulation.py` |
 | Export | OpenUSD (`UsdGeom`, `UsdShade` preview surface, `UsdPhysics` rigid body / mass / colliders / physics material) and glTF | `usd_io.py` |
+| Library | Many assets in one stage as payloads (load on demand), with `collision` (decomposed / convex_hull / bounding_box) and `friction` (measured / low / high) variant sets authored in the library layer; asset files untouched. [Catalog](https://visualknight.github.io/scan2usd/library/) | `library.py` |
 | Validate | 33 checks on the written file, including MuJoCo drop tests | `validate.py`, `simulate.py` |
 | Evaluate | Accuracy / completeness / F-score / volume against ground truth after alignment | `evaluate.py` |
 
@@ -77,7 +78,7 @@ Python 3.10–3.12, with [uv](https://docs.astral.sh/uv/):
 uv venv --python 3.11
 uv pip install -e ".[dev]"
 .venv\Scripts\scan2usd demo            # synthetic mug -> output\demo\ (see preview.png)
-.venv\Scripts\python -m pytest         # 71 tests
+.venv\Scripts\python -m pytest         # 76 tests
 ```
 
 Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (CUDA build): unzip it to `tools\colmap\` or set `SCAN2USD_COLMAP`.
@@ -105,6 +106,9 @@ scan2usd build mug.ply -o output\mug --gray-card-image card.jpg --gray-card-box 
 
 # Hinged object: seam plane and hinge line in the asset frame (m, Z-up, origin at bottom center)
 scan2usd articulate box.ply -o output\box --split "0,0,0.052,0,0,1" --hinge "0,0.05,0.052,-1,0,0" --limits 0,105
+
+# Many assets -> one USD library: payloads + 'collision' and 'friction' variant sets
+scan2usd library output\assets -o output\library\scan2usd_library.usda
 
 scan2usd preview output\mug\mug.usd    # PNG of render mesh + colliders, no 3D app needed
 scan2usd validate output\mug\mug.usd --markdown report.md

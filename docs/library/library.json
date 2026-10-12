@@ -1,0 +1,245 @@
+[
+  {
+    "name": "ace_coffee_mug_kristen_16_oz_cup",
+    "path": "/Library/ace_coffee_mug_kristen_16_oz_cup",
+    "mass_kg": 0.466,
+    "size_m": [
+      0.1263,
+      0.0906,
+      0.1349
+    ],
+    "colliders": {
+      "decomposed": 32,
+      "convex_hull": 1,
+      "bounding_box": 1
+    },
+    "variants": {
+      "collision": [
+        "bounding_box",
+        "convex_hull",
+        "decomposed"
+      ],
+      "friction": [
+        "high",
+        "low",
+        "measured"
+      ]
+    }
+  },
+  {
+    "name": "cole_hardware_bowl_scirocco_yellowblue",
+    "path": "/Library/cole_hardware_bowl_scirocco_yellowblue",
+    "mass_kg": 0.1918,
+    "size_m": [
+      0.1135,
+      0.1149,
+      0.0619
+    ],
+    "colliders": {
+      "decomposed": 32,
+      "convex_hull": 1,
+      "bounding_box": 1
+    },
+    "variants": {
+      "collision": [
+        "bounding_box",
+        "convex_hull",
+        "decomposed"
+      ],
+      "friction": [
+        "high",
+        "low",
+        "measured"
+      ]
+    }
+  },
+  {
+    "name": "great_dinos_triceratops_toy",
+    "path": "/Library/great_dinos_triceratops_toy",
+    "mass_kg": 0.1043,
+    "size_m": [
+      0.0695,
+      0.0458,
+      0.0792
+    ],
+    "colliders": {
+      "decomposed": 11,
+      "convex_hull": 1,
+      "bounding_box": 1
+    },
+    "variants": {
+      "collision": [
+        "bounding_box",
+        "convex_hull",
+        "decomposed"
+      ],
+      "friction": [
+        "high",
+        "low",
+        "measured"
+      ]
+    }
+  },
+  {
+    "name": "schleich_lion_action_figure",
+    "path": "/Library/schleich_lion_action_figure",
+    "mass_kg": 0.0546,
+    "size_m": [
+      0.115,
+      0.0417,
+      0.0704
+    ],
+    "colliders": {
+      "decomposed": 32,
+      "convex_hull": 1,
+      "bounding_box": 1
+    },
+    "variants": {
+      "collision": [
+        "bounding_box",
+        "convex_hull",
+        "decomposed"
+      ],
+      "friction": [
+        "high",
+        "low",
+        "measured"
+      ]
+    }
+  },
+  {
+    "name": "womens_bluefish_2eye_boat_shoe_in_tan",
+    "path": "/Library/womens_bluefish_2eye_boat_shoe_in_tan",
+    "mass_kg": 0.6527,
+    "size_m": [
+      0.2493,
+      0.0899,
+      0.0897
+    ],
+    "colliders": {
+      "decomposed": 32,
+      "convex_hull": 1,
+      "bounding_box": 1
+    },
+    "variants": {
+      "collision": [
+        "bounding_box",
+        "convex_hull",
+        "decomposed"
+      ],
+      "friction": [
+        "high",
+        "low",
+        "measured"
+      ]
+    }
+  },
+  {
+    "name": "ceramic_mug",
+    "path": "/Library/ceramic_mug",
+    "mass_kg": 0.3719,
+    "size_m": [
+      0.1197,
+      0.0824,
+      0.0958
+    ],
+    "colliders": {
+      "decomposed": 25,
+      "convex_hull": 1,
+      "bounding_box": 1
+    },
+    "variants": {
+      "collision": [
+        "bounding_box",
+        "convex_hull",
+        "decomposed"
+      ],
+      "friction": [
+        "high",
+        "low",
+        "measured"
+      ]
+    }
+  },
+  {
+    "name": "speckled_mug",
+    "path": "/Library/speckled_mug",
+    "mass_kg": 0.4365,
+    "size_m": [
+      0.0883,
+      0.1164,
+      0.0964
+    ],
+    "colliders": {
+      "decomposed": 32,
+      "convex_hull": 1,
+      "bounding_box": 1
+    },
+    "variants": {
+      "collision": [
+        "bounding_box",
+        "convex_hull",
+        "decomposed"
+      ],
+      "friction": [
+        "high",
+        "low",
+        "measured"
+      ]
+    }
+  },
+  {
+    "name": "keepsake_box",
+    "path": "/Library/keepsake_box",
+    "mass_kg": 0.5387,
+    "size_m": [
+      0.18,
+      0.13,
+      0.1
+    ],
+    "colliders": {
+      "decomposed": 25,
+      "convex_hull": 2,
+      "bounding_box": 2
+    },
+    "variants": {
+      "collision": [
+        "bounding_box",
+        "convex_hull",
+        "decomposed"
+      ],
+      "friction": [
+        "high",
+        "low",
+        "measured"
+      ]
+    }
+  },
+  {
+    "name": "buddha_head",
+    "path": "/Library/buddha_head",
+    "mass_kg": 4.6238,
+    "size_m": [
+      0.1515,
+      0.1615,
+      0.2
+    ],
+    "colliders": {
+      "decomposed": 21,
+      "convex_hull": 1,
+      "bounding_box": 1
+    },
+    "variants": {
+      "collision": [
+        "bounding_box",
+        "convex_hull",
+        "decomposed"
+      ],
+      "friction": [
+        "high",
+        "low",
+        "measured"
+      ]
+    }
+  }
+]

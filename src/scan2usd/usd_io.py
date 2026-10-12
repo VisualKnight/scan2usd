@@ -218,14 +218,25 @@ def _mesh_from_prim(prim: Usd.Prim, root: Usd.Prim, cache: UsdGeom.XformCache) -
     return tm
 
 
-def read_usd(path: str | Path) -> AssetData:
+def read_usd(path: str | Path, prim_path: str | None = None, variants: dict[str, str] | None = None) -> AssetData:
+    """Read an asset: the file's defaultPrim, or `prim_path` inside a larger stage (e.g. a library).
+
+    `variants` selects variant sets on that prim (in the session layer, so nothing is written).
+    """
     path = Path(path)
     stage = Usd.Stage.Open(str(path))
     if stage is None:
         raise ValueError(f"cannot open {path}")
-    root = stage.GetDefaultPrim()
+    root = stage.GetPrimAtPath(prim_path) if prim_path else stage.GetDefaultPrim()
     if not root:
-        raise ValueError(f"{path} has no defaultPrim")
+        raise ValueError(f"{path} has no {'prim ' + prim_path if prim_path else 'defaultPrim'}")
+    if variants:
+        stage.SetEditTarget(stage.GetSessionLayer())
+        for vset, value in variants.items():
+            vs = root.GetVariantSets().GetVariantSet(vset)
+            if value not in vs.GetVariantNames():
+                raise ValueError(f"{root.GetPath()} has no variant {vset}={value}")
+            vs.SetVariantSelection(value)
     cache = UsdGeom.XformCache()
 
     render_meshes, hulls, collider_info = [], [], []

@@ -264,6 +264,20 @@ def cmd_articulate(args) -> int:
     return 0
 
 
+def cmd_library(args) -> int:
+    from .library import build_library
+
+    files: list[Path] = []
+    for p in args.assets:
+        files += sorted(p.rglob("*.usda")) if p.is_dir() else [p]
+    entries = build_library(files, args.output, spacing=args.spacing)
+    for e in entries:
+        print(f"  {e.name}: {e.mass_kg * 1000:.0f} g, colliders " +
+              ", ".join(f"{k} {v}" for k, v in e.colliders.items()))
+    print(f"wrote {args.output} ({len(entries)} assets; variant sets: collision, friction)")
+    return 0
+
+
 def cmd_materials(_args) -> int:
     from .physics import MATERIALS
 
@@ -351,6 +365,12 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--scale-to", type=float)
     a.add_argument("--scale-axis", default="max", choices=["max", "x", "y", "z"])
     a.set_defaults(func=cmd_articulate)
+
+    lb = sub.add_parser("library", help="compose assets into one USD library (payloads + collision/friction variants)")
+    lb.add_argument("assets", type=Path, nargs="+", help="asset .usd(a) files, or folders to search")
+    lb.add_argument("-o", "--output", type=Path, required=True, help="library .usda path")
+    lb.add_argument("--spacing", type=float, default=0.1, help="gap between assets in the layout (m)")
+    lb.set_defaults(func=cmd_library)
 
     args = parser.parse_args(argv)
     return args.func(args)

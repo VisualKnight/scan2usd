@@ -1,0 +1,64 @@
+{
+  "library": "output/library/scan2usd_library.usda",
+  "steps": 480,
+  "dt": 0.004166666666666667,
+  "variants": {
+    "decomposed": {
+      "colliders": 242,
+      "bodies": 10,
+      "ms_per_step": 1.905,
+      "finite": true,
+      "all_on_table": true,
+      "resting_z": {
+        "ace_coffee_mug_kristen_16_oz_cup": -0.0007,
+        "cole_hardware_bowl_scirocco_yellowblue": 0.0001,
+        "great_dinos_triceratops_toy": 0.0001,
+        "schleich_lion_action_figure": 0.0001,
+        "womens_bluefish_2eye_boat_shoe_in_tan": 0.0011,
+        "ceramic_mug": -0.0003,
+        "speckled_mug": 0.0003,
+        "base": 0.0,
+        "lid": 0.0,
+        "buddha_head": 0.001
+      }
+    },
+    "convex_hull": {
+      "colliders": 10,
+      "bodies": 10,
+      "ms_per_step": 1.995,
+      "finite": true,
+      "all_on_table": true,
+      "resting_z": {
+        "ace_coffee_mug_kristen_16_oz_cup": -0.0012,
+        "cole_hardware_bowl_scirocco_yellowblue": -0.0005,
+        "great_dinos_triceratops_toy": -0.0005,
+        "schleich_lion_action_figure": -0.0008,
+        "womens_bluefish_2eye_boat_shoe_in_tan": -0.0017,
+        "ceramic_mug": -0.0003,
+        "speckled_mug": -0.0,
+        "base": 0.0,
+        "lid": 0.0,
+        "buddha_head": -0.0
+      }
+    },
+    "bounding_box": {
+      "colliders": 10,
+      "bodies": 10,
+      "ms_per_step": 1.631,
+      "finite": true,
+      "all_on_table": true,
+      "resting_z": {
+        "ace_coffee_mug_kristen_16_oz_cup": -0.0,
+        "cole_hardware_bowl_scirocco_yellowblue": 0.0,
+        "great_dinos_triceratops_toy": 0.0,
+        "schleich_lion_action_figure": -0.0,
+        "womens_bluefish_2eye_boat_shoe_in_tan": -0.0,
+        "ceramic_mug": -0.0,
+        "speckled_mug": -0.0,
+        "base": -0.0,
+        "lid": 0.0,
+        "buddha_head": 0.0
+      }
+    }
+  }
+}

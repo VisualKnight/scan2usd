@@ -107,7 +107,7 @@ PAGE = """<!DOCTYPE html>
 <body><div class="wrap">
 <h1>Scan2USD · 3D gallery</h1>
 <p class="muted">Drag to orbit, scroll to zoom. Tick "collision" to see the convex pieces the physics engine uses.
-<a href="../overview.html">Back to the overview</a></p>
+<a href="../overview.html">Back to the overview</a> · <a href="../library/index.html">USD asset library</a></p>
 <div class="grid" id="grid"></div>
 </div>
 <script>

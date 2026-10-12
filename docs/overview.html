@@ -50,7 +50,7 @@
 <span class="pill done">M1 core</span> <span class="pill done">M2 photos → USD</span> <span class="pill done">M3 hinges</span>
 <span class="pill done">M4 Isaac Sim + MuJoCo</span> <span class="pill next">next: own phone captures</span>
 <h1>Scan2USD</h1>
-<p class="muted">Phone photos in, physics-ready <b>OpenUSD</b> assets out, verified in NVIDIA Isaac Sim and MuJoCo. · <a href="gallery/index.html"><b>Interactive 3D gallery</b></a> · <a href="https://github.com/VisualKnight/scan2usd"><b>Source on GitHub</b></a></p>
+<p class="muted">Phone photos in, physics-ready <b>OpenUSD</b> assets out, verified in NVIDIA Isaac Sim and MuJoCo. · <a href="gallery/index.html"><b>Interactive 3D gallery</b></a> · <a href="library/index.html"><b>USD asset library</b></a> · <a href="https://github.com/VisualKnight/scan2usd"><b>Source on GitHub</b></a></p>
 <img class="board" src="figures/hero.jpg" alt="Real photos to a simulation-ready OpenUSD asset" style="margin-bottom:12px">
 <div class="grid g4">
   <div class="card kpi"><b>0.78 mm</b><span>mean surface error, 78 photos → USD (speckled mug vs. ground truth)</span></div>
@@ -140,6 +140,8 @@
     <p class="cap">One closed scan + a seam plane + a hinge line → base and lid with a USD revolute joint (0–105°). The lid opens, a scanned toy drops in, the lid closes.</p></div>
   <div class="card"><h3>Same hinge in Isaac Sim 6 PhysX</h3><img src="figures/isaac_articulation.webp" alt="Isaac Sim hinge drive">
     <p class="cap">The same USD, unmodified, with a drive on the joint: 90° commanded → 90.1°; 150° commanded → stops at the 105° limit; closed → 0.0°. Base drift 0.02 mm.</p></div>
+  <div class="card"><h3>USD asset library in Isaac Sim</h3><img src="figures/isaac_library.jpg" alt="Asset library in Isaac Sim">
+    <p class="cap">All 9 assets composed into one stage as payloads, with <code>collision</code> and <code>friction</code> variant sets (<a href="library/index.html">catalog</a>). Every collision variant (242 decomposed pieces, or one hull / box per body) settles in PhysX; with 10 resting objects, step time is about 2 ms for all three.</p></div>
 </div>
 
 <h2>Sim-to-real perception</h2>
@@ -199,6 +201,9 @@
   <details><summary>Articulations in USD <span>· lids, doors, laptops</span></summary>
     <p>Each part is its own rigid body; a <code>UsdPhysics.RevoluteJoint</code> joins them with a hinge axis and angle limits, under an <code>ArticulationRootAPI</code> so PhysX solves them as one mechanism.</p>
     <p class="where"><code>articulation.py</code> · <code>scan2usd articulate</code></p></details>
+  <details><summary>USD composition: payloads &amp; variants <span>· one library, many configurations</span></summary>
+    <p>USD builds a scene from layers. A <b>payload</b> is a reference that loads on demand, so a 1,000-asset library opens instantly and loads only what a scene needs. A <b>variant set</b> is a named switch with alternative opinions inside, here <code>collision</code> and <code>friction</code>. Variants are stronger than payloads (the "LIVRPS" strength order), so the library can hide an asset's colliders and add simpler ones without editing the asset file. The same idea drives LODs and material looks in film and game pipelines.</p>
+    <p class="where"><code>library.py</code> · <code>scan2usd library</code> · <a href="library/index.html">catalog</a></p></details>
   <details><summary>Synthetic data &amp; sim-to-real <span>· Replicator, domain randomization</span></summary>
     <p>Robots learn perception from labeled images. Simulators render perfect labels for free. The catch is the <b>sim-to-real gap</b>: a model that's perfect on renders can still fail on photos. <b>Domain randomization</b> varies everything that shouldn't matter (lights, colors, camera, junk objects) so the model learns only what does. Here, distractors cut false positives on real photos by 84%.</p>
     <p class="where"><code>scripts/isaac_synthdata.py</code> · <code>scripts/train_detector.py</code></p></details>
