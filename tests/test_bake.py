@@ -38,3 +38,65 @@ def test_bake_transfers_vertex_colors():
         px = np.clip((uv[mask, 0] * 255).round().astype(int), 0, 255)
         py = np.clip(((1 - uv[mask, 1]) * 255).round().astype(int), 0, 255)
         assert np.allclose(np.median(img[py, px], axis=0), expect, atol=25)
+
+
+def _bumpy_plane(n=200, size=0.1, amp=0.004, waves=3):
+    """Dense heightfield z = amp * sin(kx) * sin(ky) and its analytic normal function."""
+    k = 2 * np.pi * waves / size
+    xs = np.linspace(-size / 2, size / 2, n)
+    gx, gy = np.meshgrid(xs, xs)
+    z = amp * np.sin(k * gx) * np.sin(k * gy)
+    verts = np.c_[gx.ravel(), gy.ravel(), z.ravel()]
+    idx = np.arange(n * n).reshape(n, n)
+    a, b, c, d = idx[:-1, :-1].ravel(), idx[:-1, 1:].ravel(), idx[1:, 1:].ravel(), idx[1:, :-1].ravel()
+    faces = np.r_[np.c_[a, b, c], np.c_[a, c, d]]
+    dense = trimesh.Trimesh(verts, faces, process=False)
+
+    def normal(x, y):
+        dzdx = amp * k * np.cos(k * x) * np.sin(k * y)
+        dzdy = amp * k * np.sin(k * x) * np.cos(k * y)
+        nrm = np.c_[-dzdx, -dzdy, np.ones_like(x)]
+        return nrm / np.linalg.norm(nrm, axis=1, keepdims=True)
+
+    return dense, normal
+
+
+def test_normal_map_round_trip():
+    """Baked tangent-space normals, decoded with the same tangent frame, match the true surface."""
+    from scan2usd.bake import _rasterize, bake_normal_map, vertex_tangents
+
+    dense, true_normal = _bumpy_plane()
+    flat = trimesh.Trimesh([[-0.05, -0.05, 0], [0.05, -0.05, 0], [0.05, 0.05, 0], [-0.05, 0.05, 0]],
+                           [[0, 1, 2], [0, 2, 3]], process=False)
+    low = unwrap(flat.subdivide().subdivide())
+    size = 256
+    img, stats = bake_normal_map(dense, low, size=size)
+    assert stats["mean_deviation_deg"] > 5  # the bumps are captured
+    face_id, bary = _rasterize(np.asarray(low.visual.uv), np.asarray(low.faces), size)
+    inside = face_id >= 0
+    faces = np.asarray(low.faces)[face_id[inside]]
+    w = bary[inside][:, :, None]
+    pos = (low.vertices[faces] * w).sum(1)
+    T, hand = vertex_tangents(low, np.asarray(low.visual.uv))
+    n = np.asarray(low.vertex_normals)[faces].mean(1)
+    n /= np.linalg.norm(n, axis=1, keepdims=True)
+    t = (T[faces] * w).sum(1)
+    t -= n * (t * n).sum(1, keepdims=True)
+    t /= np.linalg.norm(t, axis=1, keepdims=True)
+    b = np.cross(n, t) * np.sign((hand[faces] * bary[inside]).sum(1))[:, None]
+    ts = np.asarray(img, np.float64)[inside] / 255.0 * 2 - 1
+    world = ts[:, :1] * t + ts[:, 1:2] * b + ts[:, 2:3] * n
+    world /= np.linalg.norm(world, axis=1, keepdims=True)
+    err = np.degrees(np.arccos(np.clip((world * true_normal(pos[:, 0], pos[:, 1])).sum(1), -1, 1)))
+    assert np.median(err) < 3.0
+
+
+def test_normal_map_is_flat_for_matching_surfaces():
+    from scan2usd.bake import bake_normal_map
+
+    dense = trimesh.creation.icosphere(subdivisions=5, radius=0.05)
+    low = unwrap(trimesh.creation.icosphere(subdivisions=3, radius=0.05))
+    img, stats = bake_normal_map(dense, low, size=128)
+    assert stats["mean_deviation_deg"] < 3.0
+    rgb = np.asarray(img)
+    assert np.median(rgb[..., 2]) > 245  # mostly (0, 0, 1) in tangent space

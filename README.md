@@ -8,7 +8,7 @@
 - **Physics-ready:** convex decomposition, mass and inertia, articulated joints. A Franka Panda picks a scanned mug that it can't pick when the mug has a single convex hull.
 - **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets finds the object in **100%** of 67 real photos, and drives a perception-to-grasp loop (10/10 picks).
 
-> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[78 s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
+> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[93 s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
 
 ## What it does
 
@@ -17,12 +17,12 @@
 | Stage | What happens | Module |
 |---|---|---|
 | Reconstruct | COLMAP structure-from-motion + multi-view stereo; the table plane becomes z = 0 (Z-up); the object is isolated as the densest footprint above the table; screened Poisson surface; flat base | `reconstruct.py` |
-| Clean | Debris removed, holes filled, meters / Z-up, origin at the base, topology-preserving decimation, optional texture bake (xatlas UV atlas, nearest-neighbor color transfer, island padding) | `mesh_ops.py`, `bake.py` |
+| Clean | Debris removed, holes filled, meters / Z-up, origin at the base, topology-preserving decimation, optional texture bake (xatlas UV atlas, color transfer, island padding) and high-to-low tangent-space normal map bake | `mesh_ops.py`, `bake.py` |
 | Color | 3×3 color-correction matrix from a ColorChecker (or gray card) applied to the albedo; CIEDE2000 reported. The chart is found automatically in the photos (OpenCV mcc) | `color.py`, `chart.py` |
 | Scale | Metric scale without a ruler: the chart's patch centers are triangulated with COLMAP's camera poses (RANSAC over views) and compared with its physical patch pitch; **0.35–1.4% error** on the benchmark | `chart.py` |
 | Physics | CoACD convex decomposition; mass, center of mass and principal inertia from volume × density or a measured mass; voxel-fill solids for scans with holes | `physics.py` |
 | Articulation | Split a scan by a seam plane, one rigid body per part, `UsdPhysics.RevoluteJoint` with limits under an articulation root | `articulation.py` |
-| Export | OpenUSD (`UsdGeom`, `UsdShade` preview surface, `UsdPhysics` rigid body / mass / colliders / physics material) and glTF | `usd_io.py` |
+| Export | OpenUSD (`UsdGeom`, `UsdShade` preview surface with per-material PBR look presets (roughness, IOR, clearcoat for glazes, metallic) and normal maps, `UsdPhysics` rigid body / mass / colliders / physics material) and glTF | `usd_io.py` |
 | Library | Many assets in one stage as payloads (load on demand), with `collision` (decomposed / convex_hull / bounding_box) and `friction` (measured / low / high) variant sets authored in the library layer; asset files untouched. [Catalog](https://visualknight.github.io/scan2usd/library/) | `library.py` |
 | Validate | 33 checks on the written file, including MuJoCo drop tests | `validate.py`, `simulate.py` |
 | Evaluate | Accuracy / completeness / F-score / volume against ground truth after alignment | `evaluate.py` |
@@ -58,6 +58,14 @@
 | ![Bake](docs/figures/texture_bake.jpg) | **Texture baking** (`--bake-texture 1024`): the 1.3M-triangle vertex-colored reconstruction becomes a 50k-triangle mesh with an xatlas UV atlas and a baked texture, visually identical and 26× lighter. |
 | ![Buddha](docs/figures/buddha_real.jpg) | **Real photos.** AliceVision's Buddha dataset (67 photos, CC-BY 4.0): all registered, marker board removed automatically, watertight head with 21 convex colliders (20 cm height assumed; the dataset gives no size). |
 
+**Path-traced rendering** (Isaac Sim 6 RTX, `scripts/isaac_pathtrace.py`):
+
+| | |
+|---|---|
+| ![Path traced](docs/figures/render_modes.jpg) | **Scanned assets, path traced.** HDRI dome light (NVIDIA's `wooden_lounge` sky) plus an area key light, NVIDIA's MDL oak table, camera depth of field. Left: RTX real-time path tracing (one frame); right: offline path tracing (1,024 samples per pixel, AI denoiser, 6 bounces). [Full-size render](docs/figures/render_beauty.jpg) |
+| ![Normal maps](docs/figures/render_normals.jpg) | **High-to-low normal map bake** (`--bake-texture 2048`). The 4.3M-triangle Buddha scan is decimated to 50k triangles, then its surface detail is baked into a tangent-space normal map (game-art workflow, with a cage-style test that ignores the far side of thin walls). Under grazing light, the right image recovers the chipped, porous stone. |
+| ![Look-dev](docs/figures/lookdev.jpg) | **Look-dev against a real photo.** The asset is path traced from the photo's solved camera (COLMAP pose chained through the pipeline's table alignment and scaling). 63% of the render's silhouette lies within 3 px of a photo edge (median 2.0 px at 1280×719). That checks geometry, scale and camera together. After matching white balance, the color difference inside the object is median ΔE2000 6.4; the remainder is lighting and shadow, since the real room light is unknown. `scripts/lookdev_camera.py`, `scripts/compare_lookdev.py` |
+
 **Robotics demos** (MuJoCo, and Isaac Sim 6 with PhysX + Replicator):
 
 | | |
@@ -83,7 +91,7 @@ Python 3.10–3.12, with [uv](https://docs.astral.sh/uv/):
 uv venv --python 3.11
 uv pip install -e ".[dev]"
 .venv\Scripts\scan2usd demo            # synthetic mug -> output\demo\ (see preview.png)
-.venv\Scripts\python -m pytest         # 76 tests
+.venv\Scripts\python -m pytest         # 79 tests
 ```
 
 Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (CUDA build): unzip it to `tools\colmap\` or set `SCAN2USD_COLMAP`.
@@ -136,6 +144,8 @@ Build outputs: `<name>.usd(a)`, `<name>.glb`, `textures/`, `color_calibration.js
 | `demo_perception_pick.py` | Detect (synthetic-trained detector) → fit the scanned mesh to RGB-D → Panda picks at the estimated pose; needs `train_detector.py` output |
 | `study_robustness.py` | Pick success vs. collision variant, friction, mass, scan size error and grasp error (93 MuJoCo trials in parallel, ~10 s) |
 | `demo_hand_grasp.py` | Shadow Hand grasp sampling on every library asset (needs `git -C data\external\menagerie sparse-checkout add shadow_hand`) |
+| `isaac_pathtrace.py`, `make_render_figures.py` | Isaac Sim 6 RTX path tracing: beauty shot, normal-map comparison, look-dev render from a photo's camera |
+| `lookdev_camera.py`, `compare_lookdev.py` | Photo camera → USD camera in the asset frame; render-vs-photo silhouette and color metrics |
 | `study_carving.py` | Visibility-carving experiment and cross-sections of the sealed benchmark objects |
 | `isaac_library.py`, `make_catalog.py` | USD library in Isaac Sim (all collision variants in PhysX) and the web catalog `docs/library/` |
 | `isaac_demo.py`, `make_isaac_figure.py` | Isaac Sim 6: PhysX settle test + Replicator dataset (run with Isaac Sim's Python) |
@@ -147,7 +157,7 @@ Build outputs: `<name>.usd(a)`, `<name>.glb`, `textures/`, `color_calibration.js
 | `blender_inspect.py` | Open a build in Blender: raw input, asset, colliders |
 | `make_gallery.py` | Interactive web gallery (glTF + model-viewer) with a collision toggle → `docs/gallery/` |
 | `make_hero.py` | The README hero strip: real photo → asset → colliders → Isaac Sim frame |
-| `make_demo_reel.py` | The 78 s demo video from the figures (`pip install "imageio[ffmpeg]"`) |
+| `make_demo_reel.py` | The 93 s demo video from the figures (`pip install "imageio[ffmpeg]"`) |
 
 ## Asset layout
 

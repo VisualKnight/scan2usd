@@ -16,13 +16,35 @@ from .physics import MassProperties
 
 @dataclass
 class SurfaceMaterial:
-    """Render material. Albedo comes from a texture, vertex colors, or a constant."""
+    """Render material (UsdPreviewSurface). Albedo comes from a texture, vertex colors, or a constant."""
 
     base_color: tuple[float, float, float] = (0.8, 0.8, 0.8)
     texture: Path | None = None
     use_vertex_colors: bool = False
     roughness: float = 0.5
     metallic: float = 0.0
+    normal_texture: Path | None = None  # tangent-space, OpenGL convention (+Y up)
+    clearcoat: float = 0.0
+    clearcoat_roughness: float = 0.01
+    ior: float = 1.5
+    opacity: float = 1.0
+
+
+# Physically plausible look presets per physics material (UsdPreviewSurface inputs). Glazed ceramic
+# is a rough diffuse body under a glossy clear layer, which is what clearcoat models.
+LOOKS: dict[str, dict[str, float]] = {
+    "ceramic": {"roughness": 0.4, "clearcoat": 1.0, "clearcoat_roughness": 0.06, "ior": 1.5},
+    "glass": {"roughness": 0.03, "ior": 1.5, "opacity": 0.15},
+    "wood": {"roughness": 0.65, "ior": 1.5},
+    "plastic": {"roughness": 0.42, "ior": 1.46},
+    "rubber": {"roughness": 0.9, "ior": 1.52},
+    "aluminum": {"roughness": 0.35, "metallic": 1.0},
+    "steel": {"roughness": 0.28, "metallic": 1.0},
+    "cardboard": {"roughness": 0.92, "ior": 1.5},
+    "foam": {"roughness": 0.95, "ior": 1.4},
+    "fruit": {"roughness": 0.45, "clearcoat": 0.4, "clearcoat_roughness": 0.25, "ior": 1.4},
+    "concrete": {"roughness": 0.88, "ior": 1.5},
+}
 
 
 @dataclass
@@ -139,6 +161,12 @@ def author_body(stage: Usd.Stage, body: Usd.Prim, usd_path: Path, mesh: trimesh.
     pbr.CreateIdAttr("UsdPreviewSurface")
     pbr.CreateInput("roughness", Sdf.ValueTypeNames.Float).Set(float(surface.roughness))
     pbr.CreateInput("metallic", Sdf.ValueTypeNames.Float).Set(float(surface.metallic))
+    pbr.CreateInput("ior", Sdf.ValueTypeNames.Float).Set(float(surface.ior))
+    if surface.clearcoat > 0:
+        pbr.CreateInput("clearcoat", Sdf.ValueTypeNames.Float).Set(float(surface.clearcoat))
+        pbr.CreateInput("clearcoatRoughness", Sdf.ValueTypeNames.Float).Set(float(surface.clearcoat_roughness))
+    if surface.opacity < 1:
+        pbr.CreateInput("opacity", Sdf.ValueTypeNames.Float).Set(float(surface.opacity))
     diffuse = pbr.CreateInput("diffuseColor", Sdf.ValueTypeNames.Color3f)
     mat.CreateSurfaceOutput().ConnectToSource(pbr.ConnectableAPI(), "surface")
 
@@ -165,6 +193,20 @@ def author_body(stage: Usd.Stage, body: Usd.Prim, usd_path: Path, mesh: trimesh.
         tex.CreateInput("wrapT", Sdf.ValueTypeNames.Token).Set("repeat")
         tex.CreateInput("st", Sdf.ValueTypeNames.Float2).ConnectToSource(reader.ConnectableAPI(), "result")
         diffuse.ConnectToSource(tex.ConnectableAPI(), "rgb")
+        if surface.normal_texture is not None:
+            # UsdPreviewSurface normal maps: raw (non-color) data remapped from [0, 1] to [-1, 1].
+            nrm = UsdShade.Shader.Define(stage, mat.GetPath().AppendChild("normalTexture"))
+            nrm.CreateIdAttr("UsdUVTexture")
+            rel = Path(surface.normal_texture).resolve().relative_to(Path(usd_path).parent.resolve()).as_posix()
+            nrm.CreateInput("file", Sdf.ValueTypeNames.Asset).Set(Sdf.AssetPath(f"./{rel}"))
+            nrm.CreateInput("sourceColorSpace", Sdf.ValueTypeNames.Token).Set("raw")
+            nrm.CreateInput("scale", Sdf.ValueTypeNames.Float4).Set(Gf.Vec4f(2, 2, 2, 1))
+            nrm.CreateInput("bias", Sdf.ValueTypeNames.Float4).Set(Gf.Vec4f(-1, -1, -1, 0))
+            nrm.CreateInput("wrapS", Sdf.ValueTypeNames.Token).Set("repeat")
+            nrm.CreateInput("wrapT", Sdf.ValueTypeNames.Token).Set("repeat")
+            nrm.CreateInput("st", Sdf.ValueTypeNames.Float2).ConnectToSource(reader.ConnectableAPI(), "result")
+            nrm.CreateOutput("rgb", Sdf.ValueTypeNames.Float3)
+            pbr.CreateInput("normal", Sdf.ValueTypeNames.Normal3f).ConnectToSource(nrm.ConnectableAPI(), "rgb")
     elif surface.use_vertex_colors:
         from .color import srgb_to_linear
 
@@ -268,6 +310,9 @@ def read_usd(path: str | Path, prim_path: str | None = None, variants: dict[str,
         elif prim.IsA(UsdShade.Shader):
             shader = UsdShade.Shader(prim)
             if shader.GetIdAttr().Get() == "UsdUVTexture":
+                space = shader.GetInput("sourceColorSpace")
+                if space and space.Get() == "raw":  # data textures (normal maps), not albedo
+                    continue
                 f = shader.GetInput("file")
                 if f and f.Get() is not None:
                     asset = f.Get()

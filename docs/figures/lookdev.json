@@ -1,0 +1,22 @@
+{
+  "silhouette_to_photo_edge_px": {
+    "median": 2.0,
+    "p90": 11.69186107441092
+  },
+  "image_size": [
+    1280,
+    719
+  ],
+  "silhouette_fraction_within_3px": 0.6349325337331334,
+  "exposure_gain": 2.501622814658001,
+  "delta_e2000_median": 15.868684926912742,
+  "delta_e2000_p90": 19.367070891779644,
+  "white_balance_gains": [
+    1.7549553981705917,
+    2.2853496711431545,
+    3.7875436222489394
+  ],
+  "delta_e2000_wb_median": 6.447706327892747,
+  "delta_e2000_wb_p90": 10.459819303375022,
+  "photo": "00021._c.png"
+}

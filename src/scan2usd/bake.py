@@ -16,11 +16,13 @@ from scipy.spatial import cKDTree
 
 
 def unwrap(mesh: trimesh.Trimesh) -> trimesh.Trimesh:
-    """Copy of `mesh` with an xatlas UV atlas (vertices split along seams)."""
+    """Copy of `mesh` with an xatlas UV atlas (vertices split along seams, smooth normals kept)."""
     import xatlas
 
     vmap, faces, uvs = xatlas.parametrize(np.asarray(mesh.vertices, np.float32), np.asarray(mesh.faces, np.uint32))
-    out = trimesh.Trimesh(mesh.vertices[vmap], faces, process=False)
+    # Normals from the welded mesh: recomputing them after the seam split would shade the seams.
+    out = trimesh.Trimesh(mesh.vertices[vmap], faces, vertex_normals=np.asarray(mesh.vertex_normals)[vmap],
+                          process=False)
     out.visual = trimesh.visual.TextureVisuals(uv=uvs)
     return out
 
@@ -76,6 +78,19 @@ def _rasterize(uvs: np.ndarray, faces: np.ndarray, size: int):
     return face_id, bary
 
 
+def _pad(img: np.ndarray, covered: np.ndarray, padding: int) -> np.ndarray:
+    """Edge padding: grow each island outward so filtering at seams samples island values."""
+    filled = covered.copy()
+    for _ in range(padding):
+        grown = ndimage.binary_dilation(filled) & ~filled
+        if not grown.any():
+            break
+        idx = ndimage.distance_transform_edt(~filled, return_distances=False, return_indices=True)
+        img[grown] = img[idx[0][grown], idx[1][grown]]
+        filled |= grown
+    return img
+
+
 def bake_color(source: trimesh.Trimesh, target: trimesh.Trimesh, size: int = 1024, padding: int = 4,
                samples: int = 2_000_000) -> tuple[trimesh.Trimesh, Image.Image, dict]:
     """Bake the source's color onto `target` (unwrapped here). Returns (mesh with UVs, texture, stats)."""
@@ -93,17 +108,82 @@ def bake_color(source: trimesh.Trimesh, target: trimesh.Trimesh, size: int = 102
 
     img = np.zeros((size, size, 3))
     img[covered] = texel
-    # Edge padding: grow each island outward so filtering at seams samples island colors.
-    filled = covered.copy()
-    for _ in range(padding):
-        grown = ndimage.binary_dilation(filled) & ~filled
-        if not grown.any():
-            break
-        idx = ndimage.distance_transform_edt(~filled, return_distances=False, return_indices=True)
-        img[grown] = img[idx[0][grown], idx[1][grown]]
-        filled |= grown
+    img = _pad(img, covered, padding)
     texture = Image.fromarray(np.clip(img, 0, 255).round().astype(np.uint8))
     low.visual = trimesh.visual.TextureVisuals(uv=uvs, image=texture)
     stats = {"texture_size": size, "atlas_coverage": float(covered.mean()),
              "bake_distance_p95_mm": float(np.percentile(dist[:, 0], 95) * 1000), "uv_vertices": int(len(uvs))}
     return low, texture, stats
+
+
+def vertex_tangents(mesh: trimesh.Trimesh, uv: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Per-vertex tangent frames (T, handedness) from UVs, accumulated per face (MikkTSpace-style basis).
+
+    T follows +u on the surface; the bitangent is handedness * cross(N, T).
+    """
+    v, f = np.asarray(mesh.vertices), np.asarray(mesh.faces)
+    p0, p1, p2 = v[f[:, 0]], v[f[:, 1]], v[f[:, 2]]
+    t0, t1, t2 = uv[f[:, 0]], uv[f[:, 1]], uv[f[:, 2]]
+    e1, e2 = p1 - p0, p2 - p0
+    d1, d2 = t1 - t0, t2 - t0
+    det = d1[:, 0] * d2[:, 1] - d2[:, 0] * d1[:, 1]
+    r = np.where(np.abs(det) > 1e-14, 1.0 / np.where(det == 0, 1, det), 0.0)
+    tan = (e1 * d2[:, 1:2] - e2 * d1[:, 1:2]) * r[:, None]
+    bit = (e2 * d1[:, 0:1] - e1 * d2[:, 0:1]) * r[:, None]
+    T = np.zeros_like(v)
+    B = np.zeros_like(v)
+    for k in range(3):
+        np.add.at(T, f[:, k], tan)
+        np.add.at(B, f[:, k], bit)
+    n = np.asarray(mesh.vertex_normals)
+    T = T - n * (T * n).sum(1, keepdims=True)  # Gram-Schmidt against the normal
+    T /= np.maximum(np.linalg.norm(T, axis=1, keepdims=True), 1e-12)
+    hand = np.where((np.cross(n, T) * B).sum(1) < 0, -1.0, 1.0)
+    return T, hand
+
+
+def bake_normal_map(source: trimesh.Trimesh, low: trimesh.Trimesh, size: int = 1024, padding: int = 4,
+                    k: int = 12) -> tuple[Image.Image, dict]:
+    """Tangent-space normal map: the dense `source`'s surface normals on the unwrapped `low` mesh.
+
+    The game-art "high-to-low" bake: per texel, the low-poly surface point and its smooth normal and
+    UV tangent frame; the high-poly normal there (k nearest dense vertices, distance-weighted),
+    expressed in that frame and encoded as RGB = 0.5 * n + 0.5 (OpenGL convention, +Y up in UV space).
+    """
+    uvs = np.asarray(low.visual.uv)
+    face_id, bary = _rasterize(uvs, np.asarray(low.faces), size)
+    covered = face_id >= 0
+    faces = np.asarray(low.faces)[face_id[covered]]
+    w3 = bary[covered][:, :, None]
+    pos = (low.vertices[faces] * w3).sum(1)
+    n_low = (np.asarray(low.vertex_normals)[faces] * w3).sum(1)
+    T, hand = vertex_tangents(low, uvs)
+    t_low = (T[faces] * w3).sum(1)
+    h = np.sign((hand[faces] * bary[covered]).sum(1))
+    n_low /= np.linalg.norm(n_low, axis=1, keepdims=True)
+    t_low -= n_low * (t_low * n_low).sum(1, keepdims=True)
+    t_low /= np.maximum(np.linalg.norm(t_low, axis=1, keepdims=True), 1e-12)
+    b_low = np.cross(n_low, t_low) * h[:, None]
+
+    dist, nearest = cKDTree(np.asarray(source.vertices)).query(pos, k=k)
+    cand = np.asarray(source.vertex_normals)[nearest]  # (texels, k, 3)
+    # Like a baking cage: ignore source points facing away from the low-poly surface (the other side
+    # of a thin wall or a cup's bottom); texels with no valid source keep the flat normal.
+    agree = (cand * n_low[:, None, :]).sum(-1) > 0.3
+    w = agree / np.maximum(dist, 1e-9)
+    n_high = (cand * w[:, :, None]).sum(1)
+    norm = np.linalg.norm(n_high, axis=1, keepdims=True)
+    n_high = np.where(norm > 1e-12, n_high / np.maximum(norm, 1e-12), n_low)
+    ts = np.stack([(n_high * t_low).sum(1), (n_high * b_low).sum(1), (n_high * n_low).sum(1)], -1)
+    ts[:, 2] = np.clip(ts[:, 2], 0.05, None)  # never point into the surface
+    ts /= np.linalg.norm(ts, axis=1, keepdims=True)
+
+    img = np.zeros((size, size, 3))
+    img[..., 2] = 1.0  # flat normal outside islands
+    img[covered] = ts
+    img = _pad(img, covered, padding)
+    rgb = np.clip((img * 0.5 + 0.5) * 255, 0, 255).round().astype(np.uint8)
+    deviation = np.degrees(np.arccos(np.clip(ts[:, 2], -1, 1)))
+    stats = {"normal_map_size": size, "mean_deviation_deg": float(deviation.mean()),
+             "p95_deviation_deg": float(np.percentile(deviation, 95))}
+    return Image.fromarray(rgb), stats

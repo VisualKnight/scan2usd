@@ -31,7 +31,7 @@ from .mesh_ops import (
     orient_and_scale,
 )
 from .physics import MATERIALS, convex_decompose, estimate_mass_properties, single_hull
-from .usd_io import PhysicsMaterial, SurfaceMaterial, export_gltf, write_usd
+from .usd_io import LOOKS, PhysicsMaterial, SurfaceMaterial, export_gltf, write_usd
 from .validate import ValidationReport, validate_usd
 
 
@@ -50,8 +50,8 @@ class BuildOptions:
     collision: str = "coacd"  # "coacd" or "hull"
     hull_threshold: float = 0.05
     max_hulls: int = 32
-    roughness: float = 0.5
-    metallic: float = 0.0
+    roughness: float | None = None  # None: the material's look preset (usd_io.LOOKS)
+    metallic: float | None = None
     chart_image: Path | None = None
     chart_corners: list[list[float]] | None = None
     gray_card_image: Path | None = None
@@ -63,6 +63,7 @@ class BuildOptions:
     run_sim: bool = True
     preview: bool = True
     bake_texture: int = 0  # texture size; >0 bakes vertex colors of the dense scan into a UV texture
+    bake_normals: bool = True  # with bake_texture: also bake a tangent-space normal map from the dense scan
 
 
 @dataclass
@@ -97,7 +98,13 @@ def _calibration(opts: BuildOptions, out_dir: Path) -> Calibration | None:
 
 def _surface(mesh: trimesh.Trimesh, opts: BuildOptions, cal: Calibration | None, out_dir: Path) -> tuple[SurfaceMaterial, dict]:
     info: dict = {}
-    surface = SurfaceMaterial(roughness=opts.roughness, metallic=opts.metallic)
+    look = dict(LOOKS.get(opts.material, {}))
+    if opts.roughness is not None:
+        look["roughness"] = opts.roughness
+    if opts.metallic is not None:
+        look["metallic"] = opts.metallic
+    surface = SurfaceMaterial(**look)
+    info["look"] = {"preset": opts.material if opts.material in LOOKS else None, **look}
     if has_texture(mesh):
         img = np.asarray(get_base_color_image(mesh).convert("RGBA"))
         info["albedo_before"] = albedo_range_stats(img)
@@ -145,18 +152,27 @@ def build_asset(input_path: str | Path, out_dir: str | Path, opts: BuildOptions)
     dense = mesh
     mesh, decimate_notes = decimate(mesh, opts.target_faces)
     clean.notes += decimate_notes
+    normal_map = None
     if opts.bake_texture and has_vertex_colors(dense) and len(dense.faces) > len(mesh.faces):
-        from .bake import bake_color
+        from .bake import bake_color, bake_normal_map
 
         mesh, _, bake_stats = bake_color(dense, mesh, size=opts.bake_texture)
         clean.notes.append(f"baked {len(dense.faces):,}-triangle vertex colors into a "
                            f"{opts.bake_texture}px texture ({bake_stats['atlas_coverage'] * 100:.0f}% atlas coverage)")
+        if opts.bake_normals:
+            # Tangent space is unchanged by the rigid orient/scale step below, so bake here.
+            normal_map, nstats = bake_normal_map(dense, mesh, size=opts.bake_texture)
+            clean.notes.append(f"baked a {opts.bake_texture}px tangent-space normal map from the dense scan "
+                               f"(mean detail angle {nstats['mean_deviation_deg']:.1f} deg)")
     del dense
     mesh, scale = orient_and_scale(mesh, opts.up_axis, opts.units, opts.scale_to, opts.scale_axis)
     t = lap("process", t)
 
     cal = _calibration(opts, out_dir)
     surface, albedo = _surface(mesh, opts, cal, out_dir)
+    if normal_map is not None and surface.texture is not None:
+        surface.normal_texture = surface.texture.parent / f"{opts.name}_normal.png"
+        normal_map.save(surface.normal_texture)
     t = lap("color", t)
 
     hulls = (

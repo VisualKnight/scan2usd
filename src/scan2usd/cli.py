@@ -60,7 +60,7 @@ def _add_build_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--collision", default="coacd", choices=["coacd", "hull"])
     p.add_argument("--hull-threshold", type=float, default=0.05, help="CoACD concavity tolerance")
     p.add_argument("--max-hulls", type=int, default=32)
-    p.add_argument("--roughness", type=float, default=0.5)
+    p.add_argument("--roughness", type=float, help="override the material's look preset (scan2usd materials)")
     p.add_argument("--chart-image", type=Path, help="photo containing a ColorChecker Classic")
     p.add_argument("--chart-corners", type=_corners, help="chart corners TL;TR;BR;BL as 'x,y;...' or JSON file")
     p.add_argument("--gray-card-image", type=Path, help="photo containing a gray card or white paper")
@@ -74,6 +74,7 @@ def _add_build_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--no-preview", action="store_true", help="skip preview.png")
     p.add_argument("--bake-texture", type=int, default=0, metavar="PX",
                    help="bake the dense scan's vertex colors into a PX x PX UV texture on the decimated mesh")
+    p.add_argument("--no-normal-map", action="store_true", help="with --bake-texture: skip the normal map bake")
 
 
 def _options(args, name: str):
@@ -87,7 +88,7 @@ def _options(args, name: str):
         chart_corners=args.chart_corners, gray_card_image=args.gray_card_image,
         gray_card_box=args.gray_card_box, gray_reflectance=args.gray_reflectance, ccm_path=args.ccm, usda=args.usda,
         gltf=not args.no_gltf, run_sim=not args.no_sim, preview=not args.no_preview,
-        bake_texture=args.bake_texture,
+        bake_texture=args.bake_texture, bake_normals=not args.no_normal_map,
     )
 
 
@@ -281,9 +282,13 @@ def cmd_library(args) -> int:
 def cmd_materials(_args) -> int:
     from .physics import MATERIALS
 
-    print(f"{'material':<10} {'density':>8} {'mu_s':>5} {'mu_d':>5} {'rest':>5}")
+    from .usd_io import LOOKS
+
+    print(f"{'material':<10} {'density':>8} {'mu_s':>5} {'mu_d':>5} {'rest':>5}  look (UsdPreviewSurface)")
     for k, v in MATERIALS.items():
-        print(f"{k:<10} {v['density']:>8.0f} {v['static_friction']:>5.2f} {v['dynamic_friction']:>5.2f} {v['restitution']:>5.2f}")
+        look = ", ".join(f"{n} {x:g}" for n, x in LOOKS.get(k, {}).items())
+        print(f"{k:<10} {v['density']:>8.0f} {v['static_friction']:>5.2f} {v['dynamic_friction']:>5.2f} "
+              f"{v['restitution']:>5.2f}  {look}")
     return 0
 
 

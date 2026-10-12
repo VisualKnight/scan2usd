@@ -136,7 +136,7 @@
       <text x="964" y="262">validate.py</text>
     </g>
     <g font-size="10.5" fill="#475569">
-      <text x="332" y="281">clean · Z-up · meters</text><text x="332" y="296">decimate · bake</text><text x="332" y="315" fill="#7c3aed">trimesh, pymeshlab</text>
+      <text x="332" y="281">clean · Z-up · meters</text><text x="332" y="296">decimate · bake maps</text><text x="332" y="315" fill="#7c3aed">trimesh, pymeshlab</text>
       <text x="490" y="281">CCM / gray card</text><text x="490" y="296">CIEDE2000</text><text x="490" y="315" fill="#7c3aed">numpy</text>
       <text x="648" y="281">convex hulls</text><text x="648" y="296">mass · inertia</text><text x="648" y="315" fill="#7c3aed">CoACD, manifold3d</text>
       <text x="806" y="281">UsdGeom · UsdShade</text><text x="806" y="296">UsdPhysics · glTF</text><text x="806" y="315" fill="#7c3aed">usd-core (pxr)</text>
@@ -167,8 +167,8 @@
     <text x="262" y="622" font-size="14">chart.py</text>
     <text x="258" y="640" font-size="10" fill="#475569">chart: color + metric scale</text>
     <text x="964" y="572" font-size="14">Isaac Sim 6</text>
-    <text x="964" y="590" font-size="10.5" fill="#475569">PhysX · synthetic data</text>
-    <text x="964" y="606" font-size="10.5" fill="#7c3aed">→ sim2real detector</text>
+    <text x="964" y="590" font-size="10.5" fill="#475569">PhysX · RTX path tracing</text>
+    <text x="964" y="606" font-size="10.5" fill="#7c3aed">→ synth data, sim2real</text>
     <use href="#cmp" x="756" y="356"/>
     <text x="646" y="372" font-size="12.5">articulation.py</text>
     <text x="648" y="390" font-size="10.5" fill="#475569">split + hinge joint</text>
@@ -184,7 +184,7 @@
       <rect x="250" y="515" width="200" height="62" fill="#fde68a" stroke="#d97706" stroke-width="1"/>
       <text x="262" y="538" font-size="11.5">each stage = one module,</text>
       <text x="262" y="555" font-size="11.5">plain functions in, data out</text>
-      <text x="262" y="571" font-size="11.5" fill="#92400e">→ easy to test (76 tests)</text>
+      <text x="262" y="571" font-size="11.5" fill="#92400e">→ easy to test (79 tests)</text>
     </g>
   </g>
 </svg>

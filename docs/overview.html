@@ -52,7 +52,7 @@
 <h1>Scan2USD</h1>
 <p class="muted">Phone photos in, physics-ready <b>OpenUSD</b> assets out, verified in NVIDIA Isaac Sim and MuJoCo. · <a href="gallery/index.html"><b>Interactive 3D gallery</b></a> · <a href="library/index.html"><b>USD asset library</b></a> · <a href="https://github.com/VisualKnight/scan2usd"><b>Source on GitHub</b></a></p>
 <img class="board" src="figures/hero.jpg" alt="Real photos to a simulation-ready OpenUSD asset" style="margin-bottom:12px">
-<details style="margin-bottom:12px"><summary>▶ Watch the 78-second demo <span>· photos → USD → MuJoCo, Isaac Sim, perception</span></summary>
+<details style="margin-bottom:12px"><summary>▶ Watch the 93-second demo <span>· photos → USD → MuJoCo, Isaac Sim, perception</span></summary>
   <video controls preload="none" poster="figures/demo_poster.jpg" style="width:100%;border-radius:8px;margin-top:8px"><source src="scan2usd_demo.mp4" type="video/mp4"></video></details>
 <div class="grid g4">
   <div class="card kpi"><b>0.78 mm</b><span>mean surface error, 78 photos → USD (speckled mug vs. ground truth)</span></div>
@@ -71,8 +71,8 @@
   <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M1 · Pipeline core</h3><p class="small muted">Clean, color-calibrate, collide, weigh, export, validate.</p></div>
   <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M2 · Photos → USD</h3><p class="small muted">COLMAP reconstruction, table removal, scoring on synthetic captures. Real photos: AliceVision Buddha.</p></div>
   <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M3 · Articulation</h3><p class="small muted">Split a scan into parts, USD revolute joint with limits.</p></div>
-  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M4 · Simulators</h3><p class="small muted">Isaac Sim 6 PhysX + randomized synthetic data → sim-to-real detector; MuJoCo Panda, grasp, bin, hinge.</p></div>
-  <div class="card ms m-next"><span class="pill next">next</span><h3 style="margin-top:6px">M5 · Showcase</h3><p class="small muted">Public repo, live site, 78 s video, USD asset library done. Next: own phone captures.</p></div>
+  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M4 · Simulators</h3><p class="small muted">Isaac Sim 6 PhysX, RTX path tracing, synthetic data → sim-to-real detector; Franka in two engines, Shadow Hand, bin, hinge.</p></div>
+  <div class="card ms m-next"><span class="pill next">next</span><h3 style="margin-top:6px">M5 · Showcase</h3><p class="small muted">Public repo, live site, 93 s video, USD asset library done. Next: own phone captures.</p></div>
 </div>
 
 <h2>Photos → USD, scored against ground truth</h2>
@@ -127,6 +127,16 @@
       <tr><td>Shoe</td><td>35/43</td><td>+0.35%</td></tr>
     </table>
     <p class="cap">A ColorChecker in the scene is also a ruler: its patches are 16 mm apart on the Mini.</p></div>
+</div>
+
+<h2>Path-traced rendering</h2>
+<div class="card" style="margin-bottom:12px"><h3>Scanned assets in Isaac Sim 6 RTX</h3><img src="figures/render_beauty.jpg" alt="Path-traced scanned assets">
+  <p class="cap">Offline path tracing, 1,024 samples per pixel, AI denoiser, 6 bounces. HDRI dome + area key light, NVIDIA MDL oak table, depth of field. Assets carry PBR look presets from their material (the speckled mug's glaze is a clearcoat over a rough body) and baked 2K albedo + normal maps. <a href="figures/render_modes.jpg">Real-time vs offline path tracing</a>.</p></div>
+<div class="grid g2">
+  <div class="card"><h3>High-to-low normal map bake</h3><img src="figures/render_normals.jpg" alt="Normal map comparison">
+    <p class="cap">4.3M-triangle scan → 50k triangles. Left: vertex colors only. Right: the scan's detail baked into a tangent-space normal map, under grazing light. A cage-style test ignores source points facing away (the far side of thin walls).</p></div>
+  <div class="card"><h3>Look-dev against a real photo</h3><img src="figures/lookdev.jpg" alt="Photo vs render">
+    <p class="cap">Render from the photo's solved camera. 63% of the silhouette lies within 3 px of a photo edge (median 2 px), which checks geometry, scale and camera at once. After white balance, color is median ΔE2000 6.4; the rest is the unknown room lighting.</p></div>
 </div>
 
 <h2>Robotics demos</h2>
@@ -205,6 +215,9 @@
   <details><summary>Accuracy, completeness, F-score <span>· how reconstruction is graded</span></summary>
     <p>Accuracy: how far the built surface is from the truth. Completeness: how much of the truth was captured. F-score at τ combines both: the share of each surface within τ (2 mm here) of the other. These are the standard metrics of the DTU and Tanks &amp; Temples benchmarks.</p>
     <p class="where"><code>evaluate.py</code> · yaw search + ICP alignment, then point-to-surface distances</p></details>
+  <details><summary>Normal maps &amp; PBR <span>· the game-art pipeline, for scans</span></summary>
+    <p>Real-time engines render a light mesh and fake the fine detail: a <b>normal map</b> stores, per texel, how the dense surface tilts relative to the low-poly one (in the "tangent space" of its UV layout). <b>PBR</b> materials describe surfaces physically (base color, roughness, metalness, index of refraction, a clearcoat layer for glazes), so they look right under any light. A path tracer then simulates the light itself. For robotics, the same assets give physics a light collision mesh and give cameras realistic images.</p>
+    <p class="where"><code>bake.bake_normal_map</code> · <code>usd_io.LOOKS</code> · <code>scripts/isaac_pathtrace.py</code></p></details>
   <details><summary>Color calibration <span>· physically based calibration, for scans</span></summary>
     <p>A 3×3 matrix maps the camera's colors of known chart patches to their true values in linear light; it's then applied to the scan's albedo. ΔE2000 ≈ 1 is just noticeable.</p>
     <p class="where"><code>color.py</code></p></details>
@@ -243,6 +256,8 @@
   <li><b>Labels can be wrong too.</b> Replicator's instance masks sometimes dropped or shrank an object; the converter now trusts the box annotator and keeps a mask only when it agrees.</li>
   <li><b>Know your camera model.</b> Back-projected depth was 3 cm off because MuJoCo's scene stores two stereo eye cameras; a mono render uses their average. One line fixed it.</li>
   <li><b>Some things can't be observed.</b> With the handle hidden from both cameras, the mug's yaw has no answer. Design the action not to need it: the rim grasp works at any yaw.</li>
+  <li><b>Bake with a cage.</b> The first normal-map bake picked up the mug's inside wall from the outside (nearest points, wrong side). Ignoring source normals that face away from the low-poly surface fixed it: mean detail angle 11.4° → 6.2°.</li>
+  <li><b>Renderers have their own units.</b> RTX depth of field at f/2.8 blurred everything: on this stage it behaved far stronger than a physical lens, so I tuned the f-stop by eye (f/40). Rigid bodies also kept falling during path-traced accumulation until physics was switched off for the render.</li>
   <li><b>Don't teleport a hand.</b> Driving the Shadow Hand's forearm as a MuJoCo mocap body moves it without velocity, and friction there is velocity-based: 120 N of squeeze and the object still stayed on the table. Welding a free forearm to the mocap target took grasp success from 0% to ~23%.</li>
   <li><b>Look at a cross-section before believing an explanation.</b> I had blamed the bowl's +82% volume on thick walls; slicing the solid showed it was mostly an unseen underside filled into a pedestal. And carving can't help where no camera looked.</li>
 </ul>

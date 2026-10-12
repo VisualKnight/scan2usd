@@ -53,6 +53,31 @@ def test_textured_build_calibrates_texture(tmp_path):
     assert (after[..., 2] - after[..., 0]).mean() > (before[..., 2] - before[..., 0]).mean() + 10
 
 
+def test_baked_build_writes_pbr_material_and_normal_map(tmp_path):
+    import trimesh
+    from pxr import Usd, UsdShade
+
+    dense = trimesh.creation.icosphere(subdivisions=5, radius=0.04)
+    dense.vertices *= (1 + 0.03 * np.sin(40 * dense.vertices[:, :1]))  # surface detail to bake
+    dense.visual = trimesh.visual.ColorVisuals(dense, vertex_colors=np.tile([180, 60, 40, 255], (len(dense.vertices), 1)))
+    src = tmp_path / "bumpy.ply"
+    dense.export(str(src))
+    opts = BuildOptions(name="bumpy", material="ceramic", collision="hull", target_faces=2000, bake_texture=256,
+                        run_sim=False, usda=True, preview=False)
+    res = build_asset(src, tmp_path / "out", opts)
+    normal = tmp_path / "out" / "textures" / "bumpy_normal.png"
+    assert normal.exists()
+    stage = Usd.Stage.Open(str(res.usd_path))
+    shaders = {p.GetName(): UsdShade.Shader(p) for p in stage.Traverse() if p.IsA(UsdShade.Shader)}
+    assert shaders["normalTexture"].GetInput("sourceColorSpace").Get() == "raw"
+    surf = shaders["PreviewSurface"]
+    assert surf.GetInput("normal").HasConnectedSource()
+    assert surf.GetInput("clearcoat").Get() == 1.0  # ceramic glaze look preset
+    asset = read_usd(res.usd_path)
+    assert len(asset.texture_paths) == 1 and asset.texture_paths[0].name == "bumpy_albedo.png"
+    assert res.summary["albedo"]["look"]["preset"] == "ceramic"
+
+
 def test_cli_build_and_validate(tmp_path, capsys):
     import trimesh
 
