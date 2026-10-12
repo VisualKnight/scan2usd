@@ -37,6 +37,30 @@ def mask_to_polygons(mask: np.ndarray, min_area: float = 4.0) -> list[list[float
     return polys
 
 
+def _box_iou(a, b) -> float:
+    ix = max(0.0, min(a[0] + a[2], b[0] + b[2]) - max(a[0], b[0]))
+    iy = max(0.0, min(a[1] + a[3], b[1] + b[3]) - max(a[1], b[1]))
+    inter = ix * iy
+    return inter / max(1e-9, a[2] * a[3] + b[2] * b[3] - inter)
+
+
+def _annotator_boxes(dataset: Path, idx: str) -> dict[str, list[float]] | None:
+    """Tight 2D boxes per class from Replicator's bbox annotator (parts of one asset are merged)."""
+    npy = dataset / f"bounding_box_2d_tight_{idx}.npy"
+    if not npy.exists():
+        return None
+    labels = json.loads((dataset / f"bounding_box_2d_tight_labels_{idx}.json").read_text())
+    boxes: dict[str, list[float]] = {}
+    for b in np.load(npy):
+        name = labels[str(int(b["semanticId"]))]["class"]
+        x0, y0, x1, y1 = float(b["x_min"]), float(b["y_min"]), float(b["x_max"]) + 1, float(b["y_max"]) + 1
+        if name in boxes:
+            p = boxes[name]
+            x0, y0, x1, y1 = min(p[0], x0), min(p[1], y0), max(p[0] + p[2], x1), max(p[1] + p[3], y1)
+        boxes[name] = [x0, y0, x1 - x0, y1 - y0]
+    return boxes
+
+
 def convert(dataset: Path) -> dict:
     frames = sorted(dataset.glob("rgb_*.png"))
     categories: dict[str, int] = {}
@@ -59,17 +83,28 @@ def convert(dataset: Path) -> dict:
             root = asset_root(path) if path else f"id{key}"
             prev = groups.get(root)
             groups[root] = (name, m if prev is None else (prev[1] | m))
+        masks = {}
         for root, (name, m) in groups.items():
-            cat = categories.setdefault(name, len(categories) + 1)
             ys, xs = np.nonzero(m)
-            polys = mask_to_polygons(m)
-            if not polys:
+            box = [float(xs.min()), float(ys.min()), float(xs.max() - xs.min() + 1), float(ys.max() - ys.min() + 1)]
+            masks[name] = (root, m, box)
+
+        # Boxes: the bbox annotator is authoritative (instance masks occasionally drop an object);
+        # masks are attached only where they agree with the box.
+        boxes = _annotator_boxes(dataset, idx)
+        if boxes is None:
+            boxes = {name: box for name, (_, _, box) in masks.items()}
+        for name, box in boxes.items():
+            if box[2] < 2 or box[3] < 2:
                 continue
+            cat = categories.setdefault(name, len(categories) + 1)
+            seg, area, prim = [], box[2] * box[3], None
+            if name in masks and _box_iou(masks[name][2], box) > 0.7:
+                prim, m, _ = masks[name]
+                seg, area = mask_to_polygons(m), float(m.sum())
             annotations.append({
-                "id": len(annotations) + 1, "image_id": img_id, "category_id": cat,
-                "bbox": [float(xs.min()), float(ys.min()), float(xs.max() - xs.min() + 1), float(ys.max() - ys.min() + 1)],
-                "area": float(m.sum()), "segmentation": polys, "iscrowd": 0,
-                "attributes": {"prim": root},
+                "id": len(annotations) + 1, "image_id": img_id, "category_id": cat, "bbox": box,
+                "area": area, "segmentation": seg, "iscrowd": 0, "attributes": {"prim": prim},
             })
     return {
         "info": {"description": "Scan2USD assets rendered with Isaac Sim Replicator", "version": "1.0"},

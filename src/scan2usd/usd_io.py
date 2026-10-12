@@ -143,6 +143,7 @@ def author_body(stage: Usd.Stage, body: Usd.Prim, usd_path: Path, mesh: trimesh.
     mat.CreateSurfaceOutput().ConnectToSource(pbr.ConnectableAPI(), "surface")
 
     render = _define_mesh(stage, str(body_path.AppendChild("render")), mesh)
+    render.GetDoubleSidedAttr().Set(True)  # scans are often open (shoe openings, unseen bases)
     render.CreateNormalsAttr(Vt.Vec3fArray.FromNumpy(np.asarray(mesh.vertex_normals, dtype=np.float32)))
     render.SetNormalsInterpolation(UsdGeom.Tokens.vertex)
     pv_api = UsdGeom.PrimvarsAPI(render)
