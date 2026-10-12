@@ -72,7 +72,7 @@ def main() -> None:
 
     # (end time, lid torque N*m, holding the toy?)
     schedule = [(0.3, 0.0, True), (1.2, 0.35, True), (2.6, 0.0, False), (3.8, -0.35, False), (4.6, -0.35, False)]
-    frames, trace, t_prev = [], [], 0.0
+    frames, trace = [], []
     for t_end, torque, hold in schedule:
         data.eq_active[0] = hold
         while data.time < t_end:

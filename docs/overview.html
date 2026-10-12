@@ -53,9 +53,9 @@
 <p class="muted">Phone photos in, physics-ready <b>OpenUSD</b> assets out, verified in NVIDIA Isaac Sim and MuJoCo.</p>
 <div class="grid g4">
   <div class="card kpi"><b>0.78 mm</b><span>mean surface error, 78 photos → USD (speckled mug vs. ground truth)</span></div>
-  <div class="card kpi"><b>8 / 8</b><span>assets load unmodified in Isaac Sim 6 and settle in PhysX</span></div>
+  <div class="card kpi"><b>9 / 9</b><span>assets load unmodified in Isaac Sim 6 and settle in PhysX</span></div>
   <div class="card kpi"><b><span class="good">lift</span> vs <span class="bad">fail</span></b><span>robot rim-grasp: convex decomposition vs. one hull</span></div>
-  <div class="card kpi"><b>60 tests</b><span>plus 33 automated checks on every asset</span></div>
+  <div class="card kpi"><b>61 tests</b><span>plus 33 automated checks on every asset</span></div>
 </div>
 
 <h2>Architecture</h2>
@@ -79,9 +79,22 @@
     <p class="cap">Same mug, two glazes. Photogrammetry needs surface texture: the plain dark glaze leaves holes; the speckled one reconstructs to 0.8 mm.</p></div>
 </div>
 <div class="card" style="margin-top:12px">
+  <h3>Real photos: 67 shots of a stone Buddha head (AliceVision dataset, CC-BY 4.0)</h3>
+  <img src="figures/buddha_real.jpg" alt="Buddha real photos to USD">
+  <p class="cap">All 67 photos registered; the marker board was removed automatically; a watertight 20 cm head with 21 convex colliders (scale assumed, as the dataset gives no size). <code>scan2usd scan</code> runs the whole thing in one command.</p>
+</div>
+<div class="card" style="margin-top:12px">
   <h3>Benchmark</h3>
-  <!-- BENCHMARK_TABLE -->
-  <p class="cap">Each object: 78 rendered photos → COLMAP → Scan2USD with one ruler measurement (height). Accuracy = reconstruction to true surface; F-score = share of both surfaces within 2 mm. Ground truth: Google Scanned Objects (CC-BY 4.0) and a procedural mug.</p>
+  <table>
+<tr><th>Object</th><th>Accuracy mean / p95 (mm)</th><th>Completeness mean (mm)</th><th>F-score @2 mm</th><th>F-score @2 mm, above base</th><th>Volume error</th><th>Chart ΔE2000</th></tr>
+<tr><td>Speckled stoneware mug (procedural)</td><td>0.78 / 2.87</td><td>0.64</td><td>0.934</td><td>0.921</td><td>+11.8%</td><td>7.6 → 1.31</td></tr>
+<tr><td>Printed coffee mug</td><td>2.00 / 10.20</td><td>2.38</td><td>0.731</td><td>0.748</td><td>+191.5%</td><td>8.0 → 1.30</td></tr>
+<tr><td>Ceramic bowl</td><td>3.03 / 9.61</td><td>2.34</td><td>0.494</td><td>0.524</td><td>+82.0%</td><td>7.8 → 1.32</td></tr>
+<tr><td>Android figure toy*</td><td>0.78 / 3.08</td><td>0.96</td><td>0.872</td><td>0.894</td><td>+1.4%</td><td>7.7 → 1.38</td></tr>
+<tr><td>Lion figure</td><td>0.60 / 2.41</td><td>0.62</td><td>0.941</td><td>0.935</td><td>+8.2%</td><td>8.0 → 1.29</td></tr>
+<tr><td>Boat shoe</td><td>1.73 / 7.20</td><td>2.53</td><td>0.747</td><td>0.739</td><td>+32.2%</td><td>8.9 → 1.31</td></tr>
+</table><ul class="small" style="margin-top:10px"><li><b>Textured objects</b> (figures, speckled glaze) reconstruct to 0.6–0.8 mm mean error, F-score 0.87–0.94, volume within 1–12%.</li><li><b>Printed mug:</b> its plain white interior is never matched, so the cup is sealed partway down (+191% volume).</li><li><b>Bowl:</b> thin, lightly textured walls come out ~2–3 mm too thick in the stereo point cloud itself (finer meshing didn't help).</li><li><b>Shoe:</b> the opening and inside aren't observed and get sealed (+32%).</li><li>Fixes: a measured <code>--mass</code>, more top-down photos into cavities, and (future) visibility-based carving.</li></ul>
+  <p class="cap">Each object: 78 rendered photos → COLMAP → Scan2USD with one ruler measurement (height). Accuracy = reconstruction to true surface; F-score = share of both surfaces within 2 mm. Ground truth: Google Scanned Objects (CC-BY 4.0) and a procedural mug. *The GSO model id says "Triceratops" but contains an Android figure.</p>
 </div>
 
 <h2>Robotics demos</h2>
@@ -89,7 +102,7 @@
   <div class="card"><h3>Rim grasp in MuJoCo</h3><img src="figures/grasp_demo.webp" alt="Grasp demo">
     <p class="cap">One finger inside the cup. With Scan2USD's 25 convex pieces the mug lifts 11.6 cm; with a single convex hull the cavity is "lidded" and the grasp fails.</p></div>
   <div class="card"><h3>Isaac Sim 6 · Replicator dataset</h3><img src="figures/isaac_dataset.jpg" alt="Isaac Sim synthetic data">
-    <p class="cap">All 8 assets referenced unmodified, settled by PhysX, then rendered with random cameras and lights: RGB, tight 2D boxes, segmentation, depth (12 frames in 9 s).</p></div>
+    <p class="cap">All 9 assets (incl. the real-photo Buddha) referenced unmodified, settled by PhysX, then rendered with random cameras and lights: RGB, tight 2D boxes, segmentation, depth (12 frames in 9 s).</p></div>
   <div class="card"><h3>Bin of scanned objects</h3><img src="figures/clutter_demo.webp" alt="Clutter demo">
     <p class="cap">14 objects, 392 convex colliders: all end in the tote and settle; resting penetration 0.08 mm.</p></div>
   <div class="card"><h3>Articulated asset</h3><img src="figures/articulation_demo.webp" alt="Hinged box demo">
@@ -142,6 +155,7 @@
   <li><b>Clustering by distance breaks on sparse surfaces.</b> Picking the object by its 2D footprint on the table worked where 3D distance clustering failed.</li>
   <li><b>Units bite.</b> MuJoCo angles default to degrees; a radian limit produced a 1.8° hinge.</li>
   <li><b>Contacts need consistent stiffness.</b> Soft default bin walls let objects sink 8 mm; matching the assets' stiffness gave 0.08 mm.</li>
+  <li><b>Fast + thin = tunneling.</b> At PhysX's default 60 Hz, a dropped mug moved 4.5 cm per step and passed through a 2 cm table; a thicker slab and 240 Hz fixed it.</li>
   <li><b>Versions matter.</b> Isaac Sim 5.1's renderer crashed on this driver; 6.0 works.</li>
 </ul>
 
@@ -154,7 +168,7 @@
     <li>The Xbox controller after that: dark gloss is the hardest case (see the lesson above).</li></ul></div>
   <div class="card small"><h3>Measure, then run</h3><ul>
     <li>Weigh it (g) and measure its height (mm).</li>
-    <li><code>scan2usd reconstruct photos\ -o work\</code> then <code>scan2usd build work\object_mesh.ply --scale-to 0.095 --scale-axis z --mass 0.36</code></li>
+    <li><code>scan2usd scan photos\ -o out\ --scale-to 0.095 --mass 0.36 --material ceramic</code> (photos → USD in one step)</li>
     <li>Put files in <code>data\raw\&lt;object&gt;\</code> (git-ignored).</li></ul></div>
 </div>
 

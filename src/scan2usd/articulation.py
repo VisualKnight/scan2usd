@@ -17,7 +17,7 @@ from scipy.spatial.transform import Rotation
 
 from . import __version__
 from .physics import MATERIALS, MassProperties, convex_decompose, estimate_mass_properties, single_hull
-from .usd_io import PhysicsMaterial, SurfaceMaterial, _prim_name, author_body, define_physics_material, read_usd
+from .usd_io import PhysicsMaterial, SurfaceMaterial, _prim_name, author_body, define_physics_material
 
 
 @dataclass

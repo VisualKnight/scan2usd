@@ -19,7 +19,7 @@ NICE = {
     "ace_coffee_mug_kristen_16_oz_cup": "printed mug", "cole_hardware_bowl_scirocco_yellowblue": "bowl",
     "great_dinos_triceratops_toy": "figure", "schleich_lion_action_figure": "lion",
     "womens_bluefish_2eye_boat_shoe_in_tan": "shoe", "ceramic_mug": "demo mug", "mug": "reconstructed mug",
-    "keepsake_box": "hinged box",
+    "keepsake_box": "hinged box", "buddha_head": "Buddha (real photos)",
 }
 
 

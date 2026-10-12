@@ -23,18 +23,34 @@
 
 **Photos → USD, scored against ground truth.** Each object is a 78-photo phone-style capture rendered in Blender (with a ColorChecker in the scene), reconstructed with COLMAP, and built with one ruler measurement. Full table: [docs/benchmark.md](docs/benchmark.md).
 
-<!-- BENCHMARK_TABLE -->
+| Object | Photos registered | Accuracy mean / p95 (mm) | Completeness mean (mm) | F-score @2 mm | F-score @2 mm, above base | Volume error | Chart ΔE2000 | Validation | Time (s) |
+|---|---|---|---|---|---|---|---|---|---|
+| Speckled stoneware mug (procedural) | 78/78 | 0.78 / 2.87 | 0.64 | 0.934 | 0.921 | +11.8% | 7.6 → 1.31 | warn | 315 |
+| Printed coffee mug | 78/78 | 2.00 / 10.20 | 2.38 | 0.731 | 0.748 | +191.5% | 8.0 → 1.30 | pass | 684 |
+| Ceramic bowl | 78/78 | 3.03 / 9.61 | 2.34 | 0.494 | 0.524 | +82.0% | 7.8 → 1.32 | warn | 891 |
+| Android figure toy* | 78/78 | 0.78 / 3.08 | 0.96 | 0.872 | 0.894 | +1.4% | 7.7 → 1.38 | warn | 648 |
+| Lion figure | 78/78 | 0.60 / 2.41 | 0.62 | 0.941 | 0.935 | +8.2% | 8.0 → 1.29 | pass | 552 |
+| Boat shoe | 78/78 | 1.73 / 7.20 | 2.53 | 0.747 | 0.739 | +32.2% | 8.9 → 1.31 | pass | 627 |
+
+*The GSO model id `Great_Dinos_Triceratops_Toy` contains an Android figure. "Above base" ignores the bottom 10 mm, which a tabletop capture can't see.
+
+- **Textured objects** (figures, speckled glaze) reconstruct to 0.6–0.8 mm mean error, F-score 0.87–0.94, volume within 1–12%.
+- **Printed mug:** its plain white interior is never matched, so the cup is sealed partway down (+191% volume).
+- **Bowl:** thin, lightly textured walls come out ~2–3 mm too thick in the stereo point cloud itself (finer meshing didn't help).
+- **Shoe:** the opening and inside aren't observed and get sealed (+32%).
+- Fixes: a measured `--mass`, more top-down photos into cavities, and (future) visibility-based carving.
 
 | | |
 |---|---|
 | ![Texture matters](docs/figures/texture_matters.jpg) | Photogrammetry needs surface texture: the same mug with a plain dark glaze leaves holes; with a speckled glaze it reconstructs to 0.8 mm. |
+| ![Buddha](docs/figures/buddha_real.jpg) | **Real photos.** AliceVision's Buddha dataset (67 photos, CC-BY 4.0): all registered, marker board removed automatically, watertight head with 21 convex colliders (20 cm height assumed; the dataset gives no size). |
 
 **Robotics demos** (MuJoCo, and Isaac Sim 6 with PhysX + Replicator):
 
 | | |
 |---|---|
 | ![Grasp](docs/figures/grasp_demo.jpg) | **Rim grasp.** One finger inside the cup: with Scan2USD's convex decomposition (25 pieces) the mug lifts 11.6 cm; with one convex hull the cavity is sealed and the grasp fails. `scripts/demo_grasp.py` |
-| ![Isaac](docs/figures/isaac_dataset.jpg) | **Isaac Sim 6.** 8 assets referenced unmodified, settled by PhysX, rendered by Replicator with random cameras and lights: RGB, tight 2D boxes, segmentation, depth. `scripts/isaac_demo.py` |
+| ![Isaac](docs/figures/isaac_dataset.jpg) | **Isaac Sim 6.** 9 assets (incl. the real-photo Buddha) referenced unmodified, settled by PhysX, rendered by Replicator with random cameras and lights: RGB, tight 2D boxes, segmentation, depth. `scripts/isaac_demo.py` |
 | ![Bin](docs/figures/clutter_demo.jpg) | **Bin of scanned objects.** 14 objects, 392 convex colliders; all settle in the tote, resting penetration 0.08 mm. `scripts/demo_clutter.py` |
 | ![Hinge](docs/figures/articulation_demo.jpg) | **Articulated asset.** A closed box scan + seam plane + hinge line → base and lid with a revolute joint (0–105°); the lid opens, a scanned toy drops in, the lid closes. `scripts/demo_articulation.py` |
 
@@ -46,7 +62,7 @@ Python 3.10–3.12, with [uv](https://docs.astral.sh/uv/):
 uv venv --python 3.11
 uv pip install -e ".[dev]"
 .venv\Scripts\scan2usd demo            # synthetic mug -> output\demo\ (see preview.png)
-.venv\Scripts\python -m pytest         # 60 tests
+.venv\Scripts\python -m pytest         # 61 tests
 ```
 
 Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (CUDA build): unzip it to `tools\colmap\` or set `SCAN2USD_COLMAP`.
@@ -54,7 +70,11 @@ Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (
 ## Usage
 
 ```powershell
-# Photos -> object mesh (Z-up, table at z=0, arbitrary scale)
+# Photos -> USD in one step (reconstruct + build); --scale-to is the measured height
+scan2usd scan photos\ -o output\mug --scale-to 0.095 --mass 0.36 --material ceramic `
+    --chart-image chart.jpg --chart-corners "412,310;1630,322;1622,1140;405,1128"
+
+# Or step by step: photos -> object mesh (Z-up, table at z=0, arbitrary scale)
 scan2usd reconstruct photos\ -o work\mug
 
 # Mesh -> simulation asset: scale from one ruler measurement, measured mass, color chart

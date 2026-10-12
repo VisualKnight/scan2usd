@@ -20,7 +20,6 @@ import json
 import math
 import os
 import random
-import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -29,6 +28,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--frames", type=int, default=12)
 parser.add_argument("--out", default=os.path.join(ROOT, "output", "isaac"))
 parser.add_argument("--settle-steps", type=int, default=240)
+parser.add_argument("--only", help="comma-separated substrings: load only matching assets (debugging)")
+parser.add_argument("--trace", action="store_true", help="print rigid-body heights while settling")
 args = parser.parse_args()
 
 from isaacsim import SimulationApp  # noqa: E402
@@ -47,6 +48,9 @@ for extra in ("output/demo/asset/ceramic_mug.usda", "data/synthetic/mug/work/ass
     pth = os.path.join(ROOT, extra)
     if os.path.exists(pth):
         assets.append(pth)
+if args.only:
+    keys = args.only.split(",")
+    assets = [a for a in assets if any(k in a for k in keys)]
 print(f"[scan2usd] {len(assets)} assets", flush=True)
 
 ctx = omni.usd.get_context()
@@ -60,27 +64,33 @@ scene = UsdPhysics.Scene.Define(stage, "/World/physicsScene")
 scene.CreateGravityDirectionAttr(Gf.Vec3f(0, 0, -1))
 scene.CreateGravityMagnitudeAttr(9.81)
 
-# Table top: a thin box collider with a neutral matte material.
+# Table top (z = 0): a thick slab, so fast-falling thin parts can't tunnel through it.
 table = UsdGeom.Cube.Define(stage, "/World/table")
 table.CreateSizeAttr(1.0)
-table.AddScaleOp().Set(Gf.Vec3f(1.2, 0.9, 0.02))
-table.AddTranslateOp().Set(Gf.Vec3d(0, 0, -0.01))
+table.AddTranslateOp().Set(Gf.Vec3d(0, 0, -0.05))
+table.AddScaleOp().Set(Gf.Vec3f(1.6, 1.2, 0.1))
 UsdPhysics.CollisionAPI.Apply(table.GetPrim())
 table.CreateDisplayColorAttr([Gf.Vec3f(0.62, 0.6, 0.57)])
+try:  # 240 Hz physics: at the default 60 Hz a 2.7 m/s drop moves 4.5 cm per step
+    from pxr import PhysxSchema
+
+    PhysxSchema.PhysxSceneAPI.Apply(scene.GetPrim()).CreateTimeStepsPerSecondAttr(240)
+except ImportError:
+    pass
 
 rng = random.Random(4)
 prims = []
-cols = 4
+cols = 3
 for i, path in enumerate(assets):
     name = os.path.splitext(os.path.basename(path))[0]
     prim_path = f"/World/obj_{i:02d}_{name[:20]}"
     xf = UsdGeom.Xform.Define(stage, prim_path)
     xf.GetPrim().GetReferences().AddReference(path)
     r, c = divmod(i, cols)
-    x = (c - (cols - 1) / 2) * 0.24 + rng.uniform(-0.02, 0.02)
-    y = (r - 0.5) * 0.26 + rng.uniform(-0.02, 0.02)
-    xf.AddTranslateOp().Set(Gf.Vec3d(x, y, 0.08 + 0.05 * i))
-    xf.AddRotateXYZOp().Set(Gf.Vec3f(rng.uniform(-25, 25), rng.uniform(-25, 25), rng.uniform(0, 360)))
+    x = (c - (cols - 1) / 2) * 0.30 + rng.uniform(-0.02, 0.02)
+    y = (r - 1) * 0.27 + rng.uniform(-0.02, 0.02)
+    xf.AddTranslateOp().Set(Gf.Vec3d(x, y, 0.05 + 0.03 * i))
+    xf.AddRotateXYZOp().Set(Gf.Vec3f(rng.uniform(-12, 12), rng.uniform(-12, 12), rng.uniform(0, 360)))
     prims.append((prim_path, name))
 
 dome = UsdLux.DomeLight.Define(stage, "/World/dome")
@@ -105,8 +115,17 @@ from omni.physx import get_physx_interface  # noqa: E402
 
 timeline = omni.timeline.get_timeline_interface()
 timeline.play()
-for _ in range(args.settle_steps):
+for step in range(args.settle_steps):
     app.update()
+    if args.trace and step % 20 == 0:
+        px = get_physx_interface()
+        hs = []
+        for prim_path, name in prims:
+            tr = px.get_rigidbody_transformation(prim_path)
+            hs.append(f"{name[:10]}={tr['position'][2]:.3f}" if tr and tr.get("ret_val") else f"{name[:10]}=?")
+            if name.startswith("buddha") and tr and tr.get("ret_val"):
+                hs.append("(xy {:.3f},{:.3f})".format(*tr["position"][:2]))
+        print(f"[scan2usd] step {step}: " + " ".join(hs), flush=True)
 physx = get_physx_interface()
 poses = {}
 for prim_path, name in prims:
@@ -121,7 +140,7 @@ for prim_path, name in prims:
     poses[name] = pos
 timeline.pause()
 finite = all(p is not None and all(math.isfinite(v) for v in p) for p in poses.values())
-on_table = all(p is not None and -0.02 < p[2] < 0.3 and abs(p[0]) < 0.6 and abs(p[1]) < 0.45 for p in poses.values())
+on_table = all(p is not None and -0.02 < p[2] < 0.3 and abs(p[0]) < 0.8 and abs(p[1]) < 0.6 for p in poses.values())
 physics = {"assets": len(prims), "finite": finite, "all_on_table": on_table, "poses": poses,
            "settle_steps": args.settle_steps}
 print("[scan2usd] physics:", json.dumps(physics), flush=True)
