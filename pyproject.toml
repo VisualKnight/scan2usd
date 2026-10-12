@@ -5,6 +5,7 @@ description = "Scan-to-Sim asset pipeline: turns real-world captures into physic
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 authors = [{ name = "Yibo Liu" }]
+license = { text = "Apache-2.0" }
 dependencies = [
     "numpy>=1.26",
     "scipy>=1.11",
