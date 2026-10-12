@@ -1,0 +1,25 @@
+{
+  "data": "synth_dr",
+  "train_images": 900,
+  "val_images": 100,
+  "epochs": 6,
+  "train_seconds": 343,
+  "synthetic_val_map50": 0.9983004424061335,
+  "synthetic_val_map75": 0.9983004424061335,
+  "per_class_ap50": {
+    "cole_hardware_bowl_scirocco_yellowblue": 1.0,
+    "great_dinos_triceratops_toy": 1.0,
+    "schleich_lion_action_figure": 1.0,
+    "womens_bluefish_2eye_boat_shoe_in_tan": 0.9995251661918328,
+    "ceramic_mug": 1.0,
+    "keepsake_box": NaN,
+    "buddha_head": 0.9995251661918328,
+    "ace_coffee_mug_kristen_16_oz_cup": 1.0,
+    "speckled_mug": 0.987353206865402
+  },
+  "real_buddha_photos": 67,
+  "real_top1_hits": 67,
+  "real_top1_rate": 1.0,
+  "real_median_score": 0.9978177547454834,
+  "real_false_positives_per_photo": 0.6865671641791045
+}

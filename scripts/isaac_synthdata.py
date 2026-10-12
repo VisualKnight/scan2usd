@@ -30,6 +30,8 @@ parser.add_argument("--out", default=os.path.join(ROOT, "output", "synth"))
 parser.add_argument("--width", type=int, default=896)
 parser.add_argument("--height", type=int, default=672)
 parser.add_argument("--seed", type=int, default=11)
+parser.add_argument("--distractors", type=int, default=0, help="unlabeled random primitives on the table")
+parser.add_argument("--panels", type=int, default=0, help="unlabeled background panels around the table")
 args = parser.parse_args()
 args.out = os.path.abspath(args.out)
 
@@ -96,6 +98,36 @@ for obj in objects:
     with rep.get.prims(path_pattern=obj["path"]):
         rep.modify.semantics([("class", obj["name"])])
 
+# Unlabeled distractors (never annotated): small primitives / flat cards on the table and large
+# panels around it, so the detector learns that "unfamiliar stuff" is background.
+def _material(name: str) -> str:
+    path = f"/World/Looks/{name}"
+    m = UsdShade.Material.Define(stage, path)
+    s = UsdShade.Shader.Define(stage, path + "/surface")
+    s.CreateIdAttr("UsdPreviewSurface")
+    s.CreateInput("diffuseColor", Sdf.ValueTypeNames.Color3f)
+    s.CreateInput("roughness", Sdf.ValueTypeNames.Float)
+    s.CreateInput("metallic", Sdf.ValueTypeNames.Float)
+    m.CreateSurfaceOutput().ConnectToSource(s.ConnectableAPI(), "surface")
+    return path
+
+
+distractors = []
+kinds = [UsdGeom.Cube, UsdGeom.Sphere, UsdGeom.Cylinder, UsdGeom.Cone]
+for k in range(args.distractors + args.panels):
+    panel = k >= args.distractors
+    gprim = (UsdGeom.Cube if panel else kinds[k % len(kinds)]).Define(stage, f"/World/distractors/d{k:02d}")
+    if isinstance(gprim, UsdGeom.Cube):
+        gprim.CreateSizeAttr(1.0)
+    elif isinstance(gprim, UsdGeom.Sphere):
+        gprim.CreateRadiusAttr(0.5)
+    else:
+        gprim.CreateRadiusAttr(0.5)
+        gprim.CreateHeightAttr(1.0)
+    gprim.AddTransformOp()
+    UsdShade.MaterialBindingAPI.Apply(gprim.GetPrim()).Bind(UsdShade.Material.Get(stage, _material(f"d{k:02d}")))
+    distractors.append({"path": str(gprim.GetPath()), "panel": panel, "look": f"/World/Looks/d{k:02d}/surface"})
+
 cam = UsdGeom.Camera.Define(stage, "/World/cam")
 cam.CreateFocalLengthAttr(24.0)
 cam.CreateHorizontalApertureAttr(36.0)
@@ -145,7 +177,52 @@ def place_objects() -> list[dict]:
                 visible = False
         img = UsdGeom.Imageable(prim)
         img.MakeVisible() if visible else img.MakeInvisible()
+    place_distractors(list(placed))
     return placed
+
+
+def _color() -> Gf.Vec3f:
+    if rng.random() < 0.3:  # near-black / near-white, like markers, cables, paper
+        v = rng.choice([rng.uniform(0.01, 0.08), rng.uniform(0.8, 0.98)])
+        return Gf.Vec3f(v, v, v)
+    return Gf.Vec3f(*[rng.uniform(0.02, 0.95) for _ in range(3)])
+
+
+def place_distractors(placed: list[dict]) -> None:
+    stage = ctx.get_stage()
+    n_on = rng.randint(0, args.distractors)
+    for k, d in enumerate(distractors):
+        prim = stage.GetPrimAtPath(d["path"])
+        shader = UsdShade.Shader(stage.GetPrimAtPath(d["look"]))
+        shader.GetInput("diffuseColor").Set(_color())
+        shader.GetInput("roughness").Set(rng.uniform(0.2, 1.0))
+        shader.GetInput("metallic").Set(rng.choice([0.0, 0.0, 0.0, 1.0]))
+        visible = True
+        if d["panel"]:
+            a = rng.uniform(0, 2 * math.pi)
+            r = rng.uniform(1.3, 2.2)
+            s = Gf.Vec3d(rng.uniform(0.3, 1.2), rng.uniform(0.05, 0.4), rng.uniform(0.3, 1.6))
+            m = (Gf.Matrix4d().SetScale(s) * Gf.Matrix4d().SetRotate(Gf.Rotation(Gf.Vec3d(0, 0, 1), math.degrees(a) + 90))
+                 * Gf.Matrix4d().SetTranslate(Gf.Vec3d(r * math.cos(a), r * math.sin(a), s[2] / 2 - 0.1)))
+        else:
+            visible = k < n_on
+            size = rng.uniform(0.02, 0.12)
+            flat = rng.random() < 0.35  # thin cards: printed markers, phones, coasters
+            s = Gf.Vec3d(size, size * rng.uniform(0.4, 1.5), size * (rng.uniform(0.02, 0.08) if flat else rng.uniform(0.5, 2.0)))
+            rad = 0.5 * math.hypot(s[0], s[1])
+            for _ in range(30):
+                x, y = rng.uniform(-0.6, 0.6), rng.uniform(-0.5, 0.5)
+                if all(math.hypot(x - p["x"], y - p["y"]) > rad + p["radius"] + 0.01 for p in placed):
+                    break
+            else:
+                visible = False
+            tilt = Gf.Matrix4d().SetRotate(Gf.Rotation(Gf.Vec3d(0, 0, 1), rng.uniform(0, 360)))
+            m = Gf.Matrix4d().SetScale(s) * tilt * Gf.Matrix4d().SetTranslate(Gf.Vec3d(x, y, s[2] / 2))
+            if visible:
+                placed.append({"x": x, "y": y, "radius": rad})
+        UsdGeom.Xformable(prim).GetOrderedXformOps()[0].Set(m)
+        img = UsdGeom.Imageable(prim)
+        img.MakeVisible() if visible else img.MakeInvisible()
 
 
 def randomize_look() -> None:
@@ -190,7 +267,7 @@ for i in range(args.frames):
         print(f"[scan2usd] frame {i + 1}/{args.frames} ({time.time() - t0:.0f} s)", flush=True)
 rep.orchestrator.wait_until_complete()
 with open(os.path.join(args.out, "synthdata.json"), "w") as f:
-    json.dump({"frames": args.frames, "assets": [o["name"] for o in objects], "seed": args.seed,
+    json.dump({"frames": args.frames, "distractors": args.distractors, "panels": args.panels, "assets": [o["name"] for o in objects], "seed": args.seed,
                "objects_per_frame": sum(counts) / max(1, len(counts)), "seconds": round(time.time() - t0, 1)},
               f, indent=2)
 print(f"[scan2usd] done in {time.time() - t0:.0f} s", flush=True)
