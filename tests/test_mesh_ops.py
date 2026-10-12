@@ -53,3 +53,22 @@ def test_decimate_keeps_watertight_and_colors():
     assert low.visual.kind == "vertex"
     assert np.allclose(low.visual.vertex_colors[:, :3].mean(0), [200, 50, 50], atol=2)
     assert low.volume == pytest.approx(mug.volume, rel=0.02)
+
+
+def test_load_obj_finds_texture_in_other_folder(tmp_path):
+    """Archives often keep textures in materials/textures while the .mtl expects them beside the OBJ."""
+    from PIL import Image
+
+    from scan2usd.mesh_ops import has_texture, load_mesh
+
+    (tmp_path / "meshes").mkdir()
+    (tmp_path / "materials" / "textures").mkdir(parents=True)
+    Image.new("RGB", (8, 8), (200, 30, 30)).save(tmp_path / "materials" / "textures" / "texture.png")
+    (tmp_path / "meshes" / "model.mtl").write_text("newmtl m0\nmap_Kd texture.png\n")
+    (tmp_path / "meshes" / "model.obj").write_text(
+        "mtllib model.mtl\nusemtl m0\n"
+        "v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 0 1\n"
+        "vt 0 0\nvt 1 0\nvt 0 1\nvt 1 1\n"
+        "f 1/1 3/3 2/2\nf 1/1 2/2 4/4\nf 1/1 4/4 3/3\nf 2/2 3/3 4/4\n")
+    mesh = load_mesh(tmp_path / "meshes" / "model.obj")
+    assert has_texture(mesh)

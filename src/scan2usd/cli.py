@@ -185,6 +185,38 @@ def cmd_reconstruct(args) -> int:
     return 0
 
 
+def _floats(n: int):
+    def parse(text: str) -> list[float]:
+        vals = [float(v) for v in text.replace(";", ",").split(",")]
+        if len(vals) != n:
+            raise argparse.ArgumentTypeError(f"expected {n} comma-separated numbers")
+        return vals
+    return parse
+
+
+def cmd_articulate(args) -> int:
+    from .articulation import Hinge, build_parts, write_articulated_usd
+    from .mesh_ops import clean_mesh, load_mesh, orient_and_scale
+    from .physics import MATERIALS
+    from .usd_io import PhysicsMaterial, SurfaceMaterial
+
+    mesh, _ = clean_mesh(load_mesh(args.input))
+    mesh, _ = orient_and_scale(mesh, args.up_axis, args.units, args.scale_to, args.scale_axis)
+    sp, hg = args.split, args.hinge
+    hinge = Hinge(origin=tuple(hg[:3]), axis=tuple(hg[3:]), lower_deg=args.limits[0], upper_deg=args.limits[1])
+    parts = build_parts(mesh, sp[:3], sp[3:], material=args.material, names=tuple(args.parts.split(",")),
+                        collision=args.collision)
+    m = MATERIALS[args.material]
+    name = args.name or Path(args.input).stem
+    out = Path(args.output) / f"{name}.usda"
+    write_articulated_usd(out, name, parts, hinge, SurfaceMaterial(),
+                          PhysicsMaterial(m["static_friction"], m["dynamic_friction"], m["restitution"]))
+    for p in parts:
+        print(f"  {p.name}: {len(p.mesh.faces):,} triangles, {len(p.hulls)} hulls, {p.mass.mass * 1000:.1f} g")
+    print(f"wrote {out} (revolute joint {args.limits[0]:g}..{args.limits[1]:g} deg)")
+    return 0
+
+
 def cmd_materials(_args) -> int:
     from .physics import MATERIALS
 
@@ -242,6 +274,23 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--quality", default="medium", choices=["low", "medium", "high", "extreme"])
     r.add_argument("--depth", type=int, help="Poisson octree depth (default: from point spacing)")
     r.set_defaults(func=cmd_reconstruct)
+
+    a = sub.add_parser("articulate", help="split a scan into two parts joined by a hinge (articulated USD)")
+    a.add_argument("input", type=Path)
+    a.add_argument("-o", "--output", type=Path, required=True)
+    a.add_argument("--name")
+    a.add_argument("--split", type=_floats(6), required=True,
+                   help="seam plane 'ox,oy,oz,nx,ny,nz' in the asset frame (m, Z-up, origin at bottom center)")
+    a.add_argument("--hinge", type=_floats(6), required=True, help="hinge line 'ox,oy,oz,ax,ay,az'")
+    a.add_argument("--limits", type=_floats(2), default=[0.0, 105.0], help="joint limits in degrees")
+    a.add_argument("--parts", default="base,lid", help="names for the parts below/above the plane")
+    a.add_argument("--material", default="wood")
+    a.add_argument("--collision", default="coacd", choices=["coacd", "hull"])
+    a.add_argument("--up-axis", default="z", choices=["z", "y", "-y", "-z"])
+    a.add_argument("--units", default="m", choices=["m", "cm", "mm", "in"])
+    a.add_argument("--scale-to", type=float)
+    a.add_argument("--scale-axis", default="max", choices=["max", "x", "y", "z"])
+    a.set_defaults(func=cmd_articulate)
 
     args = parser.parse_args(argv)
     return args.func(args)

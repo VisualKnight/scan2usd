@@ -53,7 +53,6 @@ def parse_args():
     p.add_argument("--samples", type=int, default=64)
     p.add_argument("--seed", type=int, default=7)
     p.add_argument("--keep-materials", action="store_true", help="use the mesh's own (scanned) materials")
-    p.add_argument("--keep-materials", action="store_true", help="use the mesh's own (scanned) materials")
     a = p.parse_args(argv)
     a.mesh, a.out = os.path.abspath(a.mesh), os.path.abspath(a.out)
     return a

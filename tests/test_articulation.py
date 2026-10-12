@@ -71,3 +71,17 @@ def test_hinge_respects_limits_in_mujoco(box_usd):
     assert np.degrees(data.qpos[qadr]) < 2.0
     assert np.degrees(low) > -4.0
     assert np.isfinite(data.qpos).all()
+
+
+def test_articulate_cli(tmp_path):
+    from scan2usd.cli import main
+
+    mesh, _ = make_keepsake_box()
+    src = tmp_path / "box.ply"
+    mesh.export(str(src))
+    code = main(["articulate", str(src), "-o", str(tmp_path / "out"), "--name", "box",
+                 "--split", "0,0,0.052,0,0,1", "--hinge", "0,0.05,0.052,-1,0,0", "--limits", "0,90",
+                 "--collision", "hull"])
+    assert code == 0
+    art = read_articulation(tmp_path / "out" / "box.usda")
+    assert art["joints"][0]["upper_deg"] == 90.0

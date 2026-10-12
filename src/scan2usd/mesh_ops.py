@@ -33,10 +33,33 @@ class CleanReport:
 
 
 def load_mesh(path: str | Path) -> trimesh.Trimesh:
+    path = Path(path)
     mesh = trimesh.load(str(path), force="mesh", process=True)
     if not isinstance(mesh, trimesh.Trimesh) or len(mesh.faces) == 0:
         raise ValueError(f"no triangle mesh found in {path}")
+    if path.suffix.lower() == ".obj" and mesh.visual.kind == "texture" and get_base_color_image(mesh) is None:
+        image = _find_obj_texture(path)
+        if image is not None:
+            mesh.visual.material.image = image
     return mesh
+
+
+def _find_obj_texture(obj_path: Path):
+    """Locate a .mtl's map_Kd image that isn't next to the OBJ (common in asset archives)."""
+    from PIL import Image
+
+    names = []
+    for mtl in obj_path.parent.glob("*.mtl"):
+        for line in mtl.read_text(errors="ignore").splitlines():
+            parts = line.strip().split()
+            if len(parts) >= 2 and parts[0].lower() == "map_kd":
+                names.append(Path(parts[-1]).name)
+    for name in names:
+        for root in (obj_path.parent, obj_path.parent.parent):
+            hits = sorted(root.rglob(name))
+            if hits:
+                return Image.open(hits[0])
+    return None
 
 
 def has_texture(mesh: trimesh.Trimesh) -> bool:

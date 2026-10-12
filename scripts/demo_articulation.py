@@ -35,8 +35,7 @@ def main() -> None:
     parts = build_parts(mesh, cfg["plane_origin"], cfg["plane_normal"], material="wood")
     usd = ROOT / "output" / "articulated" / "keepsake_box.usda"
     write_articulated_usd(usd, "keepsake_box", parts, cfg["hinge"],
-                          SurfaceMaterial(base_color=(0.55, 0.36, 0.2), roughness=0.6), PhysicsMaterial(0.5, 0.4, 0.2),
-                          fixed_base=True)
+                          SurfaceMaterial(base_color=(0.55, 0.36, 0.2), roughness=0.6), PhysicsMaterial(0.5, 0.4, 0.2))
     box_xml, extra = mujoco_xml(usd, fixed_base=True)
     box_xml = box_xml.replace('rgba="0.62 0.42 0.25 1"', 'rgba="0.55 0.36 0.2 1"')
 

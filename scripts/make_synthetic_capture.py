@@ -45,6 +45,9 @@ def main() -> int:
             shutil.rmtree(gt_dir)
         shutil.copytree(src / "meshes", gt_dir / "meshes")
         shutil.copytree(src / "materials", gt_dir / "materials")
+        # model.mtl references its textures by bare file name, next to the OBJ.
+        for tex in (src / "materials" / "textures").glob("*"):
+            shutil.copy2(tex, gt_dir / "meshes" / tex.name)
         gt_path = gt_dir / "meshes" / "model.obj"
         mesh = trimesh.load(str(gt_path), force="mesh")
         extra.append("--keep-materials")

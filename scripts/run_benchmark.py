@@ -26,7 +26,7 @@ OBJECTS = {
     "mug": ("mug", "ceramic", "Speckled stoneware mug (procedural)"),
     "ACE_Coffee_Mug_Kristen_16_oz_cup": ("ace_coffee_mug_kristen_16_oz_cup", "ceramic", "Printed coffee mug"),
     "Cole_Hardware_Bowl_Scirocco_YellowBlue": ("cole_hardware_bowl_scirocco_yellowblue", "ceramic", "Ceramic bowl"),
-    "Great_Dinos_Triceratops_Toy": ("great_dinos_triceratops_toy", "plastic", "Triceratops toy"),
+    "Great_Dinos_Triceratops_Toy": ("great_dinos_triceratops_toy", "plastic", "Android figure toy*"),
     "Schleich_Lion_Action_Figure": ("schleich_lion_action_figure", "plastic", "Lion figure"),
     "Womens_Bluefish_2Eye_Boat_Shoe_in_Tan": ("womens_bluefish_2eye_boat_shoe_in_tan", "rubber", "Boat shoe"),
 }
@@ -55,9 +55,11 @@ def table(rows: list[dict]) -> str:
 
 
 def main() -> None:
+    sys.stdout.reconfigure(encoding="utf-8")
     p = argparse.ArgumentParser()
     p.add_argument("--objects", default=",".join(OBJECTS))
     p.add_argument("--skip-render", action="store_true")
+    p.add_argument("--reuse", action="store_true", help="reuse existing per-object evaluation.json files")
     args = p.parse_args()
     rows = []
     for key in args.objects.split(","):
@@ -71,7 +73,8 @@ def main() -> None:
             subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             print(f"[{key}] rendered in {time.time() - t0:.0f} s", flush=True)
         try:
-            m = evaluate_capture(cap, material)
+            cached = cap / "work" / "evaluation.json"
+            m = json.loads(cached.read_text()) if args.reuse and cached.exists() else evaluate_capture(cap, material)
             m["display"] = display
             print(summarize(m), flush=True)
         except Exception as exc:  # keep the benchmark going; report the failure in the table
@@ -87,7 +90,8 @@ def main() -> None:
           "- **Accuracy**: distance from the reconstruction to the true surface. "
           "**Completeness**: distance from the true surface to the reconstruction.\n"
           "- **F-score @2 mm**: share of both surfaces within 2 mm of each other (1.0 = perfect).\n\n"
-          + table(rows) + "\n\nGround-truth meshes: Google Scanned Objects (CC-BY 4.0) and a procedural mug.\n")
+          + table(rows) + "\n\nGround-truth meshes: Google Scanned Objects (CC-BY 4.0) and a procedural mug. "
+          "*The GSO model id `Great_Dinos_Triceratops_Toy` actually contains an Android figure.\n")
     (ROOT / "docs" / "benchmark.md").write_text(md, encoding="utf-8")
     print(table(rows))
 
