@@ -97,6 +97,28 @@
 </table><ul class="small" style="margin-top:10px"><li><b>Textured objects</b> (figures, speckled glaze) reconstruct to 0.6–0.8 mm mean error, F-score 0.87–0.94, volume within 1–12%.</li><li><b>Printed mug:</b> its plain white interior is never matched, so the cup is sealed partway down (+191% volume).</li><li><b>Bowl:</b> thin, lightly textured walls come out ~2–3 mm too thick in the stereo point cloud itself (finer meshing didn't help).</li><li><b>Shoe:</b> the opening and inside aren't observed and get sealed (+32%).</li><li>Fixes: a measured <code>--mass</code>, more top-down photos into cavities, and (future) visibility-based carving.</li></ul>
   <p class="cap">Each object: 78 rendered photos → COLMAP → Scan2USD with one ruler measurement (height). Accuracy = reconstruction to true surface; F-score = share of both surfaces within 2 mm. Ground truth: Google Scanned Objects (CC-BY 4.0) and a procedural mug. *The GSO model id says "Triceratops" but contains an Android figure.</p>
 </div>
+<div class="grid g2" style="margin-top:12px">
+  <div class="card"><h3>How many photos are enough? (lion figure)</h3>
+    <table>
+      <tr><th>Photos</th><th>Registered</th><th>Accuracy</th><th>F-score @2 mm</th><th>Time</th></tr>
+      <tr><td>12</td><td class="bad">8</td><td class="bad">8.05 mm</td><td class="bad">0.10</td><td>40 s</td></tr>
+      <tr><td>20</td><td>19</td><td>0.80 mm</td><td>0.90</td><td>108 s</td></tr>
+      <tr><td>39</td><td>39</td><td>0.61 mm</td><td>0.92</td><td>238 s</td></tr>
+      <tr><td>78</td><td>78</td><td class="good">0.60 mm</td><td class="good">0.94</td><td>480 s</td></tr>
+    </table>
+    <p class="cap">Too few and photos stop overlapping, so cameras can't be solved. Past ~40, extra photos mostly buy completeness and cost time. Hence the 60–150 recommendation: margin for blurry or badly lit shots.</p></div>
+  <div class="card"><h3>Metric scale from the chart (no ruler)</h3>
+    <table>
+      <tr><th>Object</th><th>Chart views used</th><th>Scale error</th></tr>
+      <tr><td>Speckled mug</td><td>20/22</td><td>+0.96%</td></tr>
+      <tr><td>Printed mug</td><td>20/24</td><td>+0.62%</td></tr>
+      <tr><td>Bowl</td><td>9/12</td><td>−0.91%</td></tr>
+      <tr><td>Figure</td><td>23/26</td><td>+0.42%</td></tr>
+      <tr><td>Lion</td><td>24/26</td><td>+1.43%</td></tr>
+      <tr><td>Shoe</td><td>35/43</td><td>+0.35%</td></tr>
+    </table>
+    <p class="cap">A ColorChecker in the scene is also a ruler: its patches are 16 mm apart on the Mini.</p></div>
+</div>
 
 <h2>Robotics demos</h2>
 <div class="card" style="margin-bottom:12px"><h3>Franka Panda pick-and-place (MuJoCo Menagerie robot)</h3><img src="figures/panda_demo.webp" alt="Panda pick and place">

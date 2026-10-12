@@ -30,3 +30,14 @@ Scale estimated by triangulating the chart's patch centers in the photos (RANSAC
 | Boat shoe | 35/43 | +0.35% |
 
 Mean absolute scale error: **0.78%** (max 1.43%).
+
+## How many photos? (schleich_lion_action_figure)
+
+Evenly spaced subsets of the same capture, each reconstructed from scratch. With 12 photos only 8 register and the result is unusable; 20 photos already give sub-millimeter accuracy; beyond ~40, extra photos add little accuracy but cost time.
+
+| Photos | Registered | Accuracy (mm) | Completeness (mm) | F-score @2 mm | Volume error | COLMAP + mesh (s) |
+|---|---|---|---|---|---|---|
+| 12 | 8 | 8.05 | 6.71 | 0.102 | +157.8% | 40 |
+| 20 | 19 | 0.80 | 0.89 | 0.896 | +6.9% | 108 |
+| 39 | 39 | 0.61 | 0.65 | 0.920 | +10.1% | 238 |
+| 78 | 78 | 0.60 | 0.62 | 0.941 | +8.2% | 480 |

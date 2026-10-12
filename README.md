@@ -41,6 +41,8 @@
 - **Shoe:** the opening and inside aren't observed and get sealed (+32%).
 - Fixes: a measured `--mass`, more top-down photos into cavities, and (future) visibility-based carving.
 
+**How many photos?** On the lion figure: 12 photos fail (only 8 register, F-score 0.10); 20 give 0.80 mm / F 0.90; 39 give 0.61 mm; 78 give 0.60 mm / F 0.94. **Metric scale from the ColorChecker** (no ruler): 0.35–1.43% error across all six objects. Details in [docs/benchmark.md](docs/benchmark.md).
+
 | | |
 |---|---|
 | ![Texture matters](docs/figures/texture_matters.jpg) | Photogrammetry needs surface texture: the same mug with a plain dark glaze leaves holes; with a speckled glaze it reconstructs to 0.8 mm. |
