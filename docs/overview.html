@@ -149,6 +149,14 @@
     <p class="cap">All 9 assets composed into one stage as payloads, with <code>collision</code> and <code>friction</code> variant sets (<a href="library/index.html">catalog</a>). Every collision variant (242 decomposed pieces, or one hull / box per body) settles in PhysX; with 10 resting objects, step time is about 2 ms for all three.</p></div>
 </div>
 
+<h2>Dexterous grasping: Shadow Hand</h2>
+<div class="grid" style="grid-template-columns: 1.15fr 1fr">
+  <div class="card"><img src="figures/hand_grasp.webp" alt="Shadow Hand grasps scanned objects">
+    <p class="cap">The 24-joint Shadow Hand (MuJoCo Menagerie) lifts scanned objects and survives a ±2 cm / 3 Hz shake.</p></div>
+  <div class="card"><img src="figures/hand_grasp.png" alt="Grasp success per asset">
+    <p class="cap">90 sampled power grasps per asset and collision variant (1,440 trials, ~1 min on 16 cores). Convex decomposition holds 23.5% of grasps on the six hand-sized objects, one hull 18.9%. The 4.6 kg Buddha and the 25 cm shoe are beyond the hand. Grasps from above work far better (34%) than from the side (4%).</p></div>
+</div>
+
 <h2>How accurate must a scan be?</h2>
 <div class="card" style="margin-bottom:12px">
   <img src="figures/robustness.png" alt="Pick success vs collider, friction, mass, size error">
@@ -235,6 +243,7 @@
   <li><b>Labels can be wrong too.</b> Replicator's instance masks sometimes dropped or shrank an object; the converter now trusts the box annotator and keeps a mask only when it agrees.</li>
   <li><b>Know your camera model.</b> Back-projected depth was 3 cm off because MuJoCo's scene stores two stereo eye cameras; a mono render uses their average. One line fixed it.</li>
   <li><b>Some things can't be observed.</b> With the handle hidden from both cameras, the mug's yaw has no answer. Design the action not to need it: the rim grasp works at any yaw.</li>
+  <li><b>Don't teleport a hand.</b> Driving the Shadow Hand's forearm as a MuJoCo mocap body moves it without velocity, and friction there is velocity-based: 120 N of squeeze and the object still stayed on the table. Welding a free forearm to the mocap target took grasp success from 0% to ~23%.</li>
   <li><b>Look at a cross-section before believing an explanation.</b> I had blamed the bowl's +82% volume on thick walls; slicing the solid showed it was mostly an unseen underside filled into a pedestal. And carving can't help where no camera looked.</li>
 </ul>
 
