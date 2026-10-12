@@ -295,6 +295,46 @@ def cmd_uncertainty(args) -> int:
     return 0
 
 
+def cmd_guide(args) -> int:
+    from .guide import run_guide
+
+    sugg, stats = run_guide(args.usd, args.workspace, args.output, k=args.k)
+    print(f"{stats['existing_photos']} photos so far; observed surface {stats['observed_fraction'] * 100:.0f}%")
+    for i, s in enumerate(sugg):
+        print(f"  photo {i + 1}: azimuth {s.azimuth_deg:+4.0f}°, elevation {s.elevation_deg:2.0f}°, "
+              f"{s.distance_m * 100:.0f} cm  (+{s.gain * 100:.0f}%)")
+    print(f"these cover {stats['covered_fraction'] * 100:.0f}% of the physics-relevant unseen surface; "
+          f"shot list: {Path(args.output) / 'index.html'}")
+    return 0
+
+
+def cmd_splat(args) -> int:
+    from .splat import asset_transform, crop_to_asset, read_splat_ply, write_hybrid
+    from .usd_io import read_usd
+
+    splat = read_splat_ply(args.ply)
+    m = asset_transform(args.workspace, args.usd)
+    kept, rep = crop_to_asset(splat, m, read_usd(args.usd).render_mesh, margin=args.margin)
+    out = write_hybrid(args.usd, kept, m, args.output, default=args.appearance,
+                       metadata={"source": Path(args.ply).name, "crop": rep.__dict__})
+    print(f"{rep.kept:,} of {rep.total:,} Gaussians kept (within {rep.margin_m * 1000:.1f} mm of the mesh; removed "
+          f"{rep.removed_far:,} far, {rep.removed_below:,} table, {rep.removed_faint:,} faint, {rep.removed_large:,} huge)")
+    print(f"wrote {out} (variant set 'appearance': mesh | splat | splat_proxy, default {args.appearance})")
+    return 0
+
+
+def cmd_splat_data(args) -> int:
+    from .splat import asset_transform, masked_dataset
+
+    dense = Path(args.workspace) / "dense" / "0"
+    m = asset_transform(args.workspace, args.usd)
+    stats = masked_dataset(args.model or dense / "sparse", args.images or dense / "images", args.usd, m, args.output,
+                           exclude=[e for e in args.exclude.split(",") if e])
+    print(f"wrote {stats['images']} RGBA photos (object covers {stats['object_fraction_median'] * 100:.0f}% of a "
+          f"median frame, {stats['excluded']} held out) to {args.output}; train e.g. `brush_app {args.output}`")
+    return 0
+
+
 def cmd_grasps(args) -> int:
     from .schemas import read_grasps
 
@@ -424,6 +464,33 @@ def main(argv: list[str] | None = None) -> int:
     un.add_argument("--mass", type=float, help="measured mass (kg): narrows the mass interval")
     un.add_argument("--wall", type=float, default=0.003, help="min. wall kept behind observed surface (m)")
     un.set_defaults(func=cmd_uncertainty)
+
+    gd = sub.add_parser("guide", help="suggest the extra photos that would fix what matters for physics")
+    gd.add_argument("usd", type=Path, help="asset built from the first capture")
+    gd.add_argument("--workspace", type=Path, required=True, help="the reconstruct/scan workspace")
+    gd.add_argument("-o", "--output", type=Path, default=Path("shotlist"), help="folder for the shot list page")
+    gd.add_argument("-k", type=int, default=8, help="number of photos to suggest")
+    gd.set_defaults(func=cmd_guide)
+
+    sp = sub.add_parser("splat", help="add a Gaussian splat (trained on the same photos) to an asset: "
+                                      "splat for looks, hulls for physics")
+    sp.add_argument("usd", type=Path, help="physics asset built from the capture")
+    sp.add_argument("ply", type=Path, help="3D Gaussian Splatting .ply (e.g. from Brush), in the COLMAP frame")
+    sp.add_argument("--workspace", type=Path, required=True, help="the reconstruct/scan workspace")
+    sp.add_argument("-o", "--output", type=Path, required=True, help="folder for the hybrid asset")
+    sp.add_argument("--margin", type=float, help="keep Gaussians within this distance of the mesh (m)")
+    sp.add_argument("--appearance", default="splat", choices=["splat", "mesh", "splat_proxy"], help="default variant")
+    sp.set_defaults(func=cmd_splat)
+
+    sd = sub.add_parser("splat-data", help="photos + mesh silhouettes as alpha: an object-only dataset for "
+                                           "splat training (Brush honors transparency)")
+    sd.add_argument("usd", type=Path, help="physics asset built from the capture")
+    sd.add_argument("--workspace", type=Path, required=True, help="the reconstruct/scan workspace")
+    sd.add_argument("-o", "--output", type=Path, required=True, help="dataset folder (images/ + sparse/0/)")
+    sd.add_argument("--model", type=Path, help="COLMAP model (default: <workspace>/dense/0/sparse)")
+    sd.add_argument("--images", type=Path, help="photos (default: <workspace>/dense/0/images)")
+    sd.add_argument("--exclude", default="", help="comma-separated photos to hold out")
+    sd.set_defaults(func=cmd_splat_data)
 
     args = parser.parse_args(argv)
     return args.func(args)

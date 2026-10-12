@@ -1,0 +1,104 @@
+{
+  "cole_hardware_bowl_scirocco_yellowblue": {
+    "title": "Bowl",
+    "results": {
+      "weak": {
+        "photos": 48,
+        "registered": 48,
+        "fscore_2mm": 0.8991640171241128,
+        "accuracy_mm": 1.3222368515769078,
+        "completeness_mm": 1.0522769387398698,
+        "volume_error_pct": 37.671752485128174,
+        "observed_fraction": 0.9017131312437372,
+        "sealed_area": 0.08337151289526792,
+        "minutes": 13.0,
+        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\cole_hardware_bowl_scirocco_yellowblue\\guide\\weak\\asset\\cole_hardware_bowl_scirocco_yellowblue.usda"
+      },
+      "+guided": {
+        "photos": 56,
+        "registered": 56,
+        "fscore_2mm": 0.9035110209351654,
+        "accuracy_mm": 1.2622394768384406,
+        "completeness_mm": 1.0033670599974145,
+        "volume_error_pct": 39.11467220926799,
+        "observed_fraction": 0.9239742496179998,
+        "sealed_area": 0.06211522063991235,
+        "minutes": 13.7,
+        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\cole_hardware_bowl_scirocco_yellowblue\\guide\\guided\\asset\\cole_hardware_bowl_scirocco_yellowblue.usda"
+      },
+      "+random": {
+        "photos": 56,
+        "registered": 56,
+        "fscore_2mm": 0.8904332597388018,
+        "accuracy_mm": 1.524977836489678,
+        "completeness_mm": 1.1659952549725676,
+        "volume_error_pct": 45.08884768944057,
+        "observed_fraction": 0.9067238937511369,
+        "sealed_area": 0.07831728055628408,
+        "minutes": 16.2,
+        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\cole_hardware_bowl_scirocco_yellowblue\\guide\\random\\asset\\cole_hardware_bowl_scirocco_yellowblue.usda"
+      },
+      "+ring": {
+        "photos": 56,
+        "registered": 56,
+        "fscore_2mm": 0.8596924358999206,
+        "accuracy_mm": 1.6554465928143196,
+        "completeness_mm": 1.2577747360094647,
+        "volume_error_pct": 53.671284558799414,
+        "observed_fraction": 0.9168385593838378,
+        "sealed_area": 0.07011487497787908,
+        "minutes": 9.1,
+        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\cole_hardware_bowl_scirocco_yellowblue\\guide\\ring\\asset\\cole_hardware_bowl_scirocco_yellowblue.usda"
+      },
+      "full": {
+        "photos": 78,
+        "fscore_2mm": 0.4942199341353586,
+        "volume_error_pct": 81.96937485297377
+      }
+    },
+    "frame_fit_mm": 0.16785954414090065,
+    "suggestions": [
+      {
+        "azimuth": 119.99999999999999,
+        "elevation": 50.00000000000001,
+        "gain": 0.04178436669300755
+      },
+      {
+        "azimuth": 100.0,
+        "elevation": 50.0,
+        "gain": 0.037724789895289934
+      },
+      {
+        "azimuth": 40.0,
+        "elevation": 10.000000000000004,
+        "gain": 0.03653785212414133
+      },
+      {
+        "azimuth": -59.99999999999999,
+        "elevation": 50.00000000000001,
+        "gain": 0.031866978320590905
+      },
+      {
+        "azimuth": -80.00000000000003,
+        "elevation": 50.0,
+        "gain": 0.029961134640362236
+      },
+      {
+        "azimuth": 0.0,
+        "elevation": 39.99999999999999,
+        "gain": 0.024893656699660406
+      },
+      {
+        "azimuth": -160.00000000000003,
+        "elevation": 10.000000000000002,
+        "gain": 0.024669980926842687
+      },
+      {
+        "azimuth": -160.00000000000003,
+        "elevation": 50.0,
+        "gain": 0.02454022296290433
+      }
+    ],
+    "guide_covered_fraction": 0.2519789822627996
+  }
+}

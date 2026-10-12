@@ -26,3 +26,4 @@ Thumbs.db
 tools/
 data/synthetic/
 data/external/
+target/

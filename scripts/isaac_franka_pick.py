@@ -3,6 +3,10 @@
     python scripts/export_panda_plan.py                      # plan once (MuJoCo IK), main venv
     set OMNI_KIT_ACCEPT_EULA=YES
     D:\\isaac\\v6\\Scripts\\python.exe scripts\\isaac_franka_pick.py
+    # hybrid: same pick, the mug drawn by its Gaussian splat (scan2usd splat), RTX real-time PT
+    # (set PXR_PLUGINPATH_NAME=src\\scan2usd\\schema so the stored grasps' schema is recognized)
+    ... isaac_franka_pick.py --asset speckled_mug --plan output/panda_plan_speckled.json \\
+        --splat output/hybrid/speckled_mug/speckled_mug_splat.usdc --name isaac_franka_pick_splat
 
 NVIDIA's Franka (Isaac assets, standard fingers) gets the same joint waypoints the MuJoCo
 Menagerie Panda used in scripts/demo_panda.py, interpolated the same way, as joint position
@@ -14,22 +18,40 @@ Writes docs/figures/isaac_franka_pick.{webp,jpg,json}.
 
 from __future__ import annotations
 
+import argparse
 import json
 import math
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PLAN = os.path.join(ROOT, "output", "panda_plan.json")
 LIB = os.path.join(ROOT, "output", "library", "scan2usd_library.usda")
 OUT = os.path.join(ROOT, "docs", "figures")
-CASES = [("decomposed", "convex decomposition"), ("convex_hull", "one convex hull")]
 DT = 1.0 / 60.0
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--plan", default=os.path.join(ROOT, "output", "panda_plan.json"))
+parser.add_argument("--asset", default="ceramic_mug", help="library asset to pick")
+parser.add_argument("--splat", help="splat .usdc from `scan2usd splat` (<name>_splat.usdc): draw the mug with "
+                                    "its Gaussian splat; physics stays on the convex decomposition")
+parser.add_argument("--name", default="isaac_franka_pick", help="output figure name")
+args = parser.parse_args()
+PLAN = args.plan
+CASES = ([("decomposed", "Gaussian-splat look, convex-hull physics")] if args.splat
+         else [("decomposed", "convex decomposition"), ("convex_hull", "one convex hull")])
 
 from isaacsim import SimulationApp  # noqa: E402
 
 app = SimulationApp({"headless": True})
 
 import carb  # noqa: E402
+
+if args.splat:
+    import omni.kit.app  # noqa: E402
+
+    omni.kit.app.get_app().get_extension_manager().set_extension_enabled_immediate(
+        "omni.usd.schema.usd_particle_field", True)
+    carb.settings.get_settings().set("/rtx/rendermode", "RealTimePathTracing")  # splats render in RT path tracing
+
 import isaacsim.core.experimental.utils.app as app_utils  # noqa: E402
 import isaacsim.core.experimental.utils.stage as stage_utils  # noqa: E402
 import numpy as np  # noqa: E402
@@ -83,8 +105,13 @@ def scene(collision: str):
     selected = {n: vsets.GetVariantSet(n).GetVariantSelection() for n in vsets.GetNames()}
 
     mug = UsdGeom.Xform.Define(stage, "/World/mug")
-    mug.GetPrim().GetReferences().AddReference(LIB, "/Library/ceramic_mug")
+    mug.GetPrim().GetReferences().AddReference(LIB, f"/Library/{args.asset}")
     mug.GetPrim().GetVariantSet("collision").SetVariantSelection(collision)
+    if args.splat:
+        # The splat prim carries its own reconstruction->asset transform, so it can ride on any copy
+        # of the asset: payload it under the library mug and hide the textured mesh.
+        stage.DefinePrim("/World/mug/splat").GetPayloads().AddPayload(os.path.abspath(args.splat))
+        UsdGeom.Imageable(stage.GetPrimAtPath("/World/mug/render")).CreateVisibilityAttr("invisible")
     # The library lays assets out on a grid; put this one where the plan expects it.
     UsdGeom.XformCommonAPI(mug.GetPrim()).SetTranslate(Gf.Vec3d(MUG_POS[0], MUG_POS[1], 0.0))
     # More solver iterations for the grasped body: PhysX's default 4 lets thin-wall grasps creep.
@@ -216,8 +243,9 @@ for collision, title in CASES:
     videos.append(frames)
 
 os.makedirs(OUT, exist_ok=True)
-with open(os.path.join(OUT, "isaac_franka_pick.json"), "w") as f:
-    json.dump({"plan": "output/panda_plan.json (scripts/export_panda_plan.py)", "results": results}, f, indent=2)
+with open(os.path.join(OUT, f"{args.name}.json"), "w") as f:
+    json.dump({"plan": os.path.relpath(PLAN, ROOT).replace(os.sep, "/") + " (scripts/export_panda_plan.py)",
+               "asset": args.asset, "splat": bool(args.splat), "results": results}, f, indent=2)
 n = min(len(v) for v in videos)
 if n:
     sheets = []
@@ -231,7 +259,7 @@ if n:
         for k, t in enumerate(tiles):
             s.paste(t, (k * t.width, 0))
         sheets.append(s)
-    sheets[0].save(os.path.join(OUT, "isaac_franka_pick.webp"), save_all=True, append_images=sheets[1:],
+    sheets[0].save(os.path.join(OUT, f"{args.name}.webp"), save_all=True, append_images=sheets[1:],
                    duration=66, loop=0, quality=60, method=4)
-    sheets[int(len(sheets) * 0.55)].save(os.path.join(OUT, "isaac_franka_pick.jpg"), quality=86)
+    sheets[int(len(sheets) * 0.55)].save(os.path.join(OUT, f"{args.name}.jpg"), quality=86)
 app.close()

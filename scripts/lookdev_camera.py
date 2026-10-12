@@ -28,11 +28,15 @@ ROOT = Path(__file__).resolve().parents[1]
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--workspace", type=Path, default=ROOT / "data" / "work" / "buddha")
-    p.add_argument("--photo", default="00021._c.png")
+    p.add_argument("--photo", default="00021._c.png", help="photo name, or a comma-separated list")
     p.add_argument("--asset", type=Path, default=ROOT / "output" / "pbr" / "buddha_head" / "buddha_head.usda")
-    p.add_argument("--out", type=Path, default=ROOT / "output" / "lookdev" / "camera.json")
+    p.add_argument("--out", type=Path, default=ROOT / "output" / "lookdev" / "camera.json",
+                   help="output json; with several photos, camera_<photo>.json next to it")
+    p.add_argument("--model", type=Path, help="COLMAP model (default: <workspace>/dense/0/sparse, undistorted)")
+    p.add_argument("--images", type=Path, help="photo folder (default: <workspace>/dense/0/images)")
     args = p.parse_args()
     dense = args.workspace / "dense" / "0"
+    photos = args.photo.split(",")
 
     ply = read_ply_points(dense / "fused.ply")
     xyz = np.c_[ply["x"], ply["y"], ply["z"]].astype(np.float64)
@@ -47,9 +51,18 @@ def main() -> None:
     t = asset.render_mesh.bounds[0] - s * recon.bounds[0]
     fit = np.abs((s * recon.bounds[1] + t) - asset.render_mesh.bounds[1]).max()
 
-    cameras, images = read_colmap_model(dense / "sparse")
-    cam_id, r_w2c, t_w2c = images[args.photo]
+    cameras, images = read_colmap_model(args.model or dense / "sparse")
+    image_dir = args.images or dense / "images"
+    for photo in photos:
+        out = args.out if len(photos) == 1 else args.out.with_name(f"camera_{Path(photo).stem}.json")
+        write_camera(cameras, images, photo, image_dir, args.asset, asset, s, t, rot, origin, fit, out)
+
+
+def write_camera(cameras, images, photo, image_dir, asset_path, asset, s, t, rot, origin, fit, out) -> None:
+    cam_id, r_w2c, t_w2c = images[photo]
     model, w, h, params = cameras[cam_id]
+    if model == "SIMPLE_RADIAL" and abs(params[3]) < 1e-3:
+        model, params = "SIMPLE_PINHOLE", params[:3]  # distortion-free (synthetic) capture
     if model not in ("PINHOLE", "SIMPLE_PINHOLE"):
         raise SystemExit(f"expected an undistorted pinhole model, got {model}")
     fx, fy, cx, cy = (params[0], params[0], params[1], params[2]) if model == "SIMPLE_PINHOLE" else params[:4]
@@ -64,20 +77,20 @@ def main() -> None:
 
     aperture = 36.0  # mm; any value works, focal length scales with it
     cam = {
-        "photo": str((dense / "images" / args.photo).resolve()), "width": int(w), "height": int(h),
+        "photo": str((image_dir / photo).resolve()), "width": int(w), "height": int(h),
         "focal_length_mm": float(fx * aperture / w), "horizontal_aperture_mm": aperture,
         "vertical_aperture_mm": float(aperture * h / w * fx / fy),
         "horizontal_aperture_offset_mm": float((cx - w / 2) * aperture / w),
         "vertical_aperture_offset_mm": float(-(cy - h / 2) * aperture / w),
         # USD matrices are row-major with row vectors: the transpose of c2w.
         "camera_to_world_usd": c2w.T.tolist(), "camera_center_m": c2w[:3, 3].tolist(),
-        "asset": str(args.asset.resolve()), "scale": s, "bounds_fit_error_m": float(fit),
+        "asset": str(asset_path.resolve()), "scale": s, "bounds_fit_error_m": float(fit),
     }
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(cam, indent=2))
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(cam, indent=2))
     dist = np.linalg.norm(c2w[:3, 3] - asset.render_mesh.bounds.mean(0))
-    print(f"camera {np.round(c2w[:3, 3], 3)} ({dist:.2f} m from the object), f = {cam['focal_length_mm']:.1f} mm "
-          f"on {aperture:.0f} mm, {w}x{h}; bounds fit {fit * 1000:.2f} mm")
+    print(f"{photo}: camera {np.round(c2w[:3, 3], 3)} ({dist:.2f} m from the object), "
+          f"f = {cam['focal_length_mm']:.1f} mm on {aperture:.0f} mm, {w}x{h}; bounds fit {fit * 1000:.2f} mm")
 
 
 if __name__ == "__main__":

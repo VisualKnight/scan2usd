@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 670" font-family="'Segoe Print', 'Comic Sans MS', cursive">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 800" font-family="'Segoe Print', 'Comic Sans MS', cursive">
   <defs>
     <!-- Slight wobble so lines look marker-drawn -->
     <filter id="marker" x="-5%" y="-5%" width="110%" height="110%">
@@ -18,7 +18,7 @@
     <g id="cmp"><rect x="0" y="0" width="14" height="16" fill="none" stroke="#334155" stroke-width="1.2"/><rect x="-4" y="3" width="8" height="3" fill="#fff" stroke="#334155" stroke-width="1.1"/><rect x="-4" y="9" width="8" height="3" fill="#fff" stroke="#334155" stroke-width="1.1"/></g>
   </defs>
 
-  <rect width="1120" height="670" fill="#fbfbf7"/>
+  <rect width="1120" height="800" fill="#fbfbf7"/>
   <text x="24" y="40" font-size="22" fill="#1e293b">Scan2USD · how the code fits together</text>
   <text x="24" y="62" font-size="12.5" fill="#64748b">UML-ish component view · blue = calls · green = data in · red = data out</text>
 
@@ -184,7 +184,51 @@
       <rect x="250" y="515" width="200" height="62" fill="#fde68a" stroke="#d97706" stroke-width="1"/>
       <text x="262" y="538" font-size="11.5">each stage = one module,</text>
       <text x="262" y="555" font-size="11.5">plain functions in, data out</text>
-      <text x="262" y="571" font-size="11.5" fill="#92400e">→ easy to test (79 tests)</text>
+      <text x="262" y="571" font-size="11.5" fill="#92400e">→ easy to test (95 tests)</text>
     </g>
+  </g>
+<!-- M6: assets that know what they don't know -->
+  <g filter="url(#marker)" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="236" y="676" width="870" height="112" rx="10" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="8 6"/>
+    <rect x="252" y="714" width="156" height="60" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
+    <rect x="424" y="714" width="156" height="60" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
+    <rect x="596" y="714" width="156" height="60" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
+    <rect x="768" y="714" width="156" height="60" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
+    <rect x="952" y="714" width="140" height="60" rx="6" fill="#e0f2fe" stroke="#1e293b" stroke-width="2"/>
+    <g stroke="#b91c1c" stroke-width="2" fill="none">
+      <path d="M943,504 V672" marker-end="url(#arrowr)"/>
+    </g>
+    <g stroke="#1d4ed8" stroke-width="2" fill="none">
+      <path d="M408,744 H420" marker-end="url(#arrow)"/>
+      <path d="M580,744 H592" marker-end="url(#arrow)"/>
+      <path d="M924,734 H948" marker-end="url(#arrow)"/>
+      <path d="M952,758 H928" marker-end="url(#arrow)"/>
+    </g>
+    <g stroke="#15803d" stroke-width="2" fill="none" stroke-dasharray="7 5">
+      <path d="M250,744 H100 V656" marker-end="url(#arrowg)"/>
+    </g>
+  </g>
+  <g fill="#1e293b" font-size="13">
+    <text x="252" y="700" font-size="13" fill="#475569">M6 · assets that know what they don't know</text>
+    <text x="104" y="738" font-size="10.5" fill="#15803d">shot list: take</text>
+    <text x="104" y="752" font-size="10.5" fill="#15803d">these 8 photos</text>
+    <use href="#cmp" x="386" y="720"/>
+    <text x="262" y="736" font-size="14">guide.py</text>
+    <text x="262" y="754" font-size="10.5" fill="#475569">what to shoot next</text>
+    <use href="#cmp" x="558" y="720"/>
+    <text x="434" y="736" font-size="14">uncertainty.py</text>
+    <text x="434" y="754" font-size="10.5" fill="#475569">seen · guessed · sealed</text>
+    <text x="434" y="767" font-size="10.5" fill="#475569">mass / friction intervals</text>
+    <use href="#cmp" x="730" y="720"/>
+    <text x="606" y="736" font-size="14">schemas.py</text>
+    <text x="606" y="754" font-size="10.5" fill="#475569">grasps + uncertainty</text>
+    <text x="606" y="767" font-size="10.5" fill="#7c3aed">codeless USD schema</text>
+    <use href="#cmp" x="902" y="720"/>
+    <text x="778" y="736" font-size="14">splat.py</text>
+    <text x="778" y="754" font-size="10.5" fill="#475569">mesh masks · hybrid USD</text>
+    <text x="778" y="767" font-size="10.5" fill="#7c3aed">UsdVol Gaussian splat</text>
+    <text x="962" y="736" font-size="14">Brush</text>
+    <text x="962" y="754" font-size="10.5" fill="#475569">trains the splat</text>
+    <text x="962" y="767" font-size="10.5" fill="#7c3aed">masked photos → .ply</text>
   </g>
 </svg>

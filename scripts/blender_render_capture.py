@@ -53,6 +53,8 @@ def parse_args():
     p.add_argument("--samples", type=int, default=64)
     p.add_argument("--seed", type=int, default=7)
     p.add_argument("--keep-materials", action="store_true", help="use the mesh's own (scanned) materials")
+    p.add_argument("--poses", help="JSON list of {name, location, target} (world, m): render only these views "
+                                   "(the scene is identical to the full capture's), write poses_out.json")
     a = p.parse_args(argv)
     a.mesh, a.out = os.path.abspath(a.mesh), os.path.abspath(a.out)
     return a
@@ -304,6 +306,23 @@ def main():
     sc.collection.objects.link(cam_obj)
     sc.camera = cam_obj
 
+    fx = cam.lens / cam.sensor_width * args.width
+    if args.poses:  # explicit extra views (e.g. capture guidance): no chart photo, no ring views
+        with open(args.poses) as f:
+            poses = json.load(f)
+        out_meta = []
+        for pz in poses:
+            cam_obj.location = Vector(pz["location"])
+            look_at(cam_obj, Vector(pz["target"]), 0.0)
+            bpy.context.view_layer.update()
+            sc.render.filepath = os.path.join(args.out, "images", pz["name"])
+            bpy.ops.render.render(write_still=True)
+            out_meta.append({"name": pz["name"], "camera_to_world": opencv_pose(cam_obj)})
+            print(f"rendered {pz['name']}", flush=True)
+        with open(os.path.join(args.out, "poses_out.json"), "w") as f:
+            json.dump(out_meta, f, indent=1)
+        return
+
     dims = obj.dimensions
     target = Vector((0, 0, dims.z * 0.45))
     views = []
@@ -315,7 +334,6 @@ def main():
     for k in range(args.top):
         views.append((360.0 * k / max(args.top, 1), 80.0))
 
-    fx = cam.lens / cam.sensor_width * args.width
     meta = {
         "intrinsics": {"model": "PINHOLE", "width": args.width, "height": args.height,
                        "fx": fx, "fy": fx, "cx": args.width / 2, "cy": args.height / 2},
