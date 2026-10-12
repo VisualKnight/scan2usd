@@ -2,7 +2,7 @@
 
     python scripts/export_panda_plan.py                      # plan once (MuJoCo IK), main venv
     set OMNI_KIT_ACCEPT_EULA=YES
-    D:\\isaac\\v6\\Scripts\\python.exe scripts\\isaac_franka_pick.py
+    <isaac-sim>\\python.exe scripts\\isaac_franka_pick.py
     # hybrid: same pick, the mug drawn by its Gaussian splat (scan2usd splat), RTX real-time PT
     # (set PXR_PLUGINPATH_NAME=src\\scan2usd\\schema so the stored grasps' schema is recognized)
     ... isaac_franka_pick.py --asset speckled_mug --plan output/panda_plan_speckled.json \\

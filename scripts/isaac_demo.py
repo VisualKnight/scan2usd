@@ -3,7 +3,7 @@
 Run with Isaac Sim's Python (6.0+), e.g.:
 
     set OMNI_KIT_ACCEPT_EULA=YES
-    D:\\isaac\\v6\\Scripts\\python.exe scripts\\isaac_demo.py --frames 12
+    <isaac-sim>\\python.exe scripts\\isaac_demo.py --frames 12
 
 1. References every built asset (output/gso_assets/*, the demo mug, the articulated box)
    into one stage, unmodified, and drops them onto a table with PhysX.
@@ -177,7 +177,7 @@ for i in range(args.frames):
 rep.orchestrator.wait_until_complete()
 
 summary = {"physics": physics, "frames": args.frames, "seconds": round(time.time() - t0, 1),
-           "isaac_sim": "6.0", "dataset": os.path.join(args.out, "dataset")}
+           "isaac_sim": "6.0", "dataset": os.path.relpath(os.path.join(args.out, "dataset"), ROOT).replace(os.sep, "/")}
 with open(os.path.join(args.out, "isaac_demo.json"), "w") as f:
     json.dump(summary, f, indent=2)
 print("[scan2usd] done", json.dumps({k: v for k, v in summary.items() if k != "physics"}), flush=True)

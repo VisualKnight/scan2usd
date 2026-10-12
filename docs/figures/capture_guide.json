@@ -12,7 +12,7 @@
         "observed_fraction": 0.9017131312437372,
         "sealed_area": 0.08337151289526792,
         "minutes": 13.0,
-        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\cole_hardware_bowl_scirocco_yellowblue\\guide\\weak\\asset\\cole_hardware_bowl_scirocco_yellowblue.usda"
+        "usd": "data/synthetic/cole_hardware_bowl_scirocco_yellowblue/guide/weak/asset/cole_hardware_bowl_scirocco_yellowblue.usda"
       },
       "+guided": {
         "photos": 56,
@@ -24,7 +24,7 @@
         "observed_fraction": 0.9239742496179998,
         "sealed_area": 0.06211522063991235,
         "minutes": 13.7,
-        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\cole_hardware_bowl_scirocco_yellowblue\\guide\\guided\\asset\\cole_hardware_bowl_scirocco_yellowblue.usda"
+        "usd": "data/synthetic/cole_hardware_bowl_scirocco_yellowblue/guide/guided/asset/cole_hardware_bowl_scirocco_yellowblue.usda"
       },
       "+random": {
         "photos": 56,
@@ -36,7 +36,7 @@
         "observed_fraction": 0.9067238937511369,
         "sealed_area": 0.07831728055628408,
         "minutes": 16.2,
-        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\cole_hardware_bowl_scirocco_yellowblue\\guide\\random\\asset\\cole_hardware_bowl_scirocco_yellowblue.usda"
+        "usd": "data/synthetic/cole_hardware_bowl_scirocco_yellowblue/guide/random/asset/cole_hardware_bowl_scirocco_yellowblue.usda"
       },
       "+ring": {
         "photos": 56,
@@ -48,7 +48,7 @@
         "observed_fraction": 0.9168385593838378,
         "sealed_area": 0.07011487497787908,
         "minutes": 9.1,
-        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\cole_hardware_bowl_scirocco_yellowblue\\guide\\ring\\asset\\cole_hardware_bowl_scirocco_yellowblue.usda"
+        "usd": "data/synthetic/cole_hardware_bowl_scirocco_yellowblue/guide/ring/asset/cole_hardware_bowl_scirocco_yellowblue.usda"
       },
       "full": {
         "photos": 78,
@@ -114,7 +114,7 @@
         "observed_fraction": 0.8736878471200608,
         "sealed_area": 0.10726556372761407,
         "minutes": 9.7,
-        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\ace_coffee_mug_kristen_16_oz_cup\\guide\\weak\\asset\\ace_coffee_mug_kristen_16_oz_cup.usda"
+        "usd": "data/synthetic/ace_coffee_mug_kristen_16_oz_cup/guide/weak/asset/ace_coffee_mug_kristen_16_oz_cup.usda"
       },
       "+guided": {
         "photos": 56,
@@ -126,7 +126,7 @@
         "observed_fraction": 0.8296801748198084,
         "sealed_area": 0.14427822497402484,
         "minutes": 3.7,
-        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\ace_coffee_mug_kristen_16_oz_cup\\guide\\guided\\asset\\ace_coffee_mug_kristen_16_oz_cup.usda"
+        "usd": "data/synthetic/ace_coffee_mug_kristen_16_oz_cup/guide/guided/asset/ace_coffee_mug_kristen_16_oz_cup.usda"
       },
       "+random": {
         "photos": 56,
@@ -138,7 +138,7 @@
         "observed_fraction": 0.8765500004339873,
         "sealed_area": 0.10328559253752578,
         "minutes": 10.1,
-        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\ace_coffee_mug_kristen_16_oz_cup\\guide\\random\\asset\\ace_coffee_mug_kristen_16_oz_cup.usda"
+        "usd": "data/synthetic/ace_coffee_mug_kristen_16_oz_cup/guide/random/asset/ace_coffee_mug_kristen_16_oz_cup.usda"
       },
       "+ring": {
         "photos": 56,
@@ -150,7 +150,7 @@
         "observed_fraction": 0.8719195554387098,
         "sealed_area": 0.10619955372184736,
         "minutes": 10.2,
-        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\ace_coffee_mug_kristen_16_oz_cup\\guide\\ring\\asset\\ace_coffee_mug_kristen_16_oz_cup.usda"
+        "usd": "data/synthetic/ace_coffee_mug_kristen_16_oz_cup/guide/ring/asset/ace_coffee_mug_kristen_16_oz_cup.usda"
       },
       "full": {
         "photos": 78,
@@ -216,7 +216,7 @@
         "observed_fraction": 0.8963461402716154,
         "sealed_area": 0.07469484806908118,
         "minutes": 6.3,
-        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\womens_bluefish_2eye_boat_shoe_in_tan\\guide\\weak\\asset\\womens_bluefish_2eye_boat_shoe_in_tan.usda"
+        "usd": "data/synthetic/womens_bluefish_2eye_boat_shoe_in_tan/guide/weak/asset/womens_bluefish_2eye_boat_shoe_in_tan.usda"
       },
       "+guided": {
         "photos": 56,
@@ -228,7 +228,7 @@
         "observed_fraction": 0.8827814001801731,
         "sealed_area": 0.08106724405846519,
         "minutes": 7.6,
-        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\womens_bluefish_2eye_boat_shoe_in_tan\\guide\\guided\\asset\\womens_bluefish_2eye_boat_shoe_in_tan.usda"
+        "usd": "data/synthetic/womens_bluefish_2eye_boat_shoe_in_tan/guide/guided/asset/womens_bluefish_2eye_boat_shoe_in_tan.usda"
       },
       "+random": {
         "photos": 56,
@@ -240,7 +240,7 @@
         "observed_fraction": 0.8940870786761691,
         "sealed_area": 0.07699463064587647,
         "minutes": 7.0,
-        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\womens_bluefish_2eye_boat_shoe_in_tan\\guide\\random\\asset\\womens_bluefish_2eye_boat_shoe_in_tan.usda"
+        "usd": "data/synthetic/womens_bluefish_2eye_boat_shoe_in_tan/guide/random/asset/womens_bluefish_2eye_boat_shoe_in_tan.usda"
       },
       "+ring": {
         "photos": 56,
@@ -252,7 +252,7 @@
         "observed_fraction": 0.8916366533176543,
         "sealed_area": 0.07652936556641346,
         "minutes": 7.5,
-        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\womens_bluefish_2eye_boat_shoe_in_tan\\guide\\ring\\asset\\womens_bluefish_2eye_boat_shoe_in_tan.usda"
+        "usd": "data/synthetic/womens_bluefish_2eye_boat_shoe_in_tan/guide/ring/asset/womens_bluefish_2eye_boat_shoe_in_tan.usda"
       },
       "full": {
         "photos": 78,

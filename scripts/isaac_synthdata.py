@@ -3,7 +3,7 @@
 Run with Isaac Sim's Python:
 
     set OMNI_KIT_ACCEPT_EULA=YES
-    D:\\isaac\\v6\\Scripts\\python.exe scripts\\isaac_synthdata.py --frames 600 --out output\\synth
+    <isaac-sim>\\python.exe scripts\\isaac_synthdata.py --frames 600 --out output\\synth
 
 Each frame re-samples, in plain Python on the USD stage: which assets are present and where
 (non-overlapping footprints, random yaw), the table color and roughness, the lights (color,

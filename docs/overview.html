@@ -48,34 +48,23 @@
 </head>
 <body><div class="wrap">
 
-<span class="pill done">M1 core</span> <span class="pill done">M2 photos → USD</span> <span class="pill done">M3 hinges</span>
-<span class="pill done">M4 Isaac Sim + MuJoCo</span> <span class="pill done">M5 showcase</span> <span class="pill done">M6 assets that know what they don't know</span> <span class="pill next">next: own phone captures</span>
 <h1>Scan2USD</h1>
 <p class="muted">Phone photos in, physics-ready <b>OpenUSD</b> assets out, verified in NVIDIA Isaac Sim and MuJoCo. · <a href="gallery/index.html"><b>Interactive 3D gallery</b></a> · <a href="library/index.html"><b>USD asset library</b></a> · <a href="https://github.com/VisualKnight/scan2usd"><b>Source on GitHub</b></a></p>
 <img class="board" src="figures/hero.jpg" alt="Real photos to a simulation-ready OpenUSD asset" style="margin-bottom:12px">
-<details style="margin-bottom:12px"><summary>▶ Watch the 93-second demo <span>· photos → USD → MuJoCo, Isaac Sim, perception</span></summary>
+<details style="margin-bottom:12px"><summary>▶ Watch the 87-second demo <span>· photos → USD → MuJoCo, Isaac Sim, perception, splats</span></summary>
   <video controls preload="none" poster="figures/demo_poster.jpg" style="width:100%;border-radius:8px;margin-top:8px"><source src="scan2usd_demo.mp4" type="video/mp4"></video></details>
-<div class="grid g4">
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(330px, 1fr))">
   <div class="card kpi"><b>0.78 mm</b><span>mean surface error, 78 photos → USD (speckled mug vs. ground truth)</span></div>
   <div class="card kpi"><b>±1.4%</b><span>size from the ColorChecker alone, no ruler (worst of 6 objects)</span></div>
-  <div class="card kpi"><b>9 / 9</b><span>assets load unmodified in Isaac Sim 6 and settle in PhysX</span></div>
-  <div class="card kpi"><b><span class="good">pick</span> vs <span class="bad">fail</span></b><span>Franka Panda picks the scanned mug: convex decomposition vs. one hull</span></div>
+  <div class="card kpi"><b><span class="good">pick</span> vs <span class="bad">fail</span></b><span>Franka picks the scanned mug with convex decomposition, fails with one hull, in MuJoCo and Isaac Sim</span></div>
   <div class="card kpi"><b>88% → 100%</b><span>real photos where a detector trained only on our synthetic Isaac Sim data finds the object</span></div>
+  <div class="card kpi"><b>5 / 6</b><span>true masses inside the uncertainty interval stored in the USD file (a single value: 2 / 6 within 10%)</span></div>
+  <div class="card kpi"><b>18 / 18</b><span>unseen photos where the asset's Gaussian splat looks closer to reality than its textured mesh</span></div>
 </div>
 
 <h2>Architecture</h2>
 <img class="board" src="figures/architecture.svg" alt="Whiteboard architecture diagram">
 <p class="cap">Photos become a mesh (COLMAP), the pipeline turns it into a simulation asset, and the validator re-opens the written file. Downstream: MuJoCo demos, Isaac Sim, and scoring against ground truth. Bottom row: what the asset knows about itself, and the loop back to the camera.</p>
-
-<h2>Where we are</h2>
-<div class="grid g6">
-  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M1 · Pipeline core</h3><p class="small muted">Clean, color-calibrate, collide, weigh, export, validate.</p></div>
-  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M2 · Photos → USD</h3><p class="small muted">COLMAP reconstruction, table removal, scoring on synthetic captures. Real photos: AliceVision Buddha.</p></div>
-  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M3 · Articulation</h3><p class="small muted">Split a scan into parts, USD revolute joint with limits.</p></div>
-  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M4 · Simulators</h3><p class="small muted">Isaac Sim 6 PhysX, RTX path tracing, synthetic data → sim-to-real detector; Franka in two engines, Shadow Hand, bin, hinge.</p></div>
-  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M5 · Showcase</h3><p class="small muted">Public repo, live site, 93 s video, USD asset library, path-traced renders.</p></div>
-  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M6 · Self-aware assets</h3><p class="small muted">Grasps + uncertainty in USD schemas, capture guidance, splat + mesh hybrid. Next: own phone captures.</p></div>
-</div>
 
 <h2>Photos → USD, scored against ground truth</h2>
 <div class="grid g2">
@@ -101,12 +90,12 @@
 <tr><td>Speckled stoneware mug (procedural)</td><td>0.78 / 2.87</td><td>0.64</td><td>0.934</td><td>0.921</td><td>+11.8%</td><td>7.6 → 1.31</td></tr>
 <tr><td>Printed coffee mug</td><td>2.00 / 10.20</td><td>2.38</td><td>0.731</td><td>0.748</td><td>+191.5%</td><td>8.0 → 1.30</td></tr>
 <tr><td>Ceramic bowl</td><td>3.03 / 9.61</td><td>2.34</td><td>0.494</td><td>0.524</td><td>+82.0%</td><td>7.8 → 1.32</td></tr>
-<tr><td>Android figure toy*</td><td>0.78 / 3.08</td><td>0.96</td><td>0.872</td><td>0.894</td><td>+1.4%</td><td>7.7 → 1.38</td></tr>
+<tr><td>Android figure toy</td><td>0.78 / 3.08</td><td>0.96</td><td>0.872</td><td>0.894</td><td>+1.4%</td><td>7.7 → 1.38</td></tr>
 <tr><td>Lion figure</td><td>0.60 / 2.41</td><td>0.62</td><td>0.941</td><td>0.935</td><td>+8.2%</td><td>8.0 → 1.29</td></tr>
 <tr><td>Boat shoe</td><td>1.73 / 7.20</td><td>2.53</td><td>0.747</td><td>0.739</td><td>+32.2%</td><td>8.9 → 1.31</td></tr>
 </table><ul class="small" style="margin-top:10px"><li><b>Textured objects</b> (figures, speckled glaze) reconstruct to 0.6–0.8 mm mean error, F-score 0.87–0.94, volume within 1–12%.</li><li><b>Printed mug:</b> its plain white interior is never matched, so the cup is sealed partway down (+191% volume).</li><li><b>Bowl:</b> its underside, between the foot and the rim's overhang, is never seen from above, and Poisson fills it into a solid pedestal. The walls also come out ~2–3 mm thick.</li><li><b>Shoe:</b> the opening and inside aren't observed and get sealed (+32%).</li><li><b>Visibility carving</b> (removing space cameras saw through) only reaches +175% / +74% / +29%: the sealed parts were never observed (cross-sections below). Fix it in the capture: top-down shots into cavities, or flip the object for a second pass. A measured <code>--mass</code> keeps physics right meanwhile.</li></ul>
   <img src="figures/carving_study.png" alt="Carving cross-sections" style="margin-top:8px">
-  <p class="cap">Each object: 78 rendered photos → COLMAP → Scan2USD with one ruler measurement (height). Accuracy = reconstruction to true surface; F-score = share of both surfaces within 2 mm. Ground truth: Google Scanned Objects (CC-BY 4.0) and a procedural mug. *The GSO model id says "Triceratops" but contains an Android figure.</p>
+  <p class="cap">Each object: 78 rendered photos → COLMAP → Scan2USD with one ruler measurement (height). Accuracy = reconstruction to true surface; F-score = share of both surfaces within 2 mm. Ground truth: Google Scanned Objects (CC-BY 4.0) and a procedural mug.</p>
 </div>
 <div class="grid g2" style="margin-top:12px">
   <div class="card"><h3>How many photos are enough? (lion figure)</h3>
@@ -146,27 +135,21 @@
   <p class="cap">A real robot model rim-grasps the scanned mug (one finger inside), lifts it 14 cm and places it 25 cm away on the green target (11 mm error). Right: with a single convex hull the inner finger hits a phantom "lid" and the pick fails.</p></div>
 <div class="card" style="margin-bottom:12px"><h3>Same pick in Isaac Sim 6: one plan, two physics engines</h3><img src="figures/isaac_franka_pick.webp" alt="Franka pick in Isaac Sim">
   <p class="cap">The MuJoCo joint plan replayed on NVIDIA's Franka with PhysX contacts, mug loaded from the USD library. Decomposition: lifted 14.1 cm, placed with 5.5 mm error (plan from the asset's best stored grasp). The <code>convex_hull</code> variant fails the same way in both engines. Hand poses agree to 0.5 mm.</p></div>
-<div class="grid g2">
-  <div class="card"><h3>Rim grasp, minimal gripper</h3><img src="figures/grasp_demo.webp" alt="Grasp demo">
-    <p class="cap">Same comparison with a simple two-finger gripper: 25 convex pieces lift the mug 11.6 cm, one convex hull 0 cm.</p></div>
-  <div class="card"><h3>Isaac Sim 6 · Replicator dataset</h3><img src="figures/isaac_dataset.jpg" alt="Isaac Sim synthetic data">
-    <p class="cap">All 9 assets (incl. the real-photo Buddha) referenced unmodified, settled by PhysX, then rendered with random cameras and lights: RGB, tight 2D boxes, semantic + instance segmentation, depth (12 frames in 9 s), exported to <b>COCO</b> for detector training (86 instance masks).</p></div>
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(330px, 1fr))">
+  <div class="card"><h3>Articulated asset, two engines</h3><img src="figures/isaac_articulation.webp" alt="Isaac Sim hinge drive">
+    <p class="cap">One scan + a seam plane + a hinge line → base and lid with a USD revolute joint (0–105°). Unmodified in Isaac Sim PhysX: 90° commanded → 90.1°; 150° → stops at the 105° limit. <a href="figures/articulation_demo.webp">MuJoCo version</a>.</p></div>
   <div class="card"><h3>Bin of scanned objects</h3><img src="figures/clutter_demo.webp" alt="Clutter demo">
     <p class="cap">14 objects, 392 convex colliders: all end in the tote and settle; resting penetration 0.08 mm.</p></div>
-  <div class="card"><h3>Articulated asset</h3><img src="figures/articulation_demo.webp" alt="Hinged box demo">
-    <p class="cap">One closed scan + a seam plane + a hinge line → base and lid with a USD revolute joint (0–105°). The lid opens, a scanned toy drops in, the lid closes.</p></div>
-  <div class="card"><h3>Same hinge in Isaac Sim 6 PhysX</h3><img src="figures/isaac_articulation.webp" alt="Isaac Sim hinge drive">
-    <p class="cap">The same USD, unmodified, with a drive on the joint: 90° commanded → 90.1°; 150° commanded → stops at the 105° limit; closed → 0.0°. Base drift 0.02 mm.</p></div>
   <div class="card"><h3>USD asset library in Isaac Sim</h3><img src="figures/isaac_library.jpg" alt="Asset library in Isaac Sim">
-    <p class="cap">All 9 assets composed into one stage as payloads, with <code>collision</code> and <code>friction</code> variant sets (<a href="library/index.html">catalog</a>). Every collision variant (242 decomposed pieces, or one hull / box per body) settles in PhysX; with 10 resting objects, step time is about 2 ms for all three.</p></div>
+    <p class="cap">9 assets as payloads with <code>collision</code> and <code>friction</code> variant sets (<a href="library/index.html">catalog</a>). Every variant settles in PhysX, about 2 ms per step.</p></div>
 </div>
 
 <h2>Dexterous grasping: Shadow Hand</h2>
 <div class="grid" style="grid-template-columns: 1.15fr 1fr">
   <div class="card"><img src="figures/hand_grasp.webp" alt="Shadow Hand grasps scanned objects">
-    <p class="cap">The 24-joint Shadow Hand (MuJoCo Menagerie) lifts scanned objects and survives a ±2 cm / 3 Hz shake.</p></div>
+    <p class="cap">The 24-joint Shadow Hand (MuJoCo Menagerie) lifts scanned objects and survives a ±2 cm / 3 Hz shake. The camera picks the side where the thumb is visible.</p></div>
   <div class="card"><img src="figures/hand_grasp.png" alt="Grasp success per asset">
-    <p class="cap">90 sampled power grasps per asset and collision variant (1,440 trials, ~1 min on 16 cores). Convex decomposition holds 23.5% of grasps on the six hand-sized objects, one hull 18.9%. The 4.6 kg Buddha and the 25 cm shoe are beyond the hand. Grasps from above work far better (34%) than from the side (4%).</p></div>
+    <p class="cap">A benchmark for comparing <b>assets</b>, not a grasp planner: 90 random, unoptimized power grasps per asset and collision variant (1,440 trials, ~1 min on 16 cores). Convex decomposition holds more of them than one hull on the six hand-sized objects (23.5% vs 18.9%), and grasps from above beat grasps from the side (34% vs 4%). The best of these grasps are stored in the assets (below).</p></div>
 </div>
 
 <h2>How accurate must a scan be?</h2>
@@ -180,22 +163,22 @@
 <div class="grid g4" style="margin-bottom:12px">
   <div class="card kpi"><b>5 / 6</b><span>true masses inside the stored interval; the single nominal value is within 10% for only 2 / 6</span></div>
   <div class="card kpi"><b>756 trials</b><span>of MuJoCo grasping, stored as grasps in every library asset; Isaac Sim's Franka reads the best one and picks</span></div>
-  <div class="card kpi"><b>1 / 3</b><span>objects where guided extra photos beat random and higher-ring ones. Lesson: <i>visible</i> isn't <i>reconstructable</i></span></div>
+  <div class="card kpi"><b>0.49 → 0.95</b><span>bowl F-score when the asset's stored "carved" hypothesis empties the cavity no camera saw into</span></div>
   <div class="card kpi"><b>18 / 18</b><span>held-out photos where the Gaussian splat beats the textured mesh (median PSNR +7 dB Buddha, +12 dB mug)</span></div>
 </div>
 <div class="grid g2">
   <div class="card"><h3>Uncertainty in the asset (<code>Scan2UsdUncertaintyAPI</code>)</h3><img src="figures/uncertainty.png" alt="Mass intervals vs truth">
     <p class="cap">Every vertex is labeled <i>observed</i>, <i>inferred</i> or <i>sealed</i> (no camera could see it). Mass, scale and friction become intervals, and a <b>carved</b> geometry hypothesis empties unseen cavities: bowl F-score 0.49 → 0.95. On solid objects, carving is worse, so "filled" stays the default. The bowl's interval misses (206–400 g vs 191 g).</p></div>
   <div class="card"><h3>Grasps in the asset (<code>Scan2UsdGraspAPI</code>)</h3><img src="figures/isaac_franka_pick.webp" alt="Franka pick in Isaac Sim">
-    <p class="cap">A codeless USD schema stores grasp poses with their tested success rate per gripper and collision variant. <code>scan2usd grasps</code> lists them. Isaac Sim reads the best stored grasp: the pick succeeds (5.5 mm placement error) with convex decomposition and fails with one hull, as in MuJoCo. Randomizing physics within the asset's own intervals predicts real success better than the nominal asset (Brier 0.12 → 0.05). Hand-tuned ranges did as well.</p></div>
-  <div class="card"><h3>Capture guidance: which 8 photos next?</h3><img src="figures/capture_guide.png" alt="Capture guidance results">
-    <p class="cap"><code>scan2usd guide</code> finds the surface that matters for physics but no photo saw twice, and lists the camera positions that see most of it (shot list + top-down map). Test: 48 photos, then 8 more, rendered exactly where asked (≤0.2 mm). <b>Bowl</b>: guided wins (F 0.904 vs 0.890 random, 0.860 ring). <b>Shoe</b>: the higher ring wins. <b>Printed mug</b>: guided is worst (F 0.30). It aimed into the plain white interior, which stereo can't match. Next: score views by texture, not visibility alone. The test also caught a meshing bug (now fixed): a Poisson sheet ranked by area beat the mug ranked by volume.</p></div>
+    <p class="cap">A codeless USD schema stores grasp poses with their tested success rate per gripper and collision variant. <code>scan2usd grasps</code> lists them. Isaac Sim reads the best stored grasp: the pick succeeds (5.5 mm placement error) with convex decomposition and fails with one hull, as in MuJoCo. Physics randomized within the asset's intervals also predicts real grasp success better than the nominal asset (Brier 0.12 → 0.05).</p></div>
   <div class="card"><h3>Hybrid asset: Gaussian splat for looks, hulls for physics</h3><img src="figures/splat_buddha.jpg" alt="Held-out photo vs mesh vs splat">
     <p class="cap">A splat trained on the same photos (<a href="https://github.com/ArthurBrussee/brush">Brush</a>) becomes a <code>UsdVol.ParticleField3DGaussianSplat</code> under the rigid body, in an <code>appearance</code> variant set. The mesh's silhouette masks every training photo, so the splat learns only the object. On 8 real photos it never saw: ΔE2000 6.9 → 3.6, PSNR 19.7 → 27.0 dB, SSIM 0.64 → 0.78. Closest views are softer than the mesh.</p></div>
   <div class="card"><h3>Splats ride on PhysX</h3><img src="figures/splat_drop.jpg" alt="Splat objects dropped onto a table">
     <p class="cap">Isaac Sim 6, RTX real-time path tracing: splat Buddha and mugs fall on their convex hulls. An inset copy of the mesh, hidden from the camera, casts the shadows (<code>splat_proxy</code>). Gaussians receive shadows in RTX, so a proxy at the surface turned them black. The offline path tracer renders splats dark; real-time mode is fine. <a href="figures/splat_drop.mp4">Video</a>.</p></div>
   <div class="card"><h3>Franka picks a splat mug</h3><img src="figures/isaac_franka_pick_splat.webp" alt="Franka picks the splat mug">
     <p class="cap">Same plan, the mug drawn by its splat: lifted 14.5 cm, placed 1.8 cm from the target. The mask ablation matters here: trained on raw photos, the cropped mug splat is see-through (PSNR 21.6); with mesh masks, 28.9 dB. <a href="figures/splat_mug.jpg">Mug comparison</a> · <a href="figures/splat_showcase.jpg">mesh vs splat vs proxy</a>.</p></div>
+  <div class="card"><h3>Capture guidance: which 8 photos next? (work in progress)</h3><img src="figures/capture_guide.png" alt="Capture guidance results">
+    <p class="cap"><code>scan2usd guide</code> lists the camera positions that would see the physics-relevant surface no photo saw twice. Tested by rendering 8 extra photos exactly where asked: it wins on the bowl, loses to a higher ring on the shoe, and is worst on the printed mug, whose white interior is visible but has no texture for stereo to match. Next step: score views by texture, not visibility alone. The test also caught a meshing bug, now fixed.</p></div>
 </div>
 
 <h2>Sim-to-real perception</h2>
@@ -272,43 +255,31 @@
     <p class="where"><code>uncertainty.py</code> · <code>schemas.py</code> · <code>guide.py</code> · <code>scan2usd uncertainty | grasps | guide</code></p></details>
 </div>
 
-<h2>Lessons so far</h2>
+<h2>Lessons</h2>
 <ul class="small">
-  <li><b>Texture decides reconstruction.</b> A plain dark glaze and a plain white mug interior both failed to reconstruct. That shows up in the benchmark as holes or a sealed cup (volume +191%).</li>
-  <li><b>Validators can't catch everything.</b> A wrong object pick (a 38 cm ring) still passed every plausibility check; scoring against ground truth caught it.</li>
-  <li><b>Clustering by distance breaks on sparse surfaces.</b> Picking the object by its 2D footprint on the table worked where 3D distance clustering failed.</li>
-  <li><b>Units bite.</b> MuJoCo angles default to degrees; a radian limit produced a 1.8° hinge.</li>
-  <li><b>Contacts need consistent stiffness.</b> Soft default bin walls let objects sink 8 mm; matching the assets' stiffness gave 0.08 mm.</li>
-  <li><b>Fast + thin = tunneling.</b> At PhysX's default 60 Hz, a dropped mug moved 4.5 cm per step and passed through a 2 cm table; a thicker slab and 240 Hz fixed it.</li>
-  <li><b>Versions matter.</b> Isaac Sim 5.1's renderer crashed on this driver; 6.0 works.</li>
-  <li><b>Robot models need realistic actuators.</b> The Panda's stock gripper squeezes a thin cup wall with ~0.5 N in MuJoCo Menagerie and ~2 N in Isaac Sim's Franka, so the mug slipped in both; a real Franka hand reaches 70 N. Stiffening the gripper drive (~10 N) made the pick work in both engines.</li>
-  <li><b>Don't debug someone else's sample forever.</b> Isaac's experimental pick-and-place example didn't reach its own cube here. Planning once and replaying the joints in Isaac was faster and gave a cross-engine check for free.</li>
-  <li><b>Test on real data, not just synthetic.</b> The detector scored a perfect 1.00 on held-out renders and still made 4.3 false detections per real photo. Teaching it what to ignore (unlabeled distractors) fixed most of it.</li>
-  <li><b>Labels can be wrong too.</b> Replicator's instance masks sometimes dropped or shrank an object; the converter now trusts the box annotator and keeps a mask only when it agrees.</li>
-  <li><b>Know your camera model.</b> Back-projected depth was 3 cm off because MuJoCo's scene stores two stereo eye cameras; a mono render uses their average. One line fixed it.</li>
-  <li><b>Some things can't be observed.</b> With the handle hidden from both cameras, the mug's yaw has no answer. Design the action not to need it: the rim grasp works at any yaw.</li>
-  <li><b>Bake with a cage.</b> The first normal-map bake picked up the mug's inside wall from the outside (nearest points, wrong side). Ignoring source normals that face away from the low-poly surface fixed it: mean detail angle 11.4° → 6.2°.</li>
-  <li><b>Read the units, don't tune by eye.</b> Depth of field was absurdly strong, and my first fix was a fake f/40. The real cause: USD camera lens values are in <i>tenths of a scene unit</i>, so on a meters stage "50" is a 5 m lens. The view looks identical (only ratios matter), but the aperture is 100&times; too wide. Writing 0.05 gives a real 50 mm f/5.6 lens. Rigid bodies also kept falling during path-traced accumulation until physics was switched off for the render.</li>
-  <li><b>Don't teleport a hand.</b> Driving the Shadow Hand's forearm as a MuJoCo mocap body moves it without velocity, and friction there is velocity-based: 120 N of squeeze and the object still stayed on the table. Welding a free forearm to the mocap target took grasp success from 0% to ~23%.</li>
-  <li><b>Look at a cross-section before believing an explanation.</b> I had blamed the bowl's +82% volume on thick walls; slicing the solid showed it was mostly an unseen underside filled into a pedestal. And carving can't help where no camera looked.</li>
-  <li><b>Visible isn't reconstructable.</b> The capture guide pointed the camera into the printed mug's white interior: in view, but with nothing for stereo to match. The extra photos made the scan worse. The same test caught a bug: picking the "largest" mesh piece by volume for closed pieces and by area for open ones (incomparable units) kept a floor sheet instead of the mug.</li>
-  <li><b>Let the mesh help the splat.</b> Trained on raw photos, a splat spends its Gaussians on the background, and the object is see-through once that's cropped away. Masking every photo with the mesh's silhouette cost one function and raised held-out PSNR from 21.6 to 28.9 dB.</li>
-  <li><b>A shadow proxy can shadow the thing it stands in for.</b> RTX lets Gaussians receive shadows, so a mesh proxy at the surface turned the splat black. Insetting the proxy (capped at half the wall thickness for thin mugs) fixed it.</li>
+  <li><b>Test on real data, not just synthetic.</b> The detector scored a perfect 1.00 on held-out renders and still made 4.3 false detections per real photo. Unlabeled distractors in training cut that by 84%.</li>
+  <li><b>Read the units, don't tune by eye.</b> Depth of field was far too strong. USD camera lens values are in <i>tenths of a scene unit</i>, so on a meters stage "50" is a 5 m lens: same framing, 100&times; the aperture. Writing 0.05 gives a real 50 mm f/5.6 lens.</li>
+  <li><b>Look at a cross-section before believing an explanation.</b> The bowl's +82% volume looked like thick walls; slicing the solid showed an unseen underside filled into a pedestal. No line of sight, so carving can't fix it, but a stored "carved" hypothesis can.</li>
+  <li><b>Robot models need realistic actuators.</b> The stock Panda gripper squeezed a cup wall with ~0.5 N (MuJoCo) and ~2 N (Isaac), so the mug slipped in both; a real Franka hand reaches 70 N. A realistic drive made the same pick work in both engines.</li>
+  <li><b>Don't teleport a hand.</b> A mocap-driven forearm moves without velocity, and MuJoCo friction is velocity-based: 120 N of squeeze and the object stayed put. Welding a free forearm to the target fixed it.</li>
+  <li><b>Visible isn't reconstructable.</b> The capture guide aimed into the printed mug's white interior: in view, but nothing for stereo to match. Measuring the guide on three objects, not one, is what showed it.</li>
+  <li><b>Let the mesh help the splat.</b> Trained on raw photos, a splat spends its Gaussians on the background. Masking every photo with the mesh's silhouette raised held-out PSNR from 21.6 to 28.9 dB.</li>
 </ul>
 
-<h2>Capture guide</h2>
+<h2>Timeline</h2>
+<p class="small muted">Pipeline core (clean, color, collide, weigh, export, validate) → photos to USD with COLMAP, scored against ground truth → articulation → Isaac Sim + MuJoCo demos, sim-to-real detector → path-traced look-dev, asset library → grasps, uncertainty and Gaussian splats inside the USD asset. <b>Next:</b> own phone captures with a ColorChecker; texture-aware capture guidance.</p>
+
+<h2>Capture your own</h2>
 <div class="grid g2">
   <div class="card small"><h3>Shoot</h3><ul>
-    <li><b>Start easy:</b> a matte, textured object (wooden toy, sneaker, speckled mug).</li>
+    <li><b>Start easy:</b> a matte, textured object (wooden toy, sneaker, speckled mug). Dark, glossy or plain surfaces are the hardest; masking tape with pen marks helps inside plain cups.</li>
     <li><b>60–150 photos</b>: walk around it in 3 rings with 60–80% overlap; keep object and lights still; lock exposure, white balance and focus; no flash.</li>
-    <li>Put a newspaper under the object and the <b>ColorChecker</b> beside it in a few frames, plus one close-up.</li>
-    <li>The Xbox controller after that: dark gloss is the hardest case (see the lesson above).</li></ul></div>
+    <li>Put a newspaper under the object and a <b>ColorChecker</b> beside it in a few frames, plus one close-up.</li></ul></div>
   <div class="card small"><h3>Measure, then run</h3><ul>
     <li>Weigh it (g). A ruler measurement (mm) is optional if the ColorChecker is in the photos.</li>
     <li><code>scan2usd scan photos\ -o out\ --chart-pitch-mm 16 --mass 0.36 --material ceramic</code> (photos → USD in one step; measure your chart's patch spacing once)</li>
-    <li>Put files in <code>data\raw\&lt;object&gt;\</code> (git-ignored).</li></ul></div>
+    <li><code>scan2usd guide out\asset\&lt;name&gt;.usda --workspace out\colmap</code> suggests extra shots.</li></ul></div>
 </div>
-
 <footer>Scan2USD · personal R&amp;D project · Yibo Liu · Oct 2026 · Ground-truth meshes: Google Scanned Objects (CC-BY 4.0) · Real photos: AliceVision Buddha (CC-BY 4.0) · Robot: MuJoCo Menagerie Franka Panda (Apache-2.0) · Figures: <code>scripts/</code></footer>
 </div>
 <script>if (location.protocol === 'file:') { const b = document.createElement('div'); b.style.cssText = 'position:sticky;top:0;z-index:9;background:#fef3c7;border-bottom:1px solid #f59e0b;padding:8px 16px;font:14px system-ui'; b.innerHTML = 'Local preview of the repository file. The published version is <a href=\"https://visualknight.github.io/scan2usd/\">visualknight.github.io/scan2usd</a> (updates a minute after each push).'; document.body.prepend(b); }</script></body>

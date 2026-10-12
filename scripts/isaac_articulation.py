@@ -1,7 +1,7 @@
 """Isaac Sim check of an articulated Scan2USD asset: drive the hinge, verify the joint limit.
 
     set OMNI_KIT_ACCEPT_EULA=YES
-    D:\\isaac\\v6\\Scripts\\python.exe scripts\\isaac_articulation.py
+    <isaac-sim>\\python.exe scripts\\isaac_articulation.py
 
 The hinged keepsake box (scan2usd articulate) is referenced unmodified. The script adds an
 angular drive to its revolute joint and commands: open to 90 deg, then 150 deg (past the

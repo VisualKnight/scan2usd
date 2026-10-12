@@ -187,7 +187,7 @@
       <text x="262" y="571" font-size="11.5" fill="#92400e">→ easy to test (96 tests)</text>
     </g>
   </g>
-<!-- M6: assets that know what they don't know -->
+<!-- assets that know what they don't know -->
   <g filter="url(#marker)" stroke-linecap="round" stroke-linejoin="round">
     <rect x="236" y="676" width="870" height="112" rx="10" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="8 6"/>
     <rect x="252" y="714" width="156" height="60" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
@@ -209,7 +209,7 @@
     </g>
   </g>
   <g fill="#1e293b" font-size="13">
-    <text x="252" y="700" font-size="13" fill="#475569">M6 · assets that know what they don't know</text>
+    <text x="252" y="700" font-size="13" fill="#475569">assets that know what they don't know</text>
     <text x="104" y="738" font-size="10.5" fill="#15803d">shot list: take</text>
     <text x="104" y="752" font-size="10.5" fill="#15803d">these 8 photos</text>
     <use href="#cmp" x="386" y="720"/>

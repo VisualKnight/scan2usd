@@ -73,7 +73,7 @@ def build(images: Path, work: Path, cap: Path, material: str, gt) -> dict:
             "completeness_mm": m["completeness_mm"]["mean"],
             "volume_error_pct": m.get("volume_cm3", {}).get("error_pct"),
             "observed_fraction": f.observed_fraction, "sealed_area": f.label_area["sealed"],
-            "minutes": round((time.time() - t0) / 60, 1), "usd": str(res.usd_path)}
+            "minutes": round((time.time() - t0) / 60, 1), "usd": Path(os.path.relpath(res.usd_path, ROOT)).as_posix()}
 
 
 def run_object(folder: str, title: str, material: str, reuse: bool) -> dict:
@@ -110,7 +110,7 @@ def run_object(folder: str, title: str, material: str, reuse: bool) -> dict:
     print(f"[{title}] weak: {results['weak']}", flush=True)
 
     # Guidance on the weak reconstruction; random views from the same candidates.
-    weak_usd = Path(results["weak"]["usd"])
+    weak_usd = ROOT / results["weak"]["usd"]
     sugg, stats = run_guide(weak_usd, root / "weak" / "colmap", root / "shotlist", k=K)
     asset = read_usd(weak_usd)
     lo, hi = asset.render_mesh.bounds

@@ -50,6 +50,28 @@ def score(photo, render, inner):
             "ssim": float(ssim_map[inner].mean()), "wb_gains": wb.tolist()}, matched
 
 
+def square_crop(im: np.ndarray, cy: int, cx: int, side: int, size: int) -> Image.Image:
+    """Square crop centered on (cy, cx), resized without changing the aspect ratio (pads if needed)."""
+    canvas = np.full((side, side, 3), 255, np.uint8)
+    y0, x0 = cy - side // 2, cx - side // 2
+    sy0, sx0 = max(0, y0), max(0, x0)
+    sy1, sx1 = min(im.shape[0], y0 + side), min(im.shape[1], x0 + side)
+    canvas[sy0 - y0:sy1 - y0, sx0 - x0:sx1 - x0] = im[sy0:sy1, sx0:sx1]
+    return Image.fromarray(canvas).resize((size, size), Image.LANCZOS)
+
+
+def upright_rotation(cam: dict) -> int:
+    """Degrees (CCW, multiple of 90) that turn the image so the asset's +Z points up.
+
+    Phone photos are often taken in portrait and stored sideways; the solved camera knows.
+    """
+    c2w = np.array(cam["camera_to_world_usd"]).T  # USD stores the transpose
+    up = c2w[:3, :3].T @ np.array([0.0, 0.0, 1.0])  # world up in camera axes (USD: +x right, +y up)
+    if abs(up[1]) >= abs(up[0]):
+        return 0 if up[1] > 0 else 180
+    return 90 if up[0] > 0 else 270
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--object", default="buddha", choices=sorted(OBJECTS))
@@ -78,7 +100,7 @@ def main() -> None:
         sm, mm = score(photo, mesh, inner)
         ss, ms = score(photo, splat, inner)
         views.append({"photo": Path(cam["photo"]).name, "object_pixels": int(inner.sum()), "mesh": sm, "splat": ss})
-        tiles.append((inner.sum(), photo, mm, ms, mask))
+        tiles.append((inner.sum(), photo, mm, ms, mask, upright_rotation(cam)))
 
     keys = ("delta_e2000_wb_median", "psnr_db", "ssim")
     summary = {look: {k: float(np.median([v[look][k] for v in views])) for k in keys} for look in ("mesh", "splat")}
@@ -91,20 +113,20 @@ def main() -> None:
     if ablation.exists():  # same protocol, splat trained on the raw photos (background cropped afterwards)
         res["unmasked_splat"] = json.loads(ablation.read_text())["summary"]["splat"]
 
-    # Figure: for the largest views, a crop around the object: photo | mesh | splat (both white-balanced).
-    tiles.sort(key=lambda t: -t[0])
+    # Figure: prefer views that show the whole object (bbox off the image border), then the largest.
+    def framed(t):
+        ys, xs = np.nonzero(t[4])
+        return ys.min() > 4 and xs.min() > 4 and ys.max() < t[4].shape[0] - 5 and xs.max() < t[4].shape[1] - 5
+
+    tiles.sort(key=lambda t: (not framed(t), -t[0]))
     tw = 300
     rows = []
-    for _, photo, mm, ms, mask in tiles[: args.rows]:
+    for _, photo, mm, ms, mask, rot in tiles[: args.rows]:
         ys, xs = np.nonzero(mask)
-        pad = int(0.08 * max(np.ptp(ys), np.ptp(xs)))
-        y0, y1 = max(0, ys.min() - pad), min(mask.shape[0], ys.max() + pad)
-        x0, x1 = max(0, xs.min() - pad), min(mask.shape[1], xs.max() + pad)
-        side = max(y1 - y0, x1 - x0)
-        cy, cx = (y0 + y1) // 2, (x0 + x1) // 2
-        y0, x0 = max(0, cy - side // 2), max(0, cx - side // 2)
-        crop = lambda im: Image.fromarray(im[y0:y0 + side, x0:x0 + side]).resize((tw, tw), Image.LANCZOS)  # noqa: E731
-        rows.append([crop(photo), crop(mm), crop(ms)])
+        side = min(int(1.16 * max(np.ptp(ys), np.ptp(xs))), *mask.shape)
+        cy = int(np.clip((ys.min() + ys.max()) // 2, side // 2, mask.shape[0] - (side - side // 2)))
+        cx = int(np.clip((xs.min() + xs.max()) // 2, side // 2, mask.shape[1] - (side - side // 2)))
+        rows.append([square_crop(im, cy, cx, side, tw).rotate(rot) for im in (photo, mm, ms)])
     titles = [f"held-out photo ({'real' if args.object == 'buddha' else 'synthetic'})", "textured mesh (RTX)",
               "Gaussian splat (RTX)"]
     sheet = Image.new("RGB", (tw * 3, 34 + tw * len(rows) + 40), "white")

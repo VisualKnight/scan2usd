@@ -189,6 +189,39 @@ def asset(prim: str, variant: str):
     return _cache[key]
 
 
+def best_view_azimuth(model, data, lookat, distance=0.5, elevation=-18.0) -> float:
+    """Azimuth (deg) for a side-on view of the forearm, from whichever side shows more thumb and object.
+
+    Candidates are near-perpendicular to the forearm (a profile of the arm and hand); a segmentation
+    render from each scores the visible thumb and object pixels.
+    """
+    import mujoco
+
+    gb = model.geom_bodyid
+    names = [model.body(b).name for b in gb]
+    thumb = np.array(["rh_th" in n for n in names])
+    obj = np.array([n == "obj" or n.startswith("obj") for n in names])
+    axis = data.xpos[model.body("rh_palm").id][:2] - data.xpos[model.body("rh_forearm").id][:2]
+    base = np.degrees(np.arctan2(axis[1], axis[0]))
+    r = mujoco.Renderer(model, 120, 160)
+    r.enable_segmentation_rendering()
+    cam = mujoco.MjvCamera()
+    cam.lookat[:], cam.distance, cam.elevation = lookat, distance, elevation
+    best, best_az = -1.0, base + 90.0
+    for side in (90.0, -90.0):
+        for tilt in (-25.0, 0.0, 25.0):
+            cam.azimuth = base + side + tilt
+            r.update_scene(data, camera=cam)
+            seg = r.render()
+            ids = seg[..., 0][seg[..., 1] == int(mujoco.mjtObj.mjOBJ_GEOM)]
+            ids = ids[ids >= 0]
+            score = 2.0 * thumb[ids].sum() + obj[ids].sum()
+            if score > best:
+                best, best_az = score, float(cam.azimuth)
+    r.close()
+    return best_az
+
+
 def trial(p: dict, render: bool = False, physical=None):
     """One grasp trial. The grasp is planned on the library asset p["prim"] / p["variant"] (or given
     as p["pose"]); `physical` optionally replaces the simulated object (e.g. a randomized sample or
@@ -233,8 +266,13 @@ def trial(p: dict, render: bool = False, physical=None):
     if render:
         renderer = mujoco.Renderer(model, 480, 640)
         cam = mujoco.MjvCamera()
-        cam.lookat[:] = (site[0], site[1], 0.13)
-        cam.distance, cam.elevation, cam.azimuth = 0.5, -15, 130
+        look = (site[0], site[1], float(site[2]) + 0.10)  # between the grasp and the 15 cm lift
+        probe = mujoco.MjData(model)  # the hand placed at its grasp pose, to choose the view
+        probe.qpos[:] = data.qpos
+        probe.qpos[adr:adr + 3], probe.qpos[adr + 3:adr + 7] = pos, quat
+        mujoco.mj_forward(model, probe)
+        cam.lookat[:] = look
+        cam.distance, cam.elevation, cam.azimuth = 0.55, -20, best_view_azimuth(model, probe, look, 0.55, -20)
 
     def run(seconds, fn):
         n = int(seconds / dt)

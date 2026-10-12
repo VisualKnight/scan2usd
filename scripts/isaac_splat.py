@@ -1,7 +1,7 @@
 """Hybrid splat + mesh assets in Isaac Sim 6 (RTX real-time path tracing).
 
     set OMNI_KIT_ACCEPT_EULA=YES
-    D:\\isaac\\v6\\Scripts\\python.exe scripts\\isaac_splat.py --shots heldout,showcase,drop
+    <isaac-sim>\\python.exe scripts\\isaac_splat.py --shots heldout,showcase,drop
 
 The hybrid asset (scan2usd splat) references the physics asset and adds a
 UsdVol.ParticleField3DGaussianSplat under its rigid body, with an `appearance` variant set

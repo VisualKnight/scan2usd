@@ -1,7 +1,7 @@
 """Path-traced renders of Scan2USD assets in Isaac Sim 6 (RTX).
 
     set OMNI_KIT_ACCEPT_EULA=YES
-    D:\\isaac\\v6\\Scripts\\python.exe scripts\\isaac_pathtrace.py [--shots beauty,normals,lookdev] [--spp 64 --subframes 8]
+    <isaac-sim>\\python.exe scripts\\isaac_pathtrace.py [--shots beauty,normals,lookdev] [--spp 64 --subframes 8]
 
 Shots (written to output/pathtrace/):
   beauty   scanned assets on a table, HDRI dome light + key light, camera depth of field;

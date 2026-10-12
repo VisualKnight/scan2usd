@@ -1,7 +1,7 @@
 """Isaac Sim check of the USD asset library: every collision variant in PhysX, with timing.
 
     set OMNI_KIT_ACCEPT_EULA=YES
-    D:\\isaac\\v6\\Scripts\\python.exe scripts\\isaac_library.py
+    <isaac-sim>\\python.exe scripts\\isaac_library.py
 
 References output/library/scan2usd_library.usda (scan2usd library) into a stage on a table,
 selects one collision variant for all assets, drops everything from 2 cm and simulates 2 s at

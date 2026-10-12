@@ -3,7 +3,7 @@
     pip install "imageio[ffmpeg]"
     python scripts/make_demo_reel.py [--out docs/scan2usd_demo.mp4]
 
-Title card -> photos to USD -> simulation demos (MuJoCo, Isaac Sim) -> perception -> results ->
+Title card -> photos to USD -> simulation demos (MuJoCo, Isaac Sim) -> perception -> self-aware assets ->
 links. Every clip is an existing figure in docs/figures, so the reel stays in sync with them.
 """
 
@@ -30,34 +30,31 @@ SEGMENTS = [
      "67 real photos → USD asset → 21 convex colliders + mass → Isaac Sim / MuJoCo", 6),
     ("buddha_real.jpg", "Real photos → simulation asset",
      "COLMAP reconstruction, table removed automatically, watertight, convex decomposition", 4),
-    ("render_beauty.jpg", "Path traced in Isaac Sim 6 RTX",
-     "PBR look presets, baked 2K albedo + normal maps, HDRI lighting, depth of field", 5),
-    ("render_normals.jpg", "High-to-low normal map bake",
-     "4.3M-triangle scan → 50k triangles; the lost surface detail comes back from the normal map", 4),
     ("texture_bake.jpg", "Scored against ground truth",
      "0.6–0.8 mm mean surface error on textured objects; size within ±1.4% from a ColorChecker", 4),
+    ("render_beauty.jpg", "Path traced in Isaac Sim 6 RTX",
+     "PBR look presets, baked 2K albedo + normal maps, HDRI lighting, physical depth of field", 5),
     ("panda_demo.webp", "Why collision geometry matters",
-     "MuJoCo · Franka Panda rim-grasps the scanned mug: decomposition picks, one convex hull fails", 9),
+     "MuJoCo · Franka Panda rim-grasps the scanned mug: decomposition picks, one convex hull fails", 8),
     ("isaac_franka_pick.webp", "Same plan, second physics engine",
-     "Isaac Sim 6 PhysX reproduces it: lifted 14.3 cm, placed within 14 mm; one hull fails again", 8),
-    ("isaac_articulation.webp", "Articulated assets",
-     "USD revolute joint from one scan; PhysX drive: 90° → 90.1°, stops at the 105° limit", 5),
+     "Isaac Sim 6 PhysX, plan from the grasp stored in the USD: placed within 5.5 mm; one hull fails again", 7),
     ("hand_grasp.webp", "Dexterous grasping",
-     "Shadow Hand (24 joints): 1,440 sampled grasps over the asset library, lift + shake test", 7),
-    ("clutter_demo.webp", "Clutter",
-     "14 scanned objects, 392 convex colliders, settle in a tote with 0.08 mm penetration", 6),
-    ("isaac_library.jpg", "A USD asset library",
-     "Payloads + collision / friction variant sets; every variant runs in PhysX", 4),
-    ("isaac_synth_dataset.jpg", "Synthetic training data in Isaac Sim",
-     "1,000 domain-randomized labeled frames in 3.5 minutes (Replicator)", 4),
+     "Shadow Hand (24 joints): 1,440 sampled grasps over the asset library, lift + shake test", 6),
+    ("isaac_articulation.webp", "Articulated assets",
+     "USD revolute joint from one scan; PhysX drive: 90° → 90.1°, stops at the 105° limit", 4),
     ("sim2real_compare.jpg", "Sim-to-real: trained only on renders",
      "On 67 real photos: object found in 100%; distractors cut false positives by 84%", 5),
     ("perception_pick.webp", "See it, locate it, pick it",
-     "Detector → fit the scanned mesh to RGB-D → Panda picks at the estimate: 10/10, 4.6 mm median error", 9),
-    ("robustness.png", "How accurate must a scan be?",
-     "93 simulated picks: collision shape decides; size error within ±5% is tolerated", 6),
+     "Detector → fit the scanned mesh to RGB-D → Panda picks at the estimate: 10/10, 4.6 mm median error", 8),
+    ("uncertainty.png", "Assets that know what they don't know",
+     "Seen / guessed / sealed surface and mass intervals stored in USD: truth inside for 5 of 6 objects", 5),
+    ("splat_buddha.jpg", "Gaussian splat for looks, convex hulls for physics",
+     "Rendered from photos it never saw: beats the textured mesh on 18/18 (Buddha PSNR 19.7 → 27.0 dB)", 5),
+    ("splat_drop.mp4", "Splats ride on PhysX",
+     "UsdVol Gaussian splats under rigid bodies; an inset mesh proxy casts their shadows (RTX)", 4),
+    ("isaac_franka_pick_splat.webp", "Franka picks a splat mug",
+     "Same plan and physics, the mug drawn by its Gaussian splat", 6),
 ]
-
 
 def canvas(title: str, subtitle: str) -> Image.Image:
     img = Image.new("RGB", (W, H), (248, 250, 252))
@@ -93,6 +90,13 @@ def animation_frames(path: Path, max_seconds: float):
     return [frames[max(0, i)] for i in idx]
 
 
+def video_frames(path: Path, max_seconds: float):
+    """MP4 frames, sped up (frames skipped) to fit max_seconds."""
+    frames = [Image.fromarray(f) for f in imageio.mimread(path, memtest=False)]
+    step = max(1, int(np.ceil(len(frames) / (max_seconds * FPS))))
+    return frames[::step]
+
+
 def end_card() -> np.ndarray:
     img = Image.new("RGB", (W, H), "white")
     d = ImageDraw.Draw(img)
@@ -114,8 +118,8 @@ def main() -> None:
     total = 0
     for name, title, subtitle, seconds in SEGMENTS:
         path = FIG / name
-        if path.suffix == ".webp":
-            frames = animation_frames(path, seconds)
+        if path.suffix in (".webp", ".mp4"):
+            frames = animation_frames(path, seconds) if path.suffix == ".webp" else video_frames(path, seconds)
             for f in frames:
                 writer.append_data(place(f, title, subtitle))
             n = len(frames)

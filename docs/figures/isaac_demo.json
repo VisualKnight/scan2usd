@@ -55,5 +55,5 @@
   "frames": 12,
   "seconds": 11.2,
   "isaac_sim": "6.0",
-  "dataset": "D:\\Local Projects\\Scan2USD\\output\\isaac\\dataset"
+  "dataset": "output/isaac/dataset"
 }
