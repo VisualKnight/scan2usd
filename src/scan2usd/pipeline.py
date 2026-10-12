@@ -12,7 +12,15 @@ import trimesh
 from PIL import Image
 
 from . import __version__
-from .color import Calibration, albedo_range_stats, apply_ccm_srgb8, fit_ccm, sample_chart
+from .color import (
+    Calibration,
+    albedo_range_stats,
+    apply_ccm_srgb8,
+    fit_ccm,
+    fit_neutral,
+    sample_chart,
+    sample_region,
+)
 from .mesh_ops import (
     clean_mesh,
     decimate,
@@ -46,10 +54,14 @@ class BuildOptions:
     metallic: float = 0.0
     chart_image: Path | None = None
     chart_corners: list[list[float]] | None = None
+    gray_card_image: Path | None = None
+    gray_card_box: list[float] | None = None
+    gray_reflectance: float | None = 0.18
     ccm_path: Path | None = None
     usda: bool = False
     gltf: bool = True
     run_sim: bool = True
+    preview: bool = True
 
 
 @dataclass
@@ -65,6 +77,13 @@ class BuildResult:
 def _calibration(opts: BuildOptions, out_dir: Path) -> Calibration | None:
     if opts.ccm_path is not None:
         return Calibration.load(opts.ccm_path)
+    if opts.gray_card_image is not None:
+        if opts.gray_card_box is None:
+            raise ValueError("gray_card_box is required with gray_card_image")
+        img = np.asarray(Image.open(opts.gray_card_image).convert("RGB"))
+        cal = fit_neutral(sample_region(img, opts.gray_card_box), opts.gray_reflectance)
+        cal.save(out_dir / "color_calibration.json")
+        return cal
     if opts.chart_image is None:
         return None
     if opts.chart_corners is None:
@@ -167,6 +186,10 @@ def build_asset(input_path: str | Path, out_dir: str | Path, opts: BuildOptions)
     validation = validate_usd(usd_path, run_sim=opts.run_sim)
     lap("validate", t)
     (out_dir / "validation.md").write_text(validation.to_markdown(), encoding="utf-8")
+    if opts.preview:
+        from .preview import preview_file
+
+        preview_file(usd_path).save(out_dir / "preview.png")
 
     summary = {
         "scan2usd_version": __version__,

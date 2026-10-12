@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 600" font-family="'Segoe Print', 'Comic Sans MS', cursive">
+  <defs>
+    <!-- Slight wobble so lines look marker-drawn -->
+    <filter id="marker" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="3"/>
+      <feDisplacementMap in="SourceGraphic" scale="3"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10" fill="none" stroke="#1d4ed8" stroke-width="1.6"/>
+    </marker>
+    <marker id="arrowg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10" fill="none" stroke="#15803d" stroke-width="1.6"/>
+    </marker>
+    <marker id="arrowr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10" fill="none" stroke="#b91c1c" stroke-width="1.6"/>
+    </marker>
+    <!-- UML component icon -->
+    <g id="cmp"><rect x="0" y="0" width="14" height="16" fill="none" stroke="#334155" stroke-width="1.2"/><rect x="-4" y="3" width="8" height="3" fill="#fff" stroke="#334155" stroke-width="1.1"/><rect x="-4" y="9" width="8" height="3" fill="#fff" stroke="#334155" stroke-width="1.1"/></g>
+  </defs>
+
+  <rect width="1120" height="600" fill="#fbfbf7"/>
+  <text x="24" y="40" font-size="22" fill="#1e293b">Scan2USD · how the code fits together</text>
+  <text x="24" y="62" font-size="12.5" fill="#64748b">UML-ish component view · blue = calls · green = data in · red = data out</text>
+
+  <g filter="url(#marker)" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Actor -->
+    <g stroke="#1e293b" stroke-width="2" fill="none">
+      <circle cx="52" cy="104" r="10"/><path d="M52,114 V140 M36,124 H68 M52,140 L40,160 M52,140 L64,160"/>
+    </g>
+
+    <!-- CLI and demo -->
+    <rect x="110" y="96" width="160" height="58" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
+    <rect x="110" y="200" width="160" height="58" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
+
+    <!-- Orchestrator -->
+    <rect x="340" y="88" width="740" height="74" rx="8" fill="#e0f2fe" stroke="#1e293b" stroke-width="2.2"/>
+
+    <!-- Stage modules -->
+    <rect x="320" y="240" width="140" height="84" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
+    <rect x="478" y="240" width="140" height="84" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
+    <rect x="636" y="240" width="140" height="84" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
+    <rect x="794" y="240" width="140" height="84" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
+    <rect x="952" y="240" width="140" height="118" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
+    <rect x="964" y="300" width="116" height="48" rx="4" fill="#ffffff" stroke="#334155" stroke-width="1.5"/>
+
+    <!-- Inputs (documents) -->
+    <path d="M20,330 H180 V378 Q140,366 100,378 Q60,390 20,378 Z" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+    <path d="M20,420 H180 V468 Q140,456 100,468 Q60,480 20,468 Z" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+
+    <!-- Outputs (documents) -->
+    <path d="M794,450 H934 V498 Q899,486 864,498 Q829,510 794,498 Z" fill="#fee2e2" stroke="#b91c1c" stroke-width="2"/>
+    <path d="M952,450 H1092 V498 Q1057,486 1022,498 Q987,510 952,498 Z" fill="#fee2e2" stroke="#b91c1c" stroke-width="2"/>
+    <path d="M478,450 H618 V498 Q583,486 548,498 Q513,510 478,498 Z" fill="#fee2e2" stroke="#b91c1c" stroke-width="2"/>
+    <rect x="636" y="450" width="140" height="50" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
+
+    <!-- Future (ghost) -->
+    <rect x="794" y="548" width="298" height="38" rx="6" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="7 6"/>
+    <rect x="20" y="520" width="160" height="38" rx="6" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="7 6"/>
+
+    <!-- Calls -->
+    <g stroke="#1d4ed8" stroke-width="2" fill="none">
+      <path d="M74,125 H106" marker-end="url(#arrow)"/>
+      <path d="M270,125 H336" marker-end="url(#arrow)"/>
+      <path d="M190,154 V196" marker-end="url(#arrow)"/>
+      <path d="M390,162 V236" marker-end="url(#arrow)"/>
+      <path d="M548,162 V236" marker-end="url(#arrow)"/>
+      <path d="M706,162 V236" marker-end="url(#arrow)"/>
+      <path d="M864,162 V236" marker-end="url(#arrow)"/>
+      <path d="M1022,162 V236" marker-end="url(#arrow)"/>
+    </g>
+    <!-- Data in -->
+    <g stroke="#15803d" stroke-width="2" fill="none">
+      <path d="M182,352 C240,352 270,300 316,290" marker-end="url(#arrowg)"/>
+      <path d="M182,444 H548 V328" marker-end="url(#arrowg)"/>
+      <path d="M150,258 C150,290 120,300 110,326" stroke-dasharray="6 5" marker-end="url(#arrowg)"/>
+      <path d="M100,518 V472" stroke="#94a3b8" stroke-dasharray="6 5" marker-end="url(#arrowg)"/>
+      <path d="M26,518 C2,480 2,420 22,384" stroke="#94a3b8" stroke-dasharray="6 5" marker-end="url(#arrowg)"/>
+    </g>
+    <!-- Data out -->
+    <g stroke="#b91c1c" stroke-width="2" fill="none">
+      <path d="M864,324 V446" marker-end="url(#arrowr)"/>
+      <path d="M1022,358 V446" marker-end="url(#arrowr)"/>
+      <path d="M636,475 H622" marker-end="url(#arrowr)"/>
+      <path d="M864,502 V544" stroke="#94a3b8" stroke-dasharray="6 5" marker-end="url(#arrowr)"/>
+    </g>
+    <!-- Read-back loops -->
+    <g stroke="#7c3aed" stroke-width="2" fill="none" stroke-dasharray="7 5">
+      <path d="M936,470 C960,420 950,390 958,362" marker-end="url(#arrow)"/>
+      <path d="M792,475 H780" marker-end="url(#arrow)"/>
+    </g>
+  </g>
+
+  <!-- Labels (unfiltered for legibility) -->
+  <g fill="#1e293b" font-size="13">
+    <text x="52" y="178" text-anchor="middle" font-size="12">you</text>
+
+    <use href="#cmp" x="246" y="104"/>
+    <text x="122" y="120" font-size="15">cli.py</text>
+    <text x="122" y="141" font-size="11" fill="#475569">build · demo · preview</text>
+    <use href="#cmp" x="246" y="208"/>
+    <text x="122" y="224" font-size="15">demo.py</text>
+    <text x="122" y="245" font-size="11" fill="#475569">synthetic mug "scan"</text>
+
+    <use href="#cmp" x="1052" y="96"/>
+    <text x="356" y="112" font-size="11.5" fill="#475569">«orchestrator»</text>
+    <text x="356" y="136" font-size="16">pipeline.py · build_asset()</text>
+    <text x="356" y="154" font-size="11.5" fill="#475569">runs the stages in order, times each one, writes build_report.json</text>
+
+    <g font-size="11.5" fill="#1d4ed8">
+      <text x="396" y="206">1. load + clean</text>
+      <text x="554" y="206">2. calibrate</text>
+      <text x="712" y="206">3. hulls + mass</text>
+      <text x="870" y="206">4. write</text>
+      <text x="1028" y="206">5. check</text>
+    </g>
+
+    <g font-size="14.5">
+      <text x="332" y="262">mesh_ops.py</text>
+      <text x="490" y="262">color.py</text>
+      <text x="648" y="262">physics.py</text>
+      <text x="806" y="262">usd_io.py</text>
+      <text x="964" y="262">validate.py</text>
+    </g>
+    <g font-size="10.5" fill="#475569">
+      <text x="332" y="281">clean · Z-up · meters</text><text x="332" y="296">decimate</text><text x="332" y="315" fill="#7c3aed">trimesh, pymeshlab</text>
+      <text x="490" y="281">CCM / gray card</text><text x="490" y="296">CIEDE2000</text><text x="490" y="315" fill="#7c3aed">numpy</text>
+      <text x="648" y="281">convex hulls</text><text x="648" y="296">mass · inertia</text><text x="648" y="315" fill="#7c3aed">CoACD, manifold3d</text>
+      <text x="806" y="281">UsdGeom · UsdShade</text><text x="806" y="296">UsdPhysics · glTF</text><text x="806" y="315" fill="#7c3aed">usd-core (pxr)</text>
+      <text x="964" y="281">33 checks on the file</text>
+      <text x="972" y="318" font-size="13" fill="#1e293b">simulate.py</text><text x="972" y="337" fill="#7c3aed">MuJoCo drop tests</text>
+    </g>
+
+    <g font-size="12.5">
+      <text x="30" y="350">scan mesh</text><text x="30" y="367" font-size="10.5" fill="#475569">.ply · .obj · .glb</text>
+      <text x="30" y="440">chart / gray-card</text><text x="30" y="457" font-size="10.5" fill="#475569">photo</text>
+      <text x="804" y="470">asset .usd(a)</text><text x="804" y="487" font-size="10.5" fill="#475569">+ .glb</text>
+      <text x="962" y="470">validation.md</text><text x="962" y="487" font-size="10.5" fill="#475569">build_report.json</text>
+      <text x="488" y="470">preview.png</text><text x="488" y="487" font-size="10.5" fill="#475569">no 3D app needed</text>
+      <text x="648" y="472">preview.py</text><text x="648" y="490" font-size="10.5" fill="#475569">numpy rasterizer</text>
+    </g>
+    <text x="966" y="402" font-size="10.5" fill="#7c3aed">reads the</text>
+    <text x="966" y="416" font-size="10.5" fill="#7c3aed">file back</text>
+    <text x="40" y="544" font-size="11.5" fill="#64748b">phone capture (M2)</text>
+    <text x="806" y="572" font-size="11.5" fill="#64748b">Isaac Sim · synthetic data (M4)</text>
+
+    <!-- Sticky note -->
+    <g transform="rotate(-2 330 540)">
+      <rect x="250" y="515" width="200" height="62" fill="#fde68a" stroke="#d97706" stroke-width="1"/>
+      <text x="262" y="538" font-size="11.5">each stage = one module,</text>
+      <text x="262" y="555" font-size="11.5">plain functions in, data out</text>
+      <text x="262" y="571" font-size="11.5" fill="#92400e">→ easy to test (45 tests)</text>
+    </g>
+  </g>
+</svg>

@@ -12,6 +12,7 @@ from scan2usd.usd_io import read_usd
 
 def test_demo_end_to_end(tmp_path):
     res, glaze = run_demo(tmp_path, target_faces=8000)
+    assert (tmp_path / "preview.png").exists()
     assert res.validation.status == "pass", res.validation.to_markdown()
     s = res.summary
     assert s["clean"]["components_in"] == 3 and s["clean"]["components_kept"] == 1
@@ -22,6 +23,7 @@ def test_demo_end_to_end(tmp_path):
     assert (tmp_path / "asset" / "ceramic_mug.usda").exists()
     assert (tmp_path / "asset" / "ceramic_mug.glb").exists()
     assert (tmp_path / "asset" / "validation.md").exists()
+    assert (tmp_path / "asset" / "preview.png").exists()
     assert json.loads((tmp_path / "asset" / "build_report.json").read_text())["demo_glaze_delta_e2000"]
 
 
@@ -69,3 +71,32 @@ def test_cli_build_and_validate(tmp_path, capsys):
     assert json.loads((tmp_path / "v.json").read_text())["status"] == "pass"
     assert main(["materials"]) == 0
     assert "ceramic" in capsys.readouterr().out
+
+
+def test_cli_build_with_gray_card(tmp_path):
+    import trimesh
+
+    from scan2usd.color import linear_to_srgb
+
+    cast = np.diag([1.25, 1.0, 0.7])
+    gray = np.round(linear_to_srgb(np.array([0.18, 0.18, 0.18]) @ cast.T) * 255).astype(np.uint8)
+    photo = np.full((60, 80, 3), 30, np.uint8)
+    photo[20:40, 30:50] = gray
+    Image.fromarray(photo).save(tmp_path / "gray.png")
+
+    src = tmp_path / "ball.ply"
+    ball = trimesh.creation.icosphere(subdivisions=3, radius=0.05)
+    captured = np.round(linear_to_srgb(np.array([0.3, 0.3, 0.3]) @ cast.T) * 255).astype(np.uint8)
+    ball.visual = trimesh.visual.ColorVisuals(ball, vertex_colors=np.tile([*captured, 255], (len(ball.vertices), 1)))
+    ball.export(str(src))
+
+    out = tmp_path / "out"
+    code = main(["build", str(src), "-o", str(out), "--collision", "hull", "--no-sim", "--no-gltf",
+                 "--gray-card-image", str(tmp_path / "gray.png"), "--gray-card-box", "30,20,50,40"])
+    assert code == 0
+    cal = json.loads((out / "color_calibration.json").read_text())
+    assert cal["method"] == "neutral"
+    assert np.allclose(np.diag(cal["ccm"]), 1 / np.diag(cast), atol=0.03)
+    asset = read_usd(out / "ball.usd")
+    rgb = asset.render_mesh.visual.vertex_colors[:, :3].astype(float).mean(0)
+    assert np.ptp(rgb) <= 3  # the cast is gone: neutral gray again

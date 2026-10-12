@@ -191,7 +191,18 @@ def _mesh_from_prim(prim: Usd.Prim, root: Usd.Prim, cache: UsdGeom.XformCache) -
     xf, _ = cache.ComputeRelativeTransform(prim, root)
     m = np.asarray(xf, dtype=np.float64)
     pts = np.c_[pts, np.ones(len(pts))] @ m
-    return trimesh.Trimesh(pts[:, :3], idx.reshape(-1, 3), process=False)
+    tm = trimesh.Trimesh(pts[:, :3], idx.reshape(-1, 3), process=False)
+    pv = UsdGeom.PrimvarsAPI(prim).GetPrimvar("displayColor")
+    if pv and pv.HasValue():
+        lin = np.asarray(pv.Get(), dtype=np.float64)
+        if pv.GetInterpolation() == UsdGeom.Tokens.constant or len(lin) == 1:
+            lin = np.tile(lin[:1], (len(tm.vertices), 1))
+        if len(lin) == len(tm.vertices):
+            from .color import linear_to_srgb
+
+            rgb8 = np.round(linear_to_srgb(lin) * 255).astype(np.uint8)
+            tm.visual = trimesh.visual.ColorVisuals(tm, vertex_colors=np.c_[rgb8, np.full(len(rgb8), 255, np.uint8)])
+    return tm
 
 
 def read_usd(path: str | Path) -> AssetData:

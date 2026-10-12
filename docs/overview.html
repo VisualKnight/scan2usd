@@ -3,342 +3,137 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Scan2USD · Project Overview</title>
+<title>Scan2USD · Overview</title>
 <style>
-  :root {
-    --bg: #0b1120; --panel: #111a2e; --panel2: #16213a; --line: #26334f;
-    --text: #e2e8f0; --muted: #94a3b8; --dim: #64748b;
-    --done: #22c55e; --next: #f59e0b; --plan: #64748b; --accent: #38bdf8; --accent2: #a78bfa;
-  }
+  :root { --ink: #1e293b; --muted: #64748b; --line: #e2e8f0; --bg: #f8fafc; --card: #fff;
+          --done: #15803d; --next: #b45309; --plan: #64748b; --accent: #1d4ed8; }
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 "Segoe UI", system-ui, sans-serif; }
-  a { color: var(--accent); }
-  code, .mono { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.9em; }
-  code { background: #0f172a; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 80px; }
-  nav { position: sticky; top: 0; z-index: 5; background: rgba(11,17,32,.92); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
-  nav .wrap { display: flex; gap: 18px; padding: 10px 24px; flex-wrap: wrap; }
-  nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
-  nav a:hover { color: var(--text); }
-  header { padding: 48px 0 24px; }
-  h1 { font-size: 44px; margin: 0; letter-spacing: -0.5px; }
-  h1 span { background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .tagline { color: var(--muted); font-size: 18px; margin: 6px 0 18px; }
-  h2 { font-size: 26px; margin: 56px 0 6px; }
-  h2 + .lede { color: var(--muted); margin: 0 0 20px; }
-  h3 { margin: 0 0 6px; font-size: 16px; }
-  .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-  .done { background: rgba(34,197,94,.15); color: var(--done); border: 1px solid rgba(34,197,94,.4); }
-  .next { background: rgba(245,158,11,.15); color: var(--next); border: 1px solid rgba(245,158,11,.4); }
-  .plan { background: rgba(100,116,139,.18); color: #cbd5e1; border: 1px solid rgba(100,116,139,.5); }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
-  .grid { display: grid; gap: 14px; }
-  .g2 { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
-  .g3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 "Segoe UI", system-ui, sans-serif; }
+  .wrap { max-width: 1140px; margin: 0 auto; padding: 32px 24px 64px; }
+  h1 { font-size: 34px; margin: 0; }
+  h2 { font-size: 21px; margin: 40px 0 12px; }
+  h3 { font-size: 15px; margin: 0 0 4px; }
+  p { margin: 0 0 10px; }
+  code { font-family: "Cascadia Code", Consolas, monospace; font-size: .88em; background: #f1f5f9; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+  .muted { color: var(--muted); } .small { font-size: 13px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .grid { display: grid; gap: 12px; }
   .g4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-  .muted { color: var(--muted); }
-  .small { font-size: 13px; }
-
-  /* KPI tiles */
-  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
-  .kpi b { display: block; font-size: 26px; letter-spacing: -0.5px; }
-  .kpi span { color: var(--muted); font-size: 13px; }
-  .kpi .delta { color: var(--done); font-size: inherit; }
-
-  /* Pipeline */
-  .pipeline { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; position: relative; }
-  .stage { position: relative; padding: 0 6px; }
-  .stage .box { background: var(--panel); border: 1px solid var(--line); border-top: 4px solid var(--plan); border-radius: 10px; padding: 12px 10px; height: 100%; }
-  .stage.s-done .box { border-top-color: var(--done); }
-  .stage.s-next .box { border-top-color: var(--next); }
-  .stage .num { color: var(--dim); font-size: 12px; font-weight: 700; }
-  .stage h3 { font-size: 15px; margin: 2px 0 6px; }
-  .stage p { margin: 0 0 8px; font-size: 12.5px; color: var(--muted); }
-  .stage .tools { font-size: 11.5px; color: #cbd5e1; }
-  .stage:not(:last-child)::after { content: "➜"; position: absolute; right: -9px; top: 42%; color: var(--dim); font-size: 16px; z-index: 2; }
-  .flow-legend { display: flex; gap: 14px; margin: 12px 0 0; font-size: 13px; color: var(--muted); }
-  @media (max-width: 980px) { .pipeline { grid-template-columns: 1fr 1fr; gap: 12px; } .stage::after { display: none; } }
-
-  /* Roadmap */
-  .road { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-  @media (max-width: 980px) { .road { grid-template-columns: 1fr; } }
-  .ms { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; position: relative; }
-  .ms.m-done { border-color: rgba(34,197,94,.55); }
-  .ms.m-next { border-color: rgba(245,158,11,.55); }
-  .ms ul { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--muted); }
-  .ms li.ok::marker { content: "✔ "; color: var(--done); }
-  .bar { height: 8px; background: var(--panel2); border-radius: 99px; overflow: hidden; margin: 8px 0 4px; }
-  .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--done), var(--accent)); }
-  .you-are-here { position: absolute; top: -11px; right: 12px; background: var(--next); color: #111; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 99px; }
-
-  /* Tables */
-  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; }
-
-  /* USD tree */
-  .tree { font-family: "Cascadia Code", Consolas, monospace; font-size: 13px; line-height: 1.75; white-space: pre; overflow-x: auto; }
-  .tree .k { color: var(--accent2); } .tree .p { color: var(--accent); } .tree .c { color: var(--dim); }
-
-  /* Learn cards */
-  details.learn { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
-  details.learn summary { cursor: pointer; font-weight: 600; list-style: none; padding-left: 18px; position: relative; }
-  details.learn summary::-webkit-details-marker { display: none; }
-  details.learn summary::before { content: "▸"; color: var(--accent); transition: transform .15s; position: absolute; left: 0; }
-  details.learn[open] summary::before { transform: rotate(90deg); }
-  details.learn .one { display: block; color: var(--muted); font-weight: 400; font-size: 13px; }
-  details.learn p, details.learn ul { font-size: 14px; color: #cbd5e1; }
-  details.learn .where { font-size: 12.5px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 8px; margin-top: 10px; }
-  .formula { background: #0f172a; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-family: "Cascadia Code", Consolas, monospace; font-size: 13px; color: #e2e8f0; margin: 8px 0; }
-
-  figure { margin: 0; }
-  figure img { width: 100%; display: block; border-radius: 8px; }
-  figcaption { color: var(--muted); font-size: 13px; margin-top: 8px; }
-  .legend3 { display: flex; gap: 16px; font-size: 12.5px; color: var(--muted); margin: 0 0 10px; }
-  .legend3 i { display: inline-block; width: 22px; height: 12px; border: 1px solid var(--line); vertical-align: middle; margin-right: 4px; }
-
-  .story { border-left: 3px solid var(--next); }
-  .story .fix { color: var(--done); }
-  .check li { margin: 4px 0; }
-  .callout { background: linear-gradient(90deg, rgba(56,189,248,.08), rgba(167,139,250,.08)); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
-  footer { color: var(--dim); font-size: 12.5px; margin-top: 60px; }
+  .g5 { grid-template-columns: repeat(5, 1fr); }
+  @media (max-width: 900px) { .g5 { grid-template-columns: 1fr; } }
+  .pill { display: inline-block; padding: 1px 9px; border-radius: 99px; font-size: 12px; font-weight: 600; border: 1px solid; }
+  .done { color: var(--done); background: #f0fdf4; border-color: #bbf7d0; }
+  .next { color: var(--next); background: #fffbeb; border-color: #fde68a; }
+  .plan { color: var(--plan); background: #f8fafc; border-color: var(--line); }
+  .kpi b { display: block; font-size: 24px; } .kpi > span { color: var(--muted); font-size: 13px; }
+  .good { color: var(--done); }
+  img { max-width: 100%; display: block; }
+  .board { border-radius: 10px; border: 1px solid var(--line); box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  .ms { border-top: 4px solid var(--line); }
+  .ms.m-done { border-top-color: var(--done); } .ms.m-next { border-top-color: #f59e0b; }
+  table { border-collapse: collapse; font-size: 13.5px; }
+  td, th { padding: 4px 12px 4px 0; text-align: left; border-bottom: 1px solid var(--line); }
+  details { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+  details summary { cursor: pointer; font-weight: 600; }
+  details summary span { font-weight: 400; color: var(--muted); font-size: 13px; }
+  details p { margin: 8px 0 0; font-size: 14px; }
+  details .where { color: var(--muted); font-size: 12.5px; }
+  ul { margin: 6px 0; padding-left: 20px; } li { margin: 3px 0; }
+  .tree { font-family: "Cascadia Code", Consolas, monospace; font-size: 12px; white-space: pre; background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; margin-top: 8px; overflow-x: auto; }
+  footer { color: var(--muted); font-size: 12.5px; margin-top: 40px; }
 </style>
 </head>
-<body>
-<nav><div class="wrap">
-  <a href="#why">Why</a><a href="#pipeline">Pipeline</a><a href="#where">Where we are</a><a href="#results">Demo results</a>
-  <a href="#anatomy">USD anatomy</a><a href="#code">Code map</a><a href="#learn">Learn</a><a href="#lessons">Lessons</a><a href="#capture">Your capture</a>
-</div></nav>
+<body><div class="wrap">
 
-<div class="wrap">
-<header>
-  <div class="pill done">Milestone 1 of 5 complete</div>
-  <h1><span>Scan2USD</span></h1>
-  <div class="tagline">Scan-to-Sim asset pipeline: real-world captures in, physics-ready <b>OpenUSD</b> assets out, for robotics simulation.</div>
-  <div class="grid g4">
-    <div class="kpi"><b>33 / 33</b><span>automated quality checks pass on the demo asset</span></div>
-    <div class="kpi"><b>6.75 → <em class="delta" style="font-style:normal">0.24</em></b><span>color-chart error (mean CIEDE2000) after calibration</span></div>
-    <div class="kpi"><b>370k → 20k</b><span>triangles, still watertight, volume within 0.2%</span></div>
-    <div class="kpi"><b>25.6 s</b><span>scan → validated USD (was 125 s before tuning)</span></div>
-  </div>
-</header>
+<span class="pill done">M1 done</span> <span class="pill next">M2 next: real captures</span>
+<h1>Scan2USD</h1>
+<p class="muted">Phone scans in, physics-ready <b>OpenUSD</b> assets out, for robotics simulation.</p>
+<div class="grid g4">
+  <div class="card kpi"><b>33 / 33</b><span>quality checks pass on the demo asset</span></div>
+  <div class="card kpi"><b>6.75 → <span class="good">0.24</span></b><span>color error (ΔE2000) after chart calibration</span></div>
+  <div class="card kpi"><b>370k → 20k</b><span>triangles, still watertight</span></div>
+  <div class="card kpi"><b>25 s</b><span>scan → validated USD</span></div>
+</div>
 
-<!-- WHY -->
-<h2 id="why">Why this project exists</h2>
-<p class="lede">The Microsoft Robotics Simulation role asks for "scan → simulation-ready asset" skills. Each pipeline stage is chosen to turn a listed gap into a demonstrated skill, and color calibration carries your Physically-Based Calibration idea into a new domain.</p>
+<h2>Architecture</h2>
+<img class="board" src="figures/architecture.svg" alt="Whiteboard architecture diagram">
+<p class="small muted" style="margin-top:8px">The CLI calls one orchestrator, which runs five stage modules in order. The validator re-opens the written file, so it tests what a simulator would actually load.</p>
+
+<h2>Where we are</h2>
+<div class="grid g5">
+  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M1 · Pipeline core</h3><p class="small muted">Clean, calibrate, collide, weigh, export, validate. Synthetic demo, 45 tests.</p></div>
+  <div class="card ms m-next"><span class="pill next">next</span><h3 style="margin-top:6px">M2 · Real captures</h3><p class="small muted">Your phone photos → mesh (COLMAP / RealityScan); compare against measured mass and size.</p></div>
+  <div class="card ms"><span class="pill plan">planned</span><h3 style="margin-top:6px">M3 · Articulation</h3><p class="small muted">Hinged parts as UsdPhysics revolute joints, with limits.</p></div>
+  <div class="card ms"><span class="pill plan">planned</span><h3 style="margin-top:6px">M4 · Isaac Sim</h3><p class="small muted">Drop / stack scenes, domain-randomized synthetic images on the RTX 4090.</p></div>
+  <div class="card ms"><span class="pill plan">planned</span><h3 style="margin-top:6px">M5 · Showcase</h3><p class="small muted">Video, results table, public repo, resume line.</p></div>
+</div>
+
+<h2>Demo: synthetic mug</h2>
 <div class="card">
-<table>
-  <tr><th>Posting asks for</th><th>Scan2USD stage that shows it</th><th>Status</th></tr>
-  <tr><td>Reality capture (photogrammetry, NeRF / Gaussian splatting)</td><td>① Capture · ② Reconstruct</td><td><span class="pill next">next · needs your photos</span></td></tr>
-  <tr><td>Mesh optimization, PBR materials</td><td>③ Process (clean, scale, decimate) · color-calibrated albedo</td><td><span class="pill done">done</span></td></tr>
-  <tr><td>Collision geometry, mass / inertia, physics parameter estimation</td><td>④ Physics (CoACD hulls, inertia tensor, friction presets)</td><td><span class="pill done">done</span></td></tr>
-  <tr><td>Articulated objects</td><td>④ Physics: revolute joints (lids, hinges)</td><td><span class="pill plan">planned · M3</span></td></tr>
-  <tr><td>OpenUSD / glTF toolchains with physics metadata</td><td>⑤ Export (UsdPhysics schemas, glTF)</td><td><span class="pill done">done</span></td></tr>
-  <tr><td>Automated quality checks, simulation stability</td><td>⑥ Validate (33 checks + MuJoCo drop tests)</td><td><span class="pill done">done</span></td></tr>
-  <tr><td>Isaac Sim / MuJoCo, synthetic data, domain randomization</td><td>⑦ Simulate (MuJoCo done; Isaac Sim + Replicator planned)</td><td><span class="pill plan">partial · M4</span></td></tr>
-</table>
+  <img src="figures/demo_preview.png" alt="Raw scan, cleaned asset and collision hulls">
+  <p class="small muted" style="margin-top:8px">A fake scan with real-world problems (wrong axis, centimeters, debris, 370k triangles, warm color cast) goes in; a clean, calibrated, 371.9 g rigid body with 25 convex colliders comes out. Files are in <code>output\demo\</code>; run <code>scan2usd preview &lt;file&gt;</code> to render any mesh or USD.</p>
 </div>
-
-<!-- PIPELINE -->
-<h2 id="pipeline">The pipeline at a glance</h2>
-<p class="lede">Seven stages. Each one takes the previous stage's output and adds one kind of real-world truth: shape, scale, color, then physics.</p>
-<div class="pipeline">
-  <div class="stage s-next"><div class="box"><div class="num">01</div><h3>Capture</h3><p>Phone photos circling the object, plus a color chart in the same light.</p><div class="tools">Phone camera · ColorChecker</div></div></div>
-  <div class="stage s-next"><div class="box"><div class="num">02</div><h3>Reconstruct</h3><p>Photos → 3D mesh (photogrammetry) or Gaussian splats.</p><div class="tools">RealityScan · COLMAP · gsplat</div></div></div>
-  <div class="stage s-done"><div class="box"><div class="num">03</div><h3>Process</h3><p>Remove debris, fix holes, Z-up, meters, decimate while staying watertight.</p><div class="tools">trimesh · pymeshlab</div></div></div>
-  <div class="stage s-done"><div class="box"><div class="num">04</div><h3>Calibrate</h3><p>Fit a 3×3 color matrix on the chart; apply it to the albedo.</p><div class="tools">numpy · CIEDE2000</div></div></div>
-  <div class="stage s-done"><div class="box"><div class="num">05</div><h3>Physics</h3><p>Convex decomposition for collision; mass, CoM and inertia from volume × density.</p><div class="tools">CoACD · manifold3d</div></div></div>
-  <div class="stage s-done"><div class="box"><div class="num">06</div><h3>Export + Validate</h3><p>OpenUSD with UsdPhysics + glTF; 33 checks incl. drop tests.</p><div class="tools">usd-core · MuJoCo</div></div></div>
-  <div class="stage"><div class="box"><div class="num">07</div><h3>Simulate</h3><p>Isaac Sim scenes and domain-randomized synthetic images.</p><div class="tools">Isaac Sim · Replicator</div></div></div>
-</div>
-<div class="flow-legend"><span><span class="pill done">done</span> built and tested</span><span><span class="pill next">next</span> up next</span><span><span class="pill plan">planned</span> later milestone</span></div>
-
-<!-- WHERE -->
-<h2 id="where">Where we are</h2>
-<p class="lede">We built the pipeline's core first, on a synthetic "scan," so it was ready before your photos. Real data comes next.</p>
-<div class="road">
-  <div class="ms m-done"><span class="pill done">done</span><h3 style="margin-top:8px">M1 · Pipeline core</h3>
-    <div class="bar"><i style="width:100%"></i></div>
-    <ul><li class="ok">Clean / scale / decimate</li><li class="ok">Color-chart calibration</li><li class="ok">Convex collision + inertia</li><li class="ok">USD + glTF export</li><li class="ok">Validation + MuJoCo drops</li><li class="ok">CLI, demo, 35 tests</li></ul></div>
-  <div class="ms m-next"><span class="you-are-here">YOU ARE HERE</span><span class="pill next">next</span><h3 style="margin-top:8px">M2 · Real captures</h3>
-    <div class="bar"><i style="width:0%"></i></div>
-    <ul><li>Shoot 3–5 objects</li><li>Reconstruct (RealityScan / COLMAP)</li><li>Chart corner picking / auto-detect</li><li>Measured mass &amp; size ground truth</li><li>Textured meshes end-to-end</li></ul></div>
-  <div class="ms"><span class="pill plan">planned</span><h3 style="margin-top:8px">M3 · Articulation</h3>
-    <div class="bar"><i style="width:0%"></i></div>
-    <ul><li>Two-part object (hinged lid)</li><li>UsdPhysics RevoluteJoint + limits</li><li>Joint stability tests</li></ul></div>
-  <div class="ms"><span class="pill plan">planned</span><h3 style="margin-top:8px">M4 · Isaac Sim + data</h3>
-    <div class="bar"><i style="width:0%"></i></div>
-    <ul><li>Load assets on the RTX 4090</li><li>Drop / stack scenes</li><li>Domain-randomized renders</li><li>Gaussian-splat path (optional)</li></ul></div>
-  <div class="ms"><span class="pill plan">planned</span><h3 style="margin-top:8px">M5 · Showcase</h3>
-    <div class="bar"><i style="width:0%"></i></div>
-    <ul><li>Results table + video/GIF</li><li>Make repo public</li><li>Resume line with real numbers</li></ul></div>
-</div>
-
-<!-- RESULTS -->
-<h2 id="results">Demo results (synthetic mug)</h2>
-<p class="lede">The demo builds a mug, then makes it look like a real export: Y-up, centimeters, 0.2 mm noise, two floating debris specks, 370k triangles, and a warm camera color cast. The pipeline has to undo all of it, and because the true color and shape are known we can check how well it does.</p>
-<div class="grid g2">
-  <div class="card">
-    <h3>Color calibration: captured · corrected · reference</h3>
-    <div class="legend3"><span>left: as the camera saw it</span><span>middle: after the 3×3 CCM</span><span>right: ColorChecker reference</span></div>
-    <figure><img src="figures/color_chart.svg" alt="ColorChecker patches before and after calibration"><figcaption>Each patch is split into three. The left third shows the camera's warm cast; the middle and right thirds should be indistinguishable. Under each patch is its CIEDE2000 error (ΔE ≈ 1 is about the smallest difference a person can see). On the mug itself, glaze error vs. ground truth went from <b>6.08 → 0.68</b>.</figcaption></figure>
-  </div>
-  <div class="card">
-    <h3>Collision: 25 convex hulls hugging a concave mug</h3>
-    <figure><img src="figures/collision_hulls.svg" alt="Convex hulls over the mug silhouette"><figcaption>Grey is the render mesh; each colored outline is one convex hull. A single hull would fill the cup's opening and the hole in the handle, so a robot couldn't put anything inside it. The hulls' combined volume is 1.135× the real solid.</figcaption></figure>
+<div class="grid" style="grid-template-columns: 1.6fr 1fr; margin-top:12px">
+  <div class="card"><h3>Color chart: captured · corrected · reference</h3><img src="figures/color_chart.svg" alt="ColorChecker before/after"></div>
+  <div class="card"><h3>What each color reference buys you</h3>
+    <p class="small muted">Mean ΔE2000 on the demo's color cast. Below about 2 is hard to notice.</p>
+    <table>
+      <tr><th>Reference</th><th>ΔE</th><th>Cost</th></tr>
+      <tr><td>none</td><td>6.7</td><td>–</td></tr>
+      <tr><td>white paper (white balance only)</td><td>3.8</td><td>free</td></tr>
+      <tr><td>18% gray card</td><td class="good">1.7</td><td>≈ $10</td></tr>
+      <tr><td>ColorChecker (24 patches)</td><td class="good"><b>0.2</b></td><td>≈ $70–110</td></tr>
+    </table>
+    <p class="small muted" style="margin-top:8px">A gray card fixes white balance and exposure. The 24-patch chart also fixes hue cross-talk.</p>
   </div>
 </div>
-<div class="grid g3" style="margin-top:14px">
-  <div class="card"><h3>Physics estimate</h3>
-    <table><tr><td>Volume</td><td class="mono">154.9 cm³</td></tr><tr><td>Mass (ceramic, 2400 kg/m³)</td><td class="mono">371.9 g</td></tr><tr><td>Center of mass</td><td class="mono">(-1.41, 0.00, 4.00) cm</td></tr><tr><td>Principal inertia</td><td class="mono">5.36 · 5.71 · 6.53 ×10⁻⁴ kg·m²</td></tr></table>
-    <p class="small muted">The CoM sits ~5 mm from the cup's axis, toward the handle, as it should.</p></div>
-  <div class="card"><h3>MuJoCo drop tests</h3>
-    <table><tr><th>Pose</th><th>Settles</th><th>Impact / rest penetration</th></tr>
-      <tr><td>upright</td><td>0.14 s</td><td class="mono">1.46 / 0.003 mm</td></tr>
-      <tr><td>tilted 25°</td><td>0.61 s</td><td class="mono">1.50 / 0.003 mm</td></tr>
-      <tr><td>on its side</td><td>0.36 s</td><td class="mono">1.47 / 0.003 mm</td></tr></table></div>
-  <div class="card"><h3>Where the time goes</h3>
-    <table><tr><td>Convex decomposition</td><td class="mono">19.3 s</td></tr><tr><td>Clean + decimate</td><td class="mono">5.6 s</td></tr><tr><td>Validation incl. 3 sims</td><td class="mono">0.4 s</td></tr><tr><td>Load / color / mass / export</td><td class="mono">0.3 s</td></tr><tr><th>Total</th><th class="mono">25.6 s</th></tr></table></div>
+
+<h2>Learn</h2>
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr))">
+  <details><summary>Photogrammetry <span>· photos → mesh</span></summary>
+    <p>It matches features across overlapping photos, solves for the camera positions, then builds a textured surface. Gaussian splatting looks more photoreal but has no clean surface, so simulation still needs a mesh.</p>
+    <p class="where">Comes before the pipeline · M2</p></details>
+  <details><summary>Color calibration <span>· your Physically-Based Calibration, for scans</span></summary>
+    <p>Fit a 3×3 matrix that maps the camera's colors of known chart patches to their true values, in <i>linear</i> light, then apply it to the scan's albedo. ΔE2000 measures the result the way eyes perceive it (≈ 1 is just noticeable).</p>
+    <p class="where"><code>color.py</code> · <code>fit_ccm</code>, <code>fit_neutral</code></p></details>
+  <details><summary>Convex decomposition <span>· why physics wants convex pieces</span></summary>
+    <p>Fast collision tests (GJK) only work on convex shapes. CoACD splits a concave mug into hulls that keep its cavity and handle hole open, so things can go inside it.</p>
+    <p class="where"><code>physics.py</code> · runs on a 4k-triangle proxy for speed</p></details>
+  <details><summary>Mass &amp; inertia <span>· how hard to push and to spin</span></summary>
+    <p>Mass = volume × density, which needs a watertight mesh. The 3×3 inertia tensor is stored as 3 principal moments plus a rotation; it's only physical if I₁ + I₂ ≥ I₃.</p>
+    <p class="where"><code>physics.py</code> · or pass a measured <code>--mass</code></p></details>
+  <details><summary>OpenUSD &amp; UsdPhysics <span>· what's inside the output</span></summary>
+    <p>A tree of prims with physics schemas applied, readable by Isaac Sim, Omniverse, Blender and Houdini.</p>
+<div class="tree">/ceramic_mug          RigidBodyAPI · MassAPI   (Z-up, meters, kg)
+  Looks/M_surface     UsdPreviewSurface
+  Looks/PM_contact    friction · restitution
+  render              visible mesh
+  collision/hull_###  CollisionAPI · convexHull · purpose=guide</div></details>
+  <details><summary>Drop tests <span>· what "stable" means</span></summary>
+    <p>MuJoCo drops the asset in 3 poses and checks for no NaNs, no energy gain, shallow penetration, and coming to rest. Contacts are soft springs, so impact depth depends on the contact time constant.</p>
+    <p class="where"><code>simulate.py</code></p></details>
 </div>
 
-<!-- ANATOMY -->
-<h2 id="anatomy">Anatomy of an output asset</h2>
-<p class="lede">What's inside <code>ceramic_mug.usda</code>. USD is a tree of <i>prims</i>, and each prim can have <i>API schemas</i> applied that give it extra meaning, such as "this is a rigid body."</p>
-<div class="grid g2">
-<div class="card tree"><span class="c">#usda 1.0  ( upAxis = "Z", metersPerUnit = 1, kilogramsPerUnit = 1 )</span>
+<h2>Lessons so far</h2>
+<ul class="small">
+  <li><b>517 g → 372 g:</b> decimation broke watertightness, so the mass estimate fell back to hulls. Fixed with topology-preserving decimation.</li>
+  <li><b>125 s → 25 s:</b> 98% of the time was in convex decomposition. Fixed by running it on a lighter proxy mesh.</li>
+  <li><b>6.7 mm in every pose:</b> the same depth everywhere pointed to contact softness, not geometry. Fixed with stiffer contacts and separate impact / resting checks.</li>
+</ul>
 
-<span class="k">Xform</span> <span class="p">/ceramic_mug</span>   <span class="c">kind=component · RigidBodyAPI · MassAPI</span>
- ├─ <span class="c">physics:mass, centerOfMass, diagonalInertia, principalAxes</span>
- ├─ <span class="k">Scope</span> <span class="p">Looks</span>
- │   ├─ <span class="k">Material</span> <span class="p">M_surface</span>   <span class="c">UsdPreviewSurface (albedo, roughness)</span>
- │   └─ <span class="k">Material</span> <span class="p">PM_contact</span>  <span class="c">PhysicsMaterialAPI (friction, restitution)</span>
- ├─ <span class="k">Mesh</span> <span class="p">render</span>         <span class="c">what cameras see · bound to M_surface</span>
- └─ <span class="k">Scope</span> <span class="p">collision</span>
-     ├─ <span class="k">Mesh</span> <span class="p">hull_000</span>   <span class="c">purpose=guide · CollisionAPI · convexHull</span>
-     ├─ <span class="k">Mesh</span> <span class="p">hull_001</span>   <span class="c">… bound to PM_contact (physics purpose)</span>
-     └─ <span class="c">… 25 hulls</span></div>
-<div class="card">
-  <h3>Why it's split this way</h3>
-  <ul class="small" style="color:#cbd5e1">
-    <li><b>The render and collision meshes are separate.</b> Cameras need detail; physics engines need a few convex shapes. Marking the hulls <code>purpose=guide</code> keeps them out of rendered images.</li>
-    <li><b>Mass lives on the root prim.</b> The physics engine moves the whole Xform as one rigid body, and every collision mesh under it moves with it.</li>
-    <li><b>Inertia is stored in its principal frame.</b> USD keeps 3 numbers plus a rotation instead of a full 3×3 tensor; see "Inertia tensor" under Learn.</li>
-    <li><b>Units are explicit.</b> Z-up, meters and kilograms are written into the stage. Isaac Sim relies on these; an asset authored in centimeters but read as meters would be 100× too large and 10⁶× too heavy.</li>
-    <li><b>kind=component</b> marks this as a reusable asset that a scene can reference many times (e.g. 50 mugs in a scene, one file).</li>
-  </ul>
-</div>
+<h2>Next: your capture</h2>
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr))">
+  <div class="card small"><h3>Shoot</h3><ul>
+    <li><b>Start easy:</b> a matte, textured object (mug, wooden toy, sneaker).</li>
+    <li><b>Then the Xbox controller:</b> on-brand and a good grasping target, but dark glossy plastic is hard. Use soft light and avoid reflections.</li>
+    <li><b>40–80 photos</b> per object in 3 rings around it. Lock exposure, white balance and focus; no flash.</li>
+    <li>Put a newspaper under the object, and a <b>gray card</b> (or white paper) in a few frames.</li></ul></div>
+  <div class="card small"><h3>Measure</h3><ul>
+    <li>Weight on a kitchen scale (g) and one ruler dimension (mm).</li>
+    <li>That lets us report "predicted vs. measured," a strong result line.</li>
+    <li>Drop files into <code>data\raw\&lt;object&gt;\</code> (git-ignored) with a <code>notes.txt</code>.</li></ul></div>
 </div>
 
-<!-- CODE MAP -->
-<h2 id="code">Code map</h2>
-<p class="lede">Everything lives in <code>src/scan2usd/</code>. Each module maps to a pipeline stage, and <code>pipeline.py</code> calls them in order.</p>
-<div class="card">
-<table>
-  <tr><th>Module</th><th>Stage</th><th>What it does</th></tr>
-  <tr><td class="mono">mesh_ops.py</td><td>③ Process</td><td>Load any mesh format, drop floaters, fill holes, Z-up / meters, place on the ground, topology-preserving decimation</td></tr>
-  <tr><td class="mono">color.py</td><td>④ Calibrate</td><td>sRGB↔linear↔Lab, CIEDE2000, chart sampling via homography, least-squares CCM, albedo range check</td></tr>
-  <tr><td class="mono">physics.py</td><td>⑤ Physics</td><td>Material presets, CoACD decomposition on a light proxy mesh, mass / CoM / inertia, principal frame</td></tr>
-  <tr><td class="mono">usd_io.py</td><td>⑥ Export</td><td>Writes UsdGeom + UsdShade + UsdPhysics; reads assets back for validation; glTF export (Y-up)</td></tr>
-  <tr><td class="mono">simulate.py</td><td>⑥ Validate</td><td>MuJoCo drop tests: stability (energy, penetration, NaN) and settling</td></tr>
-  <tr><td class="mono">validate.py</td><td>⑥ Validate</td><td>33 checks on the <i>written file</i>, producing Markdown and JSON reports</td></tr>
-  <tr><td class="mono">pipeline.py</td><td>all</td><td>Runs the stages in order, times each one, writes <code>build_report.json</code></td></tr>
-  <tr><td class="mono">demo.py · cli.py</td><td>tools</td><td>Synthetic mug capture; <code>scan2usd build | validate | calibrate | demo | materials</code></td></tr>
-</table>
-<p class="small muted" style="margin-bottom:0">Try it: <code>.venv\Scripts\scan2usd demo</code>, then open <code>output\demo\asset\validation.md</code>. To regenerate this page's figures: <code>.venv\Scripts\python scripts\make_doc_figures.py</code>.</p>
-</div>
-
-<!-- LEARN -->
-<h2 id="learn">Learn: the concepts behind each stage</h2>
-<p class="lede">Click a card to open it. Each one gives the idea in plain words, why it matters for robot simulation, and where it lives in the code.</p>
-<div class="grid g2">
-  <details class="learn"><summary>Photogrammetry vs. Gaussian splatting <span class="one">two ways to turn photos into 3D</span></summary>
-    <p><b>Photogrammetry</b> finds the same feature points across many photos, solves for where each camera was (<i>structure from motion</i>), then builds a dense surface mesh with a texture. Output: triangles, which is what physics engines need.</p>
-    <p><b>3D Gaussian splatting</b> represents the scene as millions of fuzzy colored blobs optimized to reproduce the photos. Novel views look photoreal, but there's no clean surface; you have to extract a mesh before you can simulate it.</p>
-    <p>Robot simulation needs <i>both</i> looks and physics. A common pattern is meshes for collision and mass, and splats (or a baked texture) for appearance.</p>
-    <div class="where">In Scan2USD: stage ② (M2). Photogrammetry first, because it gives a mesh directly.</div></details>
-
-  <details class="learn"><summary>Color calibration &amp; CIEDE2000 <span class="one">your Physically-Based Calibration, for scans</span></summary>
-    <p>Cameras don't record "true" color: lighting tint, white balance and sensor response all skew it. A ColorChecker has 24 patches with known values. We measure what the camera recorded for each patch and solve for the 3×3 matrix <b>M</b> that best maps measured → true (least squares, in <i>linear</i> light):</p>
-    <div class="formula">reference_rgb ≈ M · measured_rgb   (24 equations per channel, 9 unknowns)</div>
-    <p>Then we apply M to the scan's texture. <b>CIEDE2000 (ΔE)</b> measures the color difference the way human vision perceives it: ΔE ≈ 1 is about the smallest visible difference, and below 2 is good for most work.</p>
-    <p>Why robots care: perception models trained on synthetic images transfer better to reality when the simulated colors match the real ones (<i>sim-to-real gap</i>).</p>
-    <div class="where">In code: <span class="mono">color.py</span> · <span class="mono">fit_ccm</span>, <span class="mono">delta_e_2000</span> (verified against the published Sharma test pairs).</div></details>
-
-  <details class="learn"><summary>Linear vs. sRGB color <span class="one">why the math happens in "linear"</span></summary>
-    <p>Image files store sRGB values that are gamma-encoded, i.e. packed nonlinearly to suit human vision. Light itself adds linearly. Matrix math and lighting are only physically correct in <b>linear</b> values, so we decode, do the math, and re-encode.</p>
-    <p>PBR <b>albedo</b> also has a plausible range: nothing real is darker than charcoal (≈ sRGB 30) or brighter than fresh snow (≈ sRGB 240). The pipeline reports texels outside that range.</p>
-    <div class="where">In code: <span class="mono">srgb_to_linear</span>, <span class="mono">albedo_range_stats</span>.</div></details>
-
-  <details class="learn"><summary>Convex decomposition <span class="one">why physics engines want convex pieces</span></summary>
-    <p>Fast collision algorithms (GJK/EPA, used by PhysX and MuJoCo) only work on <b>convex</b> shapes, where any straight line between two points stays inside. A mug isn't convex: its cavity and handle hole are concave.</p>
-    <p><b>CoACD</b> (SIGGRAPH 2022) cuts the mesh into pieces whose convex hulls stay within a concavity tolerance (<code>--hull-threshold</code>). Lower tolerance gives a tighter fit, more hulls, and slower simulation.</p>
-    <p>Trade-off we measured: running CoACD on a 4k-triangle proxy instead of the 20k render mesh cut the time from 123 s to 19 s, with the same fit.</p>
-    <div class="where">In code: <span class="mono">physics.convex_decompose</span>. PhysX limits a hull to 255 vertices; we cap at 64.</div></details>
-
-  <details class="learn"><summary>Mass, center of mass &amp; the inertia tensor <span class="one">how hard an object is to push and spin</span></summary>
-    <p><b>Mass</b> = volume × density. That needs a closed (watertight) mesh, because "volume" is meaningless for an open surface. <b>Center of mass</b> is the average position of all material: the point the object balances on.</p>
-    <p>The <b>inertia tensor</b> (3×3) says how hard it is to spin the object around each axis. Every rigid body has three <b>principal axes</b> where this matrix becomes diagonal; USD stores those three moments plus a rotation quaternion.</p>
-    <div class="formula">I = R · diag(I₁, I₂, I₃) · Rᵀ      physically valid only if I₁ + I₂ ≥ I₃ (triangle inequality)</div>
-    <p>Wrong inertia is a classic simulation bug: objects wobble or spin unnaturally. The validator checks positivity and the triangle inequality.</p>
-    <div class="where">In code: <span class="mono">physics.estimate_mass_properties</span>, <span class="mono">principal_frame</span>. Better yet: weigh the real object and pass <code>--mass</code>.</div></details>
-
-  <details class="learn"><summary>OpenUSD &amp; UsdPhysics <span class="one">the shared language of simulators</span></summary>
-    <p><b>OpenUSD</b> (Pixar, now the AOUSD standard) describes 3D scenes as layered trees of prims. NVIDIA Isaac Sim, Omniverse, Apple, Blender and Houdini all read it.</p>
-    <p><b>UsdPhysics</b> is the standard physics vocabulary: <code>RigidBodyAPI</code>, <code>MassAPI</code>, <code>CollisionAPI</code>, joints and physics materials. Writing it once means any compliant simulator gets the same physical object, which makes it more than a 3D model.</p>
-    <div class="where">In code: <span class="mono">usd_io.write_usd</span> / <span class="mono">read_usd</span>. See "Anatomy" above.</div></details>
-
-  <details class="learn"><summary>Soft contacts &amp; drop tests <span class="one">what "stable" means in simulation</span></summary>
-    <p>MuJoCo models contact as a stiff spring-damper, so objects briefly sink in on impact. That penetration depends on impact speed and the contact <i>time constant</i> (<code>solref</code>), not on the shape, which is why all three drop poses first showed exactly 6.72 mm.</p>
-    <p>We drop each asset in three poses and check for: no NaNs, no energy gain (energy appearing from nowhere signals instability), shallow impact and resting penetration, and coming to rest.</p>
-    <div class="where">In code: <span class="mono">simulate.drop_test</span>; <code>solref = 0.005</code> (5× the 1 ms timestep).</div></details>
-
-  <details class="learn"><summary>Synthetic data &amp; domain randomization <span class="one">coming in M4</span></summary>
-    <p>Robots learn perception (detect, segment, estimate pose) from labeled images. Rendering them in simulation gives perfect labels for free. <b>Domain randomization</b> varies lighting, materials, camera pose and distractors so the model learns what actually matters and generalizes to the real world.</p>
-    <p>Accurate scanned assets with calibrated color narrow the sim-to-real gap; randomization covers what's left.</p>
-    <div class="where">Planned: Isaac Sim Replicator on the RTX 4090.</div></details>
-</div>
-
-<!-- LESSONS -->
-<h2 id="lessons">Engineering lessons from today</h2>
-<p class="lede">Three real bugs that the validator and tests surfaced. These make good interview stories: each one is a measurement, a root cause, and a fix.</p>
-<div class="grid g3">
-  <div class="card story"><h3>"The mug weighs 517 g"</h3><p class="small">The first run said 517 g; a real ceramic mug is about 350 g. Root cause: the decimator left 14 non-manifold edges, so the mesh wasn't watertight and volume fell back to the convex-hull union, which fills part of the cavity.</p><p class="small fix">Fix: topology-preserving decimation (pymeshlab). Watertight again, volume within 0.12%, mass 372 g.</p></div>
-  <div class="card story"><h3>"125 seconds per object"</h3><p class="small">Profiling showed 98% of the time in CoACD. It was searching cuts on 20k render triangles, and the non-manifold input triggered an extra remeshing pass.</p><p class="small fix">Fix: decompose a 4k-triangle proxy. 123 s → 19 s, same fit quality.</p></div>
-  <div class="card story"><h3>"6.72 mm in every pose"</h3><p class="small">Identical penetration in three different poses was the clue: it came from contact softness, not geometry. The check was also measuring the impact transient instead of resting contact.</p><p class="small fix">Fix: stiffer contacts (solref 0.005), separate impact and resting thresholds. Now 1.5 mm / 0.003 mm.</p></div>
-</div>
-
-<!-- CAPTURE -->
-<h2 id="capture">Your capture checklist (for M2)</h2>
-<p class="lede">The pipeline doesn't need these to keep moving, but real data is what makes the project credible. Here's what helps most, in priority order.</p>
-<div class="grid g2">
-  <div class="card"><h3>What to shoot</h3>
-    <ul class="check small" style="color:#cbd5e1">
-      <li><b>3–5 everyday rigid objects</b> with matte, textured surfaces: a mug, a wooden toy or block, a sneaker, a piece of fruit, a cardboard box.</li>
-      <li><b>One articulated object</b> for M3: a box with a hinged lid, a jewelry box, or a laptop-sized case. Shoot it closed, and open if possible.</li>
-      <li><b>Avoid for now</b>: shiny, transparent or very thin objects (glass, chrome, cables). Photogrammetry can't match features on them.</li>
-    </ul>
-    <h3 style="margin-top:12px">Ground-truth measurements (very valuable)</h3>
-    <ul class="check small" style="color:#cbd5e1">
-      <li>Weigh each object on a kitchen scale (grams).</li>
-      <li>Measure one dimension with a ruler (mm), e.g. height.</li>
-      <li>These let us <i>validate</i> the estimates: "predicted 372 g, measured 361 g" is a strong result line.</li>
-    </ul></div>
-  <div class="card"><h3>How to shoot (per object)</h3>
-    <ul class="check small" style="color:#cbd5e1">
-      <li><b>60–120 photos</b> in 3 rings around the object (low ≈15°, mid ≈45°, high ≈70°), one step every 10–15°, with 70–80% overlap between neighbors.</li>
-      <li><b>Soft, even light</b>: overcast daylight or diffuse indoor light. No flash, no hard sun.</li>
-      <li><b>Lock exposure, white balance and focus</b> (Pro mode). Changing settings between shots hurts both reconstruction and color.</li>
-      <li>The object should fill ~60% of the frame. Put it on a textured surface (newspaper) so the software can track camera positions.</li>
-      <li><b>Color chart</b>: in the same light and settings, one photo with the chart flat, glare-free, filling ~¼ of the frame. If you don't have a ColorChecker, tell me; a gray card can work as a simpler fallback.</li>
-      <li>If your phone supports it, shoot RAW + JPEG. Optional: flip the object and do a second pass for the underside.</li>
-    </ul></div>
-</div>
-<div class="callout" style="margin-top:14px">
-  <b>Drop photos into</b> <code>D:\Local Projects\Scan2USD\data\raw\&lt;object_name&gt;\</code>. That folder is git-ignored, so large captures stay out of the repo. Add a short <code>notes.txt</code> with the measured mass and size.
-</div>
-
-<footer>Scan2USD · personal R&amp;D project by Yibo Liu · Oct 2026 · Page last updated after Milestone 1. Figures are generated from the demo build by <span class="mono">scripts/make_doc_figures.py</span>.</footer>
-</div>
-</body>
+<footer>Scan2USD · personal R&amp;D project · Yibo Liu · Oct 2026 · Figures: <code>scripts/make_doc_figures.py</code></footer>
+</div></body>
 </html>

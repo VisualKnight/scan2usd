@@ -34,8 +34,8 @@ Requires Python 3.10–3.12. With [uv](https://docs.astral.sh/uv/):
 ```powershell
 uv venv --python 3.11
 uv pip install -e ".[dev]"
-.venv\Scripts\scan2usd demo            # writes output\demo\
-.venv\Scripts\python -m pytest         # 35 tests
+.venv\Scripts\scan2usd demo            # writes output\demo\ (see output\demo\preview.png)
+.venv\Scripts\python -m pytest         # 45 tests
 ```
 
 ## Usage
@@ -48,13 +48,29 @@ scan2usd build mug.obj -o output\mug --units cm --up-axis y --material ceramic `
 # Scale from a ruler measurement (meters) and a measured mass (kg)
 scan2usd build shoe.glb -o output\shoe --scale-to 0.285 --scale-axis max --mass 0.41
 
+# No ColorChecker? Use an 18% gray card (or white paper with --gray-reflectance none)
+scan2usd build mug.ply -o output\mug --gray-card-image card.jpg --gray-card-box "820,410,980,560"
+
+# Render a PNG of any mesh or USD asset (no 3D app needed)
+scan2usd preview output\mug\mug.usd
+
 # Validate any USD asset; fit a color matrix on its own
 scan2usd validate output\mug\mug.usd --markdown report.md
 scan2usd calibrate chart.jpg --chart-corners corners.json -o color_calibration.json
+scan2usd calibrate card.jpg --neutral-box "820,410,980,560" -o color_calibration.json
 scan2usd materials                     # density / friction presets
 ```
 
 Chart corners are the outer corners of the 6×4 patch grid in pixels, ordered top-left (the "dark skin" patch corner), top-right, bottom-right, bottom-left.
+
+Color reference options, measured on the demo's color cast (mean CIEDE2000; about 2 is barely noticeable):
+
+| Reference | ΔE2000 | Corrects |
+|---|---|---|
+| none | 6.7 | – |
+| white paper (`--gray-reflectance none`) | 3.8 | white balance |
+| 18% gray card | 1.7 | white balance + exposure |
+| ColorChecker Classic (24 patches) | 0.2 | white balance + exposure + hue cross-talk |
 
 Outputs in the build directory:
 
@@ -65,6 +81,7 @@ Outputs in the build directory:
 | `textures/<name>_albedo.png` | Calibrated albedo (textured inputs) |
 | `color_calibration.json` | CCM and ΔE statistics |
 | `validation.md` | Human-readable check report |
+| `preview.png` | Render mesh and collision hulls, side by side |
 | `build_report.json` | All metrics, timings and validation results |
 
 ## Asset layout
@@ -89,6 +106,7 @@ Stage metadata: `upAxis = Z`, `metersPerUnit = 1`, `kilogramsPerUnit = 1`.
 | `usd_io.py` | USD writer / reader, glTF export |
 | `simulate.py` | MuJoCo drop tests |
 | `validate.py` | Quality checks and reports |
+| `preview.py` | Dependency-free preview renders (numpy rasterizer) |
 | `pipeline.py` | End-to-end orchestration |
 | `demo.py`, `cli.py` | Synthetic capture, command line |
 

@@ -184,6 +184,7 @@ class Calibration:
     delta_e_before: dict = field(default_factory=dict)
     delta_e_after: dict = field(default_factory=dict)
     patches_used: int = 24
+    method: str = "colorchecker24"
 
     @property
     def matrix(self) -> np.ndarray:
@@ -225,6 +226,43 @@ def fit_ccm(measured: np.ndarray, reference: np.ndarray | None = None, clip_leve
 
 def apply_ccm_linear(rgb_linear: np.ndarray, ccm: np.ndarray) -> np.ndarray:
     return np.clip(np.asarray(rgb_linear, dtype=np.float64) @ np.asarray(ccm).T, 0.0, 1.0)
+
+
+def sample_region(image_srgb: np.ndarray, box) -> np.ndarray:
+    """Median linear RGB inside a pixel box (x0, y0, x1, y1)."""
+    img = np.asarray(image_srgb, dtype=np.float64)
+    if img.max() > 1.0:
+        img = img / 255.0
+    x0, y0, x1, y1 = (int(round(v)) for v in box)
+    win = srgb_to_linear(img[y0:y1, x0:x1, :3]).reshape(-1, 3)
+    if win.size == 0:
+        raise ValueError(f"empty region {box}")
+    return np.median(win, axis=0)
+
+
+def fit_neutral(measured: np.ndarray, reflectance: float | None = 0.18) -> Calibration:
+    """Per-channel gains from a neutral target (gray card or white paper).
+
+    With a known `reflectance` (18% for a standard gray card) this corrects white balance
+    *and* exposure. With `reflectance=None` (e.g. printer paper of unknown brightness)
+    it corrects white balance only and keeps the green channel's exposure. Unlike the
+    24-patch fit, it cannot correct cross-channel (hue) errors.
+    """
+    m = np.atleast_2d(np.asarray(measured, dtype=np.float64))
+    if np.any(m <= 0) or np.any(m >= 0.98):
+        raise ValueError("neutral target is black or clipped; adjust exposure")
+    level = m[:, 1] if reflectance is None else np.full(len(m), float(reflectance))
+    target = np.repeat(level[:, None], 3, axis=1)
+    gains = (m * target).sum(0) / (m * m).sum(0)
+    ccm = np.diag(gains)
+    corrected = np.clip(m @ ccm.T, 0.0, None)
+    return Calibration(
+        ccm=ccm.tolist(),
+        delta_e_before=_de_stats(m, target),
+        delta_e_after=_de_stats(corrected, target),
+        patches_used=len(m),
+        method="neutral" if reflectance is not None else "white_balance",
+    )
 
 
 def apply_ccm_srgb8(rgb8: np.ndarray, ccm: np.ndarray) -> np.ndarray:

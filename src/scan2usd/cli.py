@@ -21,6 +21,22 @@ def _corners(text: str) -> list[list[float]]:
     return pts
 
 
+def _box(text: str) -> list[float]:
+    vals = [float(v) for v in text.replace(";", ",").split(",")]
+    if len(vals) != 4 or vals[2] <= vals[0] or vals[3] <= vals[1]:
+        raise argparse.ArgumentTypeError("box must be 'x0,y0,x1,y1' in pixels with x1>x0, y1>y0")
+    return vals
+
+
+def _reflectance(text: str) -> float | None:
+    if text.lower() in ("none", "wb", "auto"):
+        return None
+    v = float(text)
+    if not 0.0 < v < 1.0:
+        raise argparse.ArgumentTypeError("reflectance must be between 0 and 1 (e.g. 0.18), or 'none'")
+    return v
+
+
 def _print_validation(rep) -> None:
     c = rep.counts
     print(f"validation: {rep.status.upper()}  ({c['pass']} passed, {c['warn']} warnings, {c['fail']} failed)")
@@ -47,10 +63,15 @@ def _add_build_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--roughness", type=float, default=0.5)
     p.add_argument("--chart-image", type=Path, help="photo containing a ColorChecker Classic")
     p.add_argument("--chart-corners", type=_corners, help="chart corners TL;TR;BR;BL as 'x,y;...' or JSON file")
+    p.add_argument("--gray-card-image", type=Path, help="photo containing a gray card or white paper")
+    p.add_argument("--gray-card-box", type=_box, help="neutral region 'x0,y0,x1,y1' in pixels")
+    p.add_argument("--gray-reflectance", type=_reflectance, default=0.18,
+                   help="reflectance of the neutral target (0.18 gray card), or 'none' for white balance only")
     p.add_argument("--ccm", type=Path, help="previously fitted color_calibration.json")
     p.add_argument("--usda", action="store_true", help="write human-readable .usda instead of binary .usd")
     p.add_argument("--no-gltf", action="store_true")
     p.add_argument("--no-sim", action="store_true", help="skip MuJoCo drop tests")
+    p.add_argument("--no-preview", action="store_true", help="skip preview.png")
 
 
 def _options(args, name: str):
@@ -61,8 +82,9 @@ def _options(args, name: str):
         up_axis=args.up_axis, units=args.units, scale_to=args.scale_to, scale_axis=args.scale_axis,
         target_faces=args.target_faces, collision=args.collision, hull_threshold=args.hull_threshold,
         max_hulls=args.max_hulls, roughness=args.roughness, chart_image=args.chart_image,
-        chart_corners=args.chart_corners, ccm_path=args.ccm, usda=args.usda,
-        gltf=not args.no_gltf, run_sim=not args.no_sim,
+        chart_corners=args.chart_corners, gray_card_image=args.gray_card_image,
+        gray_card_box=args.gray_card_box, gray_reflectance=args.gray_reflectance, ccm_path=args.ccm, usda=args.usda,
+        gltf=not args.no_gltf, run_sim=not args.no_sim, preview=not args.no_preview,
     )
 
 
@@ -109,14 +131,20 @@ def cmd_validate(args) -> int:
 def cmd_calibrate(args) -> int:
     from PIL import Image
 
-    from .color import fit_ccm, load_reference_csv, sample_chart
+    from .color import fit_ccm, fit_neutral, load_reference_csv, sample_chart, sample_region
 
-    img = np.asarray(Image.open(args.chart_image).convert("RGB"))
-    ref = load_reference_csv(args.reference) if args.reference else None
-    cal = fit_ccm(sample_chart(img, np.asarray(args.chart_corners)), ref)
+    img = np.asarray(Image.open(args.image).convert("RGB"))
+    if args.chart_corners:
+        ref = load_reference_csv(args.reference) if args.reference else None
+        cal = fit_ccm(sample_chart(img, np.asarray(args.chart_corners)), ref)
+    elif args.neutral_box:
+        cal = fit_neutral(sample_region(img, args.neutral_box), args.reflectance)
+    else:
+        print("error: give --chart-corners (ColorChecker) or --neutral-box (gray card / white paper)")
+        return 1
     cal.save(args.output)
-    print(f"dE2000 mean {cal.delta_e_before['mean']:.2f} -> {cal.delta_e_after['mean']:.2f} "
-          f"(max {cal.delta_e_after['max']:.2f}, {cal.patches_used}/24 patches)")
+    print(f"{cal.method}: dE2000 mean {cal.delta_e_before['mean']:.2f} -> {cal.delta_e_after['mean']:.2f} "
+          f"(max {cal.delta_e_after['max']:.2f}, {cal.patches_used} patch(es))")
     print(f"wrote {args.output}")
     return 0
 
@@ -129,7 +157,17 @@ def cmd_demo(args) -> int:
     _report_build(res)
     print(f"  mug glaze vs ground truth dE2000: {glaze['captured']:.2f} (as captured) -> "
           f"{glaze['calibrated']:.2f} (calibrated)")
+    print(f"preview: {Path(args.output) / 'preview.png'}")
     return 0 if res.validation.status != "fail" else 2
+
+
+def cmd_preview(args) -> int:
+    from .preview import preview_file
+
+    out = args.output or Path(args.input).with_suffix(".preview.png")
+    preview_file(args.input, size=args.size).save(out)
+    print(f"wrote {out}")
+    return 0
 
 
 def cmd_materials(_args) -> int:
@@ -159,10 +197,12 @@ def main(argv: list[str] | None = None) -> int:
     v.add_argument("--markdown", type=Path)
     v.set_defaults(func=cmd_validate)
 
-    c = sub.add_parser("calibrate", help="fit a color-correction matrix from a ColorChecker photo")
-    c.add_argument("chart_image", type=Path)
-    c.add_argument("--chart-corners", type=_corners, required=True)
+    c = sub.add_parser("calibrate", help="fit a color correction from a ColorChecker or gray-card photo")
+    c.add_argument("image", type=Path)
+    c.add_argument("--chart-corners", type=_corners, help="ColorChecker corners TL;TR;BR;BL")
     c.add_argument("--reference", type=Path, help="CSV of measured reference patches (sRGB 0..1)")
+    c.add_argument("--neutral-box", type=_box, help="gray card / white paper region 'x0,y0,x1,y1'")
+    c.add_argument("--reflectance", type=_reflectance, default=0.18, help="neutral reflectance, or 'none'")
     c.add_argument("-o", "--output", type=Path, default=Path("color_calibration.json"))
     c.set_defaults(func=cmd_calibrate)
 
@@ -174,6 +214,12 @@ def main(argv: list[str] | None = None) -> int:
 
     m = sub.add_parser("materials", help="list built-in material presets")
     m.set_defaults(func=cmd_materials)
+
+    pv = sub.add_parser("preview", help="render a PNG preview of a mesh or USD asset (no 3D app needed)")
+    pv.add_argument("input", type=Path)
+    pv.add_argument("-o", "--output", type=Path, help="PNG path (default: <input>.preview.png)")
+    pv.add_argument("--size", type=int, default=420)
+    pv.set_defaults(func=cmd_preview)
 
     args = parser.parse_args(argv)
     return args.func(args)

@@ -100,7 +100,7 @@ def write_demo_inputs(out_dir: str | Path) -> dict:
     }
 
 
-def run_demo(out_dir: str | Path, target_faces: int = 20_000, run_sim: bool = True):
+def run_demo(out_dir: str | Path, target_faces: int = 20_000, run_sim: bool = True, preview: bool = True):
     """Write the synthetic capture and build it. Returns (BuildResult, glaze dE2000 dict)."""
     from .pipeline import BuildOptions, build_asset
 
@@ -120,4 +120,26 @@ def run_demo(out_dir: str | Path, target_faces: int = 20_000, run_sim: bool = Tr
     }
     res.summary["demo_glaze_delta_e2000"] = glaze
     res.report_path.write_text(json.dumps(res.summary, indent=2), encoding="utf-8")
+    if preview:
+        write_demo_preview(inputs["scan"], res.usd_path, out / "preview.png")
     return res, glaze
+
+
+def write_demo_preview(scan_path: Path, usd_path: Path, out_path: Path, size: int = 380) -> Path:
+    """Before/after sheet: raw scan as exported, built asset, and its collision hulls."""
+    from .mesh_ops import decimate
+    from .preview import contact_sheet, hull_colors, render
+    from .usd_io import read_usd
+
+    scan = trimesh.load(str(scan_path), force="mesh")
+    scan, _ = decimate(scan, 60_000)  # faster preview; keeps vertex colors
+    asset = read_usd(usd_path)
+    b = asset.render_mesh.bounds
+    sheet = contact_sheet([
+        ("input: raw scan (Y-up, cm, debris, color cast)", render([scan], size=size)),
+        ("output: cleaned + color-calibrated", render([asset.render_mesh], size=size, bounds=b)),
+        (f"output: {len(asset.hulls)} collision hulls",
+         render(asset.hulls, hull_colors(len(asset.hulls)), size=size, bounds=b)),
+    ])
+    sheet.save(out_path)
+    return out_path
