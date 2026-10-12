@@ -170,6 +170,26 @@ def cmd_preview(args) -> int:
     return 0
 
 
+def cmd_scan(args) -> int:
+    """Photos -> COLMAP -> Scan2USD asset in one go."""
+    from .pipeline import build_asset
+    from .reconstruct import reconstruct
+
+    if args.scale_to is None:
+        print("note: no --scale-to given; COLMAP's scale is arbitrary, so the asset size will be wrong")
+    out = Path(args.output)
+    mesh, rep = reconstruct(args.photos, out / "colmap", quality=args.quality)
+    print(f"reconstructed: {rep.registered_images}/{rep.images} photos registered, "
+          f"{rep.object_points:,} object points, {'watertight' if rep.watertight else 'open'} mesh")
+    opts = _options(args, args.name or Path(args.photos).resolve().name)
+    opts.up_axis, opts.units = "z", "m"
+    if args.scale_to is not None and args.scale_axis == "max":
+        opts.scale_axis = "z"  # the table plane is known, so "height" is unambiguous
+    res = build_asset(mesh, out / "asset", opts)
+    _report_build(res)
+    return 0 if res.validation.status != "fail" else 2
+
+
 def cmd_reconstruct(args) -> int:
     from .reconstruct import reconstruct
 
@@ -274,6 +294,14 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--quality", default="medium", choices=["low", "medium", "high", "extreme"])
     r.add_argument("--depth", type=int, help="Poisson octree depth (default: from point spacing)")
     r.set_defaults(func=cmd_reconstruct)
+
+    sc = sub.add_parser("scan", help="photos -> physics-ready USD in one step (reconstruct + build)")
+    sc.add_argument("photos", type=Path, help="folder of photos")
+    sc.add_argument("-o", "--output", type=Path, required=True)
+    sc.add_argument("--name", help="asset name (default: photo folder name)")
+    sc.add_argument("--quality", default="medium", choices=["low", "medium", "high", "extreme"])
+    _add_build_args(sc)
+    sc.set_defaults(func=cmd_scan)
 
     a = sub.add_parser("articulate", help="split a scan into two parts joined by a hinge (articulated USD)")
     a.add_argument("input", type=Path)

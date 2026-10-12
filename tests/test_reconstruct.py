@@ -67,3 +67,10 @@ def test_compare_identical_after_yaw():
     assert m["accuracy_mm"]["mean"] < 0.6
     assert m["fscore_2mm"] > 0.97
     assert abs(m["volume_cm3"]["error_pct"]) < 1e-6
+
+
+def test_compare_reports_above_base_metrics():
+    gt = make_mug(sections=48)
+    m = compare(gt.copy(), gt, samples=8000)
+    assert m["fscore_2mm_above_base"] > 0.97
+    assert m["accuracy_above_base_mm"]["mean"] < 0.5

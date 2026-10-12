@@ -34,25 +34,35 @@ def align(source: trimesh.Trimesh, reference: trimesh.Trimesh, yaw_step: float =
     return refined
 
 
-def compare(recon: trimesh.Trimesh, gt: trimesh.Trimesh, samples: int = 30000, seed: int = 0) -> dict:
+def compare(recon: trimesh.Trimesh, gt: trimesh.Trimesh, samples: int = 30000, seed: int = 0,
+            base_exclude: float = 0.01) -> dict:
     """Point-to-surface distances in mm after alignment, plus volume error.
 
     accuracy:     reconstruction -> ground-truth surface (is what we built correct?)
     completeness: ground truth -> reconstructed surface (did we capture everything?)
+    The "*_above_base" variants ignore the bottom `base_exclude` meters, which a tabletop
+    capture cannot see (the object rests on it).
     """
     m = align(recon, gt, seed=seed)
     aligned = recon.copy()
     aligned.apply_transform(m)
-    acc = np.abs(trimesh.proximity.closest_point(gt, aligned.sample(samples, seed=seed))[1]) * 1000.0
-    comp = np.abs(trimesh.proximity.closest_point(aligned, gt.sample(samples, seed=seed + 1))[1]) * 1000.0
+    rp = aligned.sample(samples, seed=seed)
+    gp = gt.sample(samples, seed=seed + 1)
+    acc = np.abs(trimesh.proximity.closest_point(gt, rp)[1]) * 1000.0
+    comp = np.abs(trimesh.proximity.closest_point(aligned, gp)[1]) * 1000.0
+    z0 = gt.bounds[0][2] + base_exclude
+    acc_up, comp_up = acc[rp[:, 2] > z0], comp[gp[:, 2] > z0]
 
-    def fscore(tau_mm: float) -> float:
-        p, r = np.mean(acc < tau_mm), np.mean(comp < tau_mm)
+    def fscore(tau_mm: float, a=acc, c=comp) -> float:
+        p, r = np.mean(a < tau_mm), np.mean(c < tau_mm)
         return float(2 * p * r / (p + r)) if p + r > 0 else 0.0
 
     out = {
         "accuracy_mm": {"mean": float(acc.mean()), "median": float(np.median(acc)), "p95": float(np.percentile(acc, 95))},
         "completeness_mm": {"mean": float(comp.mean()), "median": float(np.median(comp)), "p95": float(np.percentile(comp, 95))},
+        "accuracy_above_base_mm": {"mean": float(acc_up.mean()), "p95": float(np.percentile(acc_up, 95))},
+        "completeness_above_base_mm": {"mean": float(comp_up.mean()), "p95": float(np.percentile(comp_up, 95))},
+        "fscore_2mm_above_base": fscore(2.0, acc_up, comp_up),
         "chamfer_mm": float((acc.mean() + comp.mean()) / 2),
         "fscore_1mm": fscore(1.0),
         "fscore_2mm": fscore(2.0),

@@ -19,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from evaluate_synthetic import evaluate_capture, summarize  # noqa: E402
+from evaluate_synthetic import evaluate_capture, rescore_capture, summarize  # noqa: E402
 
 # object -> (capture folder, material preset, display name)
 OBJECTS = {
@@ -35,21 +35,22 @@ OBJECTS = {
 def table(rows: list[dict]) -> str:
     lines = [
         "| Object | Photos registered | Accuracy mean / p95 (mm) | Completeness mean (mm) | F-score @2 mm | "
-        "Volume error | Chart ΔE2000 | Validation | Time (s) |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "F-score @2 mm, above base | Volume error | Chart ΔE2000 | Validation | Time (s) |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for r in rows:
         if "error" in r:
-            lines.append(f"| {r['display']} | – | failed: {r['error']} | | | | | | |")
+            lines.append(f"| {r['display']} | – | failed: {r['error']} | | | | | | | |")
             continue
         vol = f"{r['volume_cm3']['error_pct']:+.1f}%" if "volume_cm3" in r else "n/a (open mesh)"
         rec = r["reconstruction"]
         ce = r["color_chart_delta_e2000"]
         t = sum(rec["timings_s"].values()) + r["build_time_s"]
+        above = f"{r['fscore_2mm_above_base']:.3f}" if "fscore_2mm_above_base" in r else "–"
         lines.append(
             f"| {r['display']} | {rec['registered_images']}/{rec['images']} | "
             f"{r['accuracy_mm']['mean']:.2f} / {r['accuracy_mm']['p95']:.2f} | {r['completeness_mm']['mean']:.2f} | "
-            f"{r['fscore_2mm']:.3f} | {vol} | {ce['delta_e_before']:.1f} → {ce['delta_e_after']:.2f} | "
+            f"{r['fscore_2mm']:.3f} | {above} | {vol} | {ce['delta_e_before']:.1f} → {ce['delta_e_after']:.2f} | "
             f"{r['validation']} | {t:.0f} |")
     return "\n".join(lines)
 
@@ -74,7 +75,12 @@ def main() -> None:
             print(f"[{key}] rendered in {time.time() - t0:.0f} s", flush=True)
         try:
             cached = cap / "work" / "evaluation.json"
-            m = json.loads(cached.read_text()) if args.reuse and cached.exists() else evaluate_capture(cap, material)
+            if args.reuse and cached.exists():
+                m = json.loads(cached.read_text())
+                if "fscore_2mm_above_base" not in m:
+                    m = rescore_capture(cap)
+            else:
+                m = evaluate_capture(cap, material)
             m["display"] = display
             print(summarize(m), flush=True)
         except Exception as exc:  # keep the benchmark going; report the failure in the table

@@ -61,13 +61,24 @@ def evaluate_capture(cap: Path, material: str = "plastic", quality: str = "mediu
     return metrics
 
 
+def rescore_capture(cap: Path) -> dict:
+    """Recompute the ground-truth metrics for an already built capture (no reconstruction)."""
+    work = cap / "work"
+    metrics = json.loads((work / "evaluation.json").read_text())
+    usd = next((work / "asset").glob("*.usda"))
+    metrics.update(compare(read_usd(usd).render_mesh, load_ground_truth(cap)))
+    (work / "evaluation.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    return metrics
+
+
 def summarize(m: dict) -> str:
     a, c = m["accuracy_mm"], m["completeness_mm"]
     lines = [
         f"[{m['object']}] registered {m['reconstruction']['registered_images']}/{m['reconstruction']['images']}, "
         f"validation {m['validation']}",
         f"  accuracy  mean {a['mean']:.2f} mm, p95 {a['p95']:.2f} mm | completeness mean {c['mean']:.2f} mm",
-        f"  F-score   @1mm {m['fscore_1mm']:.3f}, @2mm {m['fscore_2mm']:.3f}",
+        f"  F-score   @1mm {m['fscore_1mm']:.3f}, @2mm {m['fscore_2mm']:.3f}"
+        + (f" | above base @2mm {m['fscore_2mm_above_base']:.3f}" if "fscore_2mm_above_base" in m else ""),
     ]
     if "volume_cm3" in m:
         v = m["volume_cm3"]
