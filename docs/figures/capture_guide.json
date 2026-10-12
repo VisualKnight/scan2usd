@@ -100,5 +100,209 @@
       }
     ],
     "guide_covered_fraction": 0.2519789822627996
+  },
+  "ace_coffee_mug_kristen_16_oz_cup": {
+    "title": "Printed mug",
+    "results": {
+      "weak": {
+        "photos": 48,
+        "registered": 48,
+        "fscore_2mm": 0.49291763394531796,
+        "accuracy_mm": 2.767493997479204,
+        "completeness_mm": 2.8600353330344825,
+        "volume_error_pct": null,
+        "observed_fraction": 0.8736878471200608,
+        "sealed_area": 0.10726556372761407,
+        "minutes": 9.7,
+        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\ace_coffee_mug_kristen_16_oz_cup\\guide\\weak\\asset\\ace_coffee_mug_kristen_16_oz_cup.usda"
+      },
+      "+guided": {
+        "photos": 56,
+        "registered": 56,
+        "fscore_2mm": 0.29880296814891794,
+        "accuracy_mm": 5.292725122122164,
+        "completeness_mm": 4.625766900750884,
+        "volume_error_pct": 220.8539744786114,
+        "observed_fraction": 0.8296801748198084,
+        "sealed_area": 0.14427822497402484,
+        "minutes": 3.7,
+        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\ace_coffee_mug_kristen_16_oz_cup\\guide\\guided\\asset\\ace_coffee_mug_kristen_16_oz_cup.usda"
+      },
+      "+random": {
+        "photos": 56,
+        "registered": 56,
+        "fscore_2mm": 0.4790710137724617,
+        "accuracy_mm": 2.897915668678955,
+        "completeness_mm": 2.9596565523247262,
+        "volume_error_pct": null,
+        "observed_fraction": 0.8765500004339873,
+        "sealed_area": 0.10328559253752578,
+        "minutes": 10.1,
+        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\ace_coffee_mug_kristen_16_oz_cup\\guide\\random\\asset\\ace_coffee_mug_kristen_16_oz_cup.usda"
+      },
+      "+ring": {
+        "photos": 56,
+        "registered": 56,
+        "fscore_2mm": 0.6808794137241839,
+        "accuracy_mm": 2.1967979274416805,
+        "completeness_mm": 2.579807655566642,
+        "volume_error_pct": 215.14218816405636,
+        "observed_fraction": 0.8719195554387098,
+        "sealed_area": 0.10619955372184736,
+        "minutes": 10.2,
+        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\ace_coffee_mug_kristen_16_oz_cup\\guide\\ring\\asset\\ace_coffee_mug_kristen_16_oz_cup.usda"
+      },
+      "full": {
+        "photos": 78,
+        "fscore_2mm": 0.7305641447663467,
+        "volume_error_pct": 191.48905580095717
+      }
+    },
+    "frame_fit_mm": 0.08088281598453705,
+    "suggestions": [
+      {
+        "azimuth": 160.0,
+        "elevation": 79.99999999999999,
+        "gain": 0.34856423945200055
+      },
+      {
+        "azimuth": 100.0,
+        "elevation": 79.99999999999999,
+        "gain": 0.25957892936529203
+      },
+      {
+        "azimuth": 180.0,
+        "elevation": 79.99999999999999,
+        "gain": 0.09816565491832795
+      },
+      {
+        "azimuth": 100.0,
+        "elevation": 9.999999999999998,
+        "gain": 0.036849808066277134
+      },
+      {
+        "azimuth": 119.99999999999999,
+        "elevation": 9.999999999999998,
+        "gain": 0.026009964595402647
+      },
+      {
+        "azimuth": 19.999999999999996,
+        "elevation": 79.99999999999999,
+        "gain": 0.019805627576540027
+      },
+      {
+        "azimuth": 80.0,
+        "elevation": 9.999999999999998,
+        "gain": 0.01526118351650521
+      },
+      {
+        "azimuth": 140.0,
+        "elevation": 9.999999999999998,
+        "gain": 0.012703803139591721
+      }
+    ],
+    "guide_covered_fraction": 0.8169392106299374
+  },
+  "womens_bluefish_2eye_boat_shoe_in_tan": {
+    "title": "Boat shoe",
+    "results": {
+      "weak": {
+        "photos": 48,
+        "registered": 48,
+        "fscore_2mm": 0.6725055947320574,
+        "accuracy_mm": 1.9047269449582211,
+        "completeness_mm": 3.775768529409432,
+        "volume_error_pct": 51.13375985300572,
+        "observed_fraction": 0.8963461402716154,
+        "sealed_area": 0.07469484806908118,
+        "minutes": 6.3,
+        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\womens_bluefish_2eye_boat_shoe_in_tan\\guide\\weak\\asset\\womens_bluefish_2eye_boat_shoe_in_tan.usda"
+      },
+      "+guided": {
+        "photos": 56,
+        "registered": 56,
+        "fscore_2mm": 0.6765977647318906,
+        "accuracy_mm": 1.907012851419219,
+        "completeness_mm": 2.966037223269102,
+        "volume_error_pct": 43.09335648933575,
+        "observed_fraction": 0.8827814001801731,
+        "sealed_area": 0.08106724405846519,
+        "minutes": 7.6,
+        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\womens_bluefish_2eye_boat_shoe_in_tan\\guide\\guided\\asset\\womens_bluefish_2eye_boat_shoe_in_tan.usda"
+      },
+      "+random": {
+        "photos": 56,
+        "registered": 56,
+        "fscore_2mm": 0.699479826843923,
+        "accuracy_mm": 1.865522743078616,
+        "completeness_mm": 3.5227593464782814,
+        "volume_error_pct": 47.15247479476719,
+        "observed_fraction": 0.8940870786761691,
+        "sealed_area": 0.07699463064587647,
+        "minutes": 7.0,
+        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\womens_bluefish_2eye_boat_shoe_in_tan\\guide\\random\\asset\\womens_bluefish_2eye_boat_shoe_in_tan.usda"
+      },
+      "+ring": {
+        "photos": 56,
+        "registered": 56,
+        "fscore_2mm": 0.7492716517675592,
+        "accuracy_mm": 1.5891964621266175,
+        "completeness_mm": 2.657462501713747,
+        "volume_error_pct": 36.08245250406155,
+        "observed_fraction": 0.8916366533176543,
+        "sealed_area": 0.07652936556641346,
+        "minutes": 7.5,
+        "usd": "D:\\Local Projects\\Scan2USD\\data\\synthetic\\womens_bluefish_2eye_boat_shoe_in_tan\\guide\\ring\\asset\\womens_bluefish_2eye_boat_shoe_in_tan.usda"
+      },
+      "full": {
+        "photos": 78,
+        "fscore_2mm": 0.7468477564459906,
+        "volume_error_pct": 32.247906066029145
+      }
+    },
+    "frame_fit_mm": 0.21091290581686511,
+    "suggestions": [
+      {
+        "azimuth": 59.99999999999999,
+        "elevation": 79.99999999999999,
+        "gain": 0.14180976034746254
+      },
+      {
+        "azimuth": -19.999999999999993,
+        "elevation": 79.99999999999999,
+        "gain": 0.12159236656621414
+      },
+      {
+        "azimuth": -100.0,
+        "elevation": 79.99999999999999,
+        "gain": 0.04536477312498981
+      },
+      {
+        "azimuth": -120.00000000000004,
+        "elevation": 10.0,
+        "gain": 0.02687465718330277
+      },
+      {
+        "azimuth": 59.99999999999999,
+        "elevation": 59.99999999999999,
+        "gain": 0.023323494323868228
+      },
+      {
+        "azimuth": -80.00000000000003,
+        "elevation": 10.0,
+        "gain": 0.01917241743975803
+      },
+      {
+        "azimuth": 160.0,
+        "elevation": 10.0,
+        "gain": 0.01769996424989561
+      },
+      {
+        "azimuth": -100.0,
+        "elevation": 59.99999999999999,
+        "gain": 0.01649119615607411
+      }
+    ],
+    "guide_covered_fraction": 0.4123286293915652
   }
 }

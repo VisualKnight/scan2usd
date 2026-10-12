@@ -174,6 +174,19 @@ def isolate_object(xyz: np.ndarray, spacing: float, plane_threshold: float):
     return aligned, keep, rot, origin, float(inliers.mean())
 
 
+def _main_body(bodies, points: np.ndarray) -> int:
+    """Index of the Poisson component the measured points actually support.
+
+    Poisson can add surfaces no point backs: sheets over unseen regions, bubbles. Rank components
+    by how many of their vertices lie on the point cloud (unit-free, unlike comparing one body's
+    volume with another's area).
+    """
+    tree = cKDTree(points)
+    near = 3.0 * _median_spacing(points)
+    support = [int((tree.query(b.vertices, distance_upper_bound=near)[0] <= near).sum()) for b in bodies]
+    return int(np.argmax(support))
+
+
 def _median_spacing(xyz: np.ndarray, sample: int = 20000, seed: int = 0) -> float:
     """Median nearest-neighbor distance (the cloud's sampling density)."""
     rng = np.random.default_rng(seed)
@@ -279,8 +292,7 @@ def reconstruct(images: str | Path, workspace: str | Path, quality: str = "mediu
     mesh = mesh.slice_plane([0, 0, 0], [0, 0, 1], cap=True)
     bodies = mesh.split(only_watertight=False)
     if len(bodies) > 1:
-        sizes = [b.volume if b.is_watertight else b.area for b in bodies]
-        mesh = bodies[int(np.argmax(sizes))]
+        mesh = bodies[_main_body(bodies, obj_xyz)]
         rep.notes.append(f"kept the main body, dropped {len(bodies) - 1} Poisson fragment(s)")
     _, nearest = cKDTree(obj_xyz).query(mesh.vertices)
     colors = obj_rgb[nearest]

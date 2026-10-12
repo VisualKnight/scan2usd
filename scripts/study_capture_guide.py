@@ -194,6 +194,8 @@ def figure(summary: dict, out: Path) -> None:
                 w = int(420 * abs(ve) / vmax)
                 d.rectangle([230, y, 230 + w, y + 22], fill=colors[c])
                 d.text((236 + w, y + 2), f"{ve:+.0f}%", fill=(51, 65, 85), font=_font(14))
+            else:
+                d.text((236, y + 2), "n/a (mesh not closed)", fill=(148, 163, 184), font=_font(14))
             f = r["fscore_2mm"]
             d.rectangle([820, y, 820 + int(420 * f), y + 22], fill=colors[c])
             d.text((826 + int(420 * f), y + 2), f"{f:.3f}", fill=(51, 65, 85), font=_font(14))

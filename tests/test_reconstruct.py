@@ -74,3 +74,16 @@ def test_compare_reports_above_base_metrics():
     m = compare(gt.copy(), gt, samples=8000)
     assert m["fscore_2mm_above_base"] > 0.97
     assert m["accuracy_above_base_mm"]["mean"] < 0.5
+
+
+def test_main_body_prefers_point_support_over_size():
+    """A big open Poisson sheet (large area) vs the small closed body the points sit on."""
+    from scan2usd.reconstruct import _main_body
+
+    obj = trimesh.creation.icosphere(subdivisions=3, radius=1.0)
+    sheet = trimesh.creation.box((12.0, 12.0, 0.01))
+    sheet.apply_translation((0, 0, 0.2))
+    sheet = trimesh.Trimesh(sheet.vertices, sheet.faces[:-2])  # open: area 288 vs volume 4.2
+    points = obj.sample(5000, seed=0)
+    assert sheet.area > obj.volume and not sheet.is_watertight
+    assert _main_body([sheet, obj], points) == 1
