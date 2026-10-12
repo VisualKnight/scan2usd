@@ -99,8 +99,11 @@ class Arm:
 
 
 def build_scene(asset, collision: str, work: Path, mug_pos=MUG_POS, mug_quat=(1, 0, 0, 0), extras=(),
-                extra_xml: str = "") -> mujoco.MjModel:
-    """Panda + scanned mug (+ optional extra MjAsset bodies and raw worldbody XML, e.g. cameras)."""
+                extra_xml: str = "", mug_body=None) -> mujoco.MjModel:
+    """Panda + scanned mug (+ optional extra MjAsset bodies and raw worldbody XML, e.g. cameras).
+
+    mug_body: a prebuilt MjAsset named "mug" (e.g. with modified physics), instead of building from `asset`.
+    """
     if work.exists():
         shutil.rmtree(work)
     shutil.copytree(PANDA, work)
@@ -114,7 +117,8 @@ def build_scene(asset, collision: str, work: Path, mug_pos=MUG_POS, mug_quat=(1,
     text = text.replace('gainprm="0.01568627451 0 0" biasprm="0 -100 -10"',
                         'gainprm="0.31372549 0 0" biasprm="0 -2000 -60"')
     panda_xml.write_text(text)
-    bodies = [asset_body(asset, "mug", pos=tuple(mug_pos), quat=tuple(mug_quat), collision=collision), *extras]
+    mug = mug_body or asset_body(asset, "mug", pos=tuple(mug_pos), quat=tuple(mug_quat), collision=collision)
+    bodies = [mug, *extras]
     for b in bodies:
         for name, data in b.files.items():
             (work / "assets" / name).write_bytes(data)
