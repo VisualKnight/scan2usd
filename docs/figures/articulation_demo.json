@@ -1,0 +1,14 @@
+{
+  "usd": "output\\articulated\\keepsake_box.usda",
+  "max_lid_deg": 106.51,
+  "final_lid_deg": -0.03,
+  "toy_inside_box": true,
+  "toy_final_pos_m": [
+    0.03315240063922834,
+    0.012110441091087661,
+    0.02157579457160059
+  ],
+  "base_mass_g": 368.12158245833314,
+  "lid_mass_g": 170.55361864929145,
+  "finite": true
+}

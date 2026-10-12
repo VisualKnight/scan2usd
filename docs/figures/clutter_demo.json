@@ -1,0 +1,13 @@
+{
+  "objects": 14,
+  "unique_assets": 6,
+  "colliders": 392,
+  "finite": true,
+  "all_in_bin": true,
+  "in_bin": 14,
+  "max_final_speed_mps": 0.001128048018172815,
+  "settled": true,
+  "impact_penetration_mm": 14.531669782971143,
+  "resting_penetration_mm": 0.081933980915507,
+  "sim_seconds": 5.0
+}

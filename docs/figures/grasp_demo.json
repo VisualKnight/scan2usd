@@ -1,0 +1,14 @@
+[
+  {
+    "collision": "hulls",
+    "geoms": 25,
+    "mug_lift_m": 0.11595668438540856,
+    "success": true
+  },
+  {
+    "collision": "single",
+    "geoms": 1,
+    "mug_lift_m": 2.9026564235534735e-07,
+    "success": false
+  }
+]

@@ -24,7 +24,7 @@ from scan2usd.preview import _font
 from scan2usd.usd_io import read_usd
 
 ROOT = Path(__file__).resolve().parents[1]
-BIN = (0.42, 0.32, 0.14)  # inner size (m)
+BIN = (0.42, 0.32, 0.20)  # inner size (m), a typical picking tote
 WALL = 0.012
 
 
@@ -45,13 +45,14 @@ def bin_xml() -> str:
         (0, ly + t, h, lx, t, h), (0, -ly - t, h, lx, t, h),
     ]
     return "".join(f'<geom type="box" pos="{x} {y} {z}" size="{a} {b} {c}" rgba="0.33 0.45 0.62 1" '
-                   f'friction="0.6 0.005 0.0001"/>' for x, y, z, a, b, c in walls)
+                   f'friction="0.6 0.005 0.0001" solref="0.005 1"/>' for x, y, z, a, b, c in walls)
 
 
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--count", type=int, default=14)
     p.add_argument("--seed", type=int, default=3)
+    p.add_argument("--report-contacts", action="store_true", help="print the deepest contacts at the end")
     p.add_argument("--out", type=Path, default=ROOT / "docs" / "figures")
     args = p.parse_args()
     rng = np.random.default_rng(args.seed)
@@ -84,7 +85,7 @@ def main() -> None:
   <worldbody>
     <light pos="0.4 -0.6 1.5" dir="-0.3 0.4 -1" diffuse="0.8 0.8 0.8" castshadow="true"/>
     <light pos="-0.6 0.6 1.2" dir="0.4 -0.4 -1" diffuse="0.35 0.35 0.35" castshadow="false"/>
-    <geom type="plane" size="1.5 1.5 0.05" material="grid" pos="0 0 -0.0121"/>
+    <geom type="plane" size="1.5 1.5 0.05" material="grid" pos="0 0 -0.0121" solref="0.005 1"/>
     {bin_xml()}
     {''.join(bodies)}
   </worldbody>
@@ -94,20 +95,29 @@ def main() -> None:
     renderer = mujoco.Renderer(model, 540, 720)
     cam = mujoco.MjvCamera()
     cam.lookat[:] = (0, 0, 0.12)
-    cam.distance, cam.elevation, cam.azimuth = 1.05, -38, 125
+    cam.distance, cam.elevation, cam.azimuth = 1.0, -58, 120
     ids = [model.body(n).id for n, _ in drop_order]
 
     duration, fps = 5.0, 30
-    frames, max_pen, peak_speed = [], 0.0, 0.0
+    frames, max_pen, rest_pen = [], 0.0, 0.0
     steps = int(duration / model.opt.timestep)
     for step in range(steps):
         mujoco.mj_step(model, data)
         if data.ncon:
-            max_pen = max(max_pen, float(-data.contact.dist[: data.ncon].min()))
+            pen = float(-data.contact.dist[: data.ncon].min())
+            max_pen = max(max_pen, pen)
+            if step >= steps - int(0.5 / model.opt.timestep):
+                rest_pen = max(rest_pen, pen)
         if step % int(1 / (fps * model.opt.timestep)) == 0:
             renderer.update_scene(data, camera=cam)
             frames.append(renderer.render().copy())
     speeds = np.linalg.norm(data.cvel[ids][:, 3:], axis=1)
+    if args.report_contacts:
+        for k in np.argsort(data.contact.dist[: data.ncon])[:6]:
+            c = data.contact[k]
+            g1, g2 = int(c.geom[0]), int(c.geom[1])
+            print(f"{-c.dist * 1000:6.2f} mm  {model.body(model.geom_bodyid[g1]).name}:{model.geom(g1).name}"
+                  f" <-> {model.body(model.geom_bodyid[g2]).name}:{model.geom(g2).name}")
     pos = data.xpos[ids]
     inside = (np.abs(pos[:, 0]) < BIN[0] / 2) & (np.abs(pos[:, 1]) < BIN[1] / 2) & (pos[:, 2] < BIN[2] + 0.2)
     result = {
@@ -119,7 +129,8 @@ def main() -> None:
         "in_bin": int(inside.sum()),
         "max_final_speed_mps": float(speeds.max()),
         "settled": bool(speeds.max() < 0.02),
-        "max_penetration_mm": max_pen * 1000,
+        "impact_penetration_mm": max_pen * 1000,
+        "resting_penetration_mm": rest_pen * 1000,
         "sim_seconds": duration,
     }
     print(json.dumps(result, indent=2))

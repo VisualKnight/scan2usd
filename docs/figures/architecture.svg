@@ -55,7 +55,9 @@
 
     <!-- Future (ghost) -->
     <rect x="794" y="550" width="140" height="56" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
-    <rect x="952" y="556" width="140" height="44" rx="6" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="7 6"/>
+    <rect x="952" y="550" width="140" height="56" rx="6" fill="#e0f2fe" stroke="#1e293b" stroke-width="2"/>
+    <rect x="636" y="350" width="140" height="56" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
+    <rect x="636" y="550" width="140" height="56" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
     <rect x="20" y="512" width="160" height="58" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
     <path d="M20,604 H180 V650 Q140,638 100,650 Q60,662 20,650 Z" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
 
@@ -85,12 +87,16 @@
       <path d="M1022,358 V446" marker-end="url(#arrowr)"/>
       <path d="M636,475 H622" marker-end="url(#arrowr)"/>
       <path d="M864,502 V546" stroke="#7c3aed" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
-      <path d="M936,500 C960,520 990,530 1010,552" stroke="#94a3b8" stroke-dasharray="6 5" marker-end="url(#arrowr)"/>
+      <path d="M936,500 C960,520 990,530 1010,546" marker-end="url(#arrowr)"/>
+      <path d="M812,506 C795,525 785,535 774,546" marker-end="url(#arrowr)"/>
+      <path d="M776,398 C790,420 800,435 812,448" marker-end="url(#arrowr)"/>
     </g>
     <!-- Read-back loops -->
     <g stroke="#7c3aed" stroke-width="2" fill="none" stroke-dasharray="7 5">
       <path d="M936,470 C960,420 950,390 958,362" marker-end="url(#arrow)"/>
       <path d="M792,475 H780" marker-end="url(#arrow)"/>
+      <path d="M706,348 V328" marker-end="url(#arrow)"/>
+      <path d="M778,362 C800,350 820,340 840,328" marker-end="url(#arrow)"/>
     </g>
   </g>
 
@@ -153,15 +159,21 @@
     <use href="#cmp" x="914" y="556"/>
     <text x="806" y="572" font-size="14.5">evaluate.py</text>
     <text x="806" y="590" font-size="10.5" fill="#475569">scores vs ground truth</text>
-    <text x="964" y="576" font-size="11.5" fill="#64748b">Isaac Sim (M4)</text>
-    <text x="964" y="592" font-size="10.5" fill="#94a3b8">synthetic data</text>
+    <text x="964" y="572" font-size="14">Isaac Sim 6</text>
+    <text x="964" y="590" font-size="10.5" fill="#475569">PhysX + Replicator</text>
+    <use href="#cmp" x="756" y="356"/>
+    <text x="646" y="372" font-size="12.5">articulation.py</text>
+    <text x="648" y="390" font-size="10.5" fill="#475569">split + hinge joint</text>
+    <use href="#cmp" x="756" y="556"/>
+    <text x="648" y="572" font-size="14">mjcf.py</text>
+    <text x="648" y="590" font-size="10.5" fill="#475569">MuJoCo demos</text>
 
     <!-- Sticky note -->
     <g transform="rotate(-2 330 540)">
       <rect x="250" y="515" width="200" height="62" fill="#fde68a" stroke="#d97706" stroke-width="1"/>
       <text x="262" y="538" font-size="11.5">each stage = one module,</text>
       <text x="262" y="555" font-size="11.5">plain functions in, data out</text>
-      <text x="262" y="571" font-size="11.5" fill="#92400e">→ easy to test (50 tests)</text>
+      <text x="262" y="571" font-size="11.5" fill="#92400e">→ easy to test (61 tests)</text>
     </g>
   </g>
 </svg>

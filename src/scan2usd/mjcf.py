@@ -24,6 +24,10 @@ def _mean_rgb(mesh: trimesh.Trimesh) -> tuple[float, float, float]:
     if mesh.visual.kind == "vertex":
         c = np.asarray(mesh.visual.vertex_colors[:, :3], dtype=np.float64).mean(0) / 255.0
         return tuple(float(v) for v in c)
+    image = getattr(getattr(mesh.visual, "material", None), "image", None)
+    if image is not None:  # MuJoCo geoms take one color: use the texture's average
+        c = np.asarray(image.convert("RGB").resize((64, 64)), dtype=np.float64).reshape(-1, 3).mean(0) / 255.0
+        return tuple(float(v) for v in c)
     return (0.75, 0.75, 0.78)
 
 
@@ -58,6 +62,11 @@ def asset_body(asset: AssetData | str, name: str, pos=(0, 0, 0), quat=(1, 0, 0, 
         assets.append(f'<mesh name="{name}_hull_{k}" file="{name}_hull_{k}.stl"/>')
 
     mu = friction if friction is not None else float(asset.physics_material.get("dynamic_friction", 0.5) or 0.5)
+    if rgba is None and asset.texture_paths and asset.texture_paths[0].exists():
+        from PIL import Image
+
+        img = Image.open(asset.texture_paths[0]).convert("RGB").resize((64, 64))
+        rgba = (*(np.asarray(img, dtype=np.float64).reshape(-1, 3).mean(0) / 255.0), 1.0)
     rgba = rgba or (*_mean_rgb(asset.render_mesh), 1.0)
     inertia = asset.inertia_tensor()
     full = f"{inertia[0, 0]:.6g} {inertia[1, 1]:.6g} {inertia[2, 2]:.6g} {inertia[0, 1]:.6g} {inertia[0, 2]:.6g} {inertia[1, 2]:.6g}"
