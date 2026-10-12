@@ -6,134 +6,158 @@
 <title>Scan2USD · Overview</title>
 <style>
   :root { --ink: #1e293b; --muted: #64748b; --line: #e2e8f0; --bg: #f8fafc; --card: #fff;
-          --done: #15803d; --next: #b45309; --plan: #64748b; --accent: #1d4ed8; }
+          --done: #15803d; --next: #b45309; --plan: #64748b; --bad: #b91c1c; }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 "Segoe UI", system-ui, sans-serif; }
-  .wrap { max-width: 1140px; margin: 0 auto; padding: 32px 24px 64px; }
-  h1 { font-size: 34px; margin: 0; }
-  h2 { font-size: 21px; margin: 40px 0 12px; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 32px 24px 64px; }
+  h1 { font-size: 34px; margin: 4px 0 0; }
+  h2 { font-size: 21px; margin: 44px 0 12px; }
   h3 { font-size: 15px; margin: 0 0 4px; }
   p { margin: 0 0 10px; }
-  code { font-family: "Cascadia Code", Consolas, monospace; font-size: .88em; background: #f1f5f9; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+  code { font-family: "Cascadia Code", Consolas, monospace; font-size: .86em; background: #f1f5f9; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
   .muted { color: var(--muted); } .small { font-size: 13px; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
   .grid { display: grid; gap: 12px; }
+  .g2 { grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); }
   .g4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
   .g5 { grid-template-columns: repeat(5, 1fr); }
-  @media (max-width: 900px) { .g5 { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) { .g5, .g2 { grid-template-columns: 1fr; } }
   .pill { display: inline-block; padding: 1px 9px; border-radius: 99px; font-size: 12px; font-weight: 600; border: 1px solid; }
   .done { color: var(--done); background: #f0fdf4; border-color: #bbf7d0; }
   .next { color: var(--next); background: #fffbeb; border-color: #fde68a; }
   .plan { color: var(--plan); background: #f8fafc; border-color: var(--line); }
   .kpi b { display: block; font-size: 24px; } .kpi > span { color: var(--muted); font-size: 13px; }
-  .good { color: var(--done); }
-  img { max-width: 100%; display: block; }
-  .board { border-radius: 10px; border: 1px solid var(--line); box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  .good { color: var(--done); } .bad { color: var(--bad); }
+  img { max-width: 100%; display: block; border-radius: 8px; }
+  .board { border: 1px solid var(--line); box-shadow: 0 1px 3px rgba(0,0,0,.05); }
   .ms { border-top: 4px solid var(--line); }
   .ms.m-done { border-top-color: var(--done); } .ms.m-next { border-top-color: #f59e0b; }
-  table { border-collapse: collapse; font-size: 13.5px; }
-  td, th { padding: 4px 12px 4px 0; text-align: left; border-bottom: 1px solid var(--line); }
+  table { border-collapse: collapse; font-size: 13.5px; width: 100%; }
+  td, th { padding: 5px 10px 5px 0; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
   details { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
   details summary { cursor: pointer; font-weight: 600; }
   details summary span { font-weight: 400; color: var(--muted); font-size: 13px; }
   details p { margin: 8px 0 0; font-size: 14px; }
   details .where { color: var(--muted); font-size: 12.5px; }
   ul { margin: 6px 0; padding-left: 20px; } li { margin: 3px 0; }
-  .tree { font-family: "Cascadia Code", Consolas, monospace; font-size: 12px; white-space: pre; background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; margin-top: 8px; overflow-x: auto; }
+  .cap { color: var(--muted); font-size: 13px; margin-top: 8px; }
   footer { color: var(--muted); font-size: 12.5px; margin-top: 40px; }
 </style>
 </head>
 <body><div class="wrap">
 
-<span class="pill done">M1 done</span> <span class="pill next">M2 next: real captures</span>
+<span class="pill done">M1 core</span> <span class="pill done">M2 photos → USD</span> <span class="pill done">M3 hinges</span>
+<span class="pill done">M4 Isaac Sim + MuJoCo</span> <span class="pill next">next: your phone captures</span>
 <h1>Scan2USD</h1>
-<p class="muted">Phone scans in, physics-ready <b>OpenUSD</b> assets out, for robotics simulation.</p>
+<p class="muted">Phone photos in, physics-ready <b>OpenUSD</b> assets out, verified in NVIDIA Isaac Sim and MuJoCo.</p>
 <div class="grid g4">
-  <div class="card kpi"><b>33 / 33</b><span>quality checks pass on the demo asset</span></div>
-  <div class="card kpi"><b>6.75 → <span class="good">0.24</span></b><span>color error (ΔE2000) after chart calibration</span></div>
-  <div class="card kpi"><b>370k → 20k</b><span>triangles, still watertight</span></div>
-  <div class="card kpi"><b>25 s</b><span>scan → validated USD</span></div>
+  <div class="card kpi"><b>0.78 mm</b><span>mean surface error, 78 photos → USD (speckled mug vs. ground truth)</span></div>
+  <div class="card kpi"><b>8 / 8</b><span>assets load unmodified in Isaac Sim 6 and settle in PhysX</span></div>
+  <div class="card kpi"><b><span class="good">lift</span> vs <span class="bad">fail</span></b><span>robot rim-grasp: convex decomposition vs. one hull</span></div>
+  <div class="card kpi"><b>60 tests</b><span>plus 33 automated checks on every asset</span></div>
 </div>
 
 <h2>Architecture</h2>
 <img class="board" src="figures/architecture.svg" alt="Whiteboard architecture diagram">
-<p class="small muted" style="margin-top:8px">The CLI calls one orchestrator, which runs five stage modules in order. The validator re-opens the written file, so it tests what a simulator would actually load.</p>
+<p class="cap">Photos become a mesh (COLMAP), the pipeline turns it into a simulation asset, and the validator re-opens the written file. Downstream: MuJoCo demos, Isaac Sim, and scoring against ground truth.</p>
 
 <h2>Where we are</h2>
 <div class="grid g5">
-  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M1 · Pipeline core</h3><p class="small muted">Clean, calibrate, collide, weigh, export, validate. Synthetic demo, 45 tests.</p></div>
-  <div class="card ms m-next"><span class="pill next">next</span><h3 style="margin-top:6px">M2 · Real captures</h3><p class="small muted">Your phone photos → mesh (COLMAP / RealityScan); compare against measured mass and size.</p></div>
-  <div class="card ms"><span class="pill plan">planned</span><h3 style="margin-top:6px">M3 · Articulation</h3><p class="small muted">Hinged parts as UsdPhysics revolute joints, with limits.</p></div>
-  <div class="card ms"><span class="pill plan">planned</span><h3 style="margin-top:6px">M4 · Isaac Sim</h3><p class="small muted">Drop / stack scenes, domain-randomized synthetic images on the RTX 4090.</p></div>
-  <div class="card ms"><span class="pill plan">planned</span><h3 style="margin-top:6px">M5 · Showcase</h3><p class="small muted">Video, results table, public repo, resume line.</p></div>
+  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M1 · Pipeline core</h3><p class="small muted">Clean, color-calibrate, collide, weigh, export, validate.</p></div>
+  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M2 · Photos → USD</h3><p class="small muted">COLMAP reconstruction, table removal, scoring on synthetic captures. <b>Waiting on your phone photos.</b></p></div>
+  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M3 · Articulation</h3><p class="small muted">Split a scan into parts, USD revolute joint with limits.</p></div>
+  <div class="card ms m-done"><span class="pill done">done</span><h3 style="margin-top:6px">M4 · Simulators</h3><p class="small muted">Isaac Sim 6 PhysX + Replicator dataset; MuJoCo grasp, bin, hinge.</p></div>
+  <div class="card ms m-next"><span class="pill next">next</span><h3 style="margin-top:6px">M5 · Showcase</h3><p class="small muted">Real captures, video, public repo, resume line.</p></div>
 </div>
 
-<h2>Demo: synthetic mug</h2>
-<div class="card">
-  <img src="figures/demo_preview.png" alt="Raw scan, cleaned asset and collision hulls">
-  <p class="small muted" style="margin-top:8px">A fake scan with real-world problems (wrong axis, centimeters, debris, 370k triangles, warm color cast) goes in; a clean, calibrated, 371.9 g rigid body with 25 convex colliders comes out. Files are in <code>output\demo\</code>; run <code>scan2usd preview &lt;file&gt;</code> to render any mesh or USD.</p>
+<h2>Photos → USD, scored against ground truth</h2>
+<div class="grid g2">
+  <div class="card"><img src="figures/synthetic_capture.jpg" alt="Synthetic phone capture">
+    <p class="cap">A fake phone capture rendered in Blender: 78 photos in 3 rings plus top views, warm light, ColorChecker in the scene, known camera poses and shape.</p></div>
+  <div class="card"><img src="figures/texture_matters.jpg" alt="Dark plain glaze vs speckled glaze reconstruction">
+    <p class="cap">Same mug, two glazes. Photogrammetry needs surface texture: the plain dark glaze leaves holes; the speckled one reconstructs to 0.8 mm.</p></div>
 </div>
-<div class="grid" style="grid-template-columns: 1.6fr 1fr; margin-top:12px">
-  <div class="card"><h3>Color chart: captured · corrected · reference</h3><img src="figures/color_chart.svg" alt="ColorChecker before/after"></div>
-  <div class="card"><h3>What each color reference buys you</h3>
-    <p class="small muted">Mean ΔE2000 on the demo's color cast. Below about 2 is hard to notice.</p>
+<div class="card" style="margin-top:12px">
+  <h3>Benchmark</h3>
+  <!-- BENCHMARK_TABLE -->
+  <p class="cap">Each object: 78 rendered photos → COLMAP → Scan2USD with one ruler measurement (height). Accuracy = reconstruction to true surface; F-score = share of both surfaces within 2 mm. Ground truth: Google Scanned Objects (CC-BY 4.0) and a procedural mug.</p>
+</div>
+
+<h2>Robotics demos</h2>
+<div class="grid g2">
+  <div class="card"><h3>Rim grasp in MuJoCo</h3><img src="figures/grasp_demo.webp" alt="Grasp demo">
+    <p class="cap">One finger inside the cup. With Scan2USD's 25 convex pieces the mug lifts 11.6 cm; with a single convex hull the cavity is "lidded" and the grasp fails.</p></div>
+  <div class="card"><h3>Isaac Sim 6 · Replicator dataset</h3><img src="figures/isaac_dataset.jpg" alt="Isaac Sim synthetic data">
+    <p class="cap">All 8 assets referenced unmodified, settled by PhysX, then rendered with random cameras and lights: RGB, tight 2D boxes, segmentation, depth (12 frames in 9 s).</p></div>
+  <div class="card"><h3>Bin of scanned objects</h3><img src="figures/clutter_demo.webp" alt="Clutter demo">
+    <p class="cap">14 objects, 392 convex colliders: all end in the tote and settle; resting penetration 0.08 mm.</p></div>
+  <div class="card"><h3>Articulated asset</h3><img src="figures/articulation_demo.webp" alt="Hinged box demo">
+    <p class="cap">One closed scan + a seam plane + a hinge line → base and lid with a USD revolute joint (0–105°). The lid opens, a scanned toy drops in, the lid closes.</p></div>
+</div>
+
+<h2>Color calibration</h2>
+<div class="grid" style="grid-template-columns: 1.6fr 1fr">
+  <div class="card"><img src="figures/color_chart.svg" alt="ColorChecker before/after"><p class="cap">Each patch: as captured · corrected · reference, with ΔE2000.</p></div>
+  <div class="card"><h3>What each reference buys you</h3>
     <table>
-      <tr><th>Reference</th><th>ΔE</th><th>Cost</th></tr>
+      <tr><th>Reference</th><th>ΔE2000</th><th>Cost</th></tr>
       <tr><td>none</td><td>6.7</td><td>–</td></tr>
-      <tr><td>white paper (white balance only)</td><td>3.8</td><td>free</td></tr>
+      <tr><td>white paper</td><td>3.8</td><td>free</td></tr>
       <tr><td>18% gray card</td><td class="good">1.7</td><td>≈ $10</td></tr>
-      <tr><td>ColorChecker (24 patches)</td><td class="good"><b>0.2</b></td><td>≈ $70–110</td></tr>
+      <tr><td>ColorChecker</td><td class="good"><b>0.2</b></td><td>≈ $60–110</td></tr>
     </table>
-    <p class="small muted" style="margin-top:8px">A gray card fixes white balance and exposure. The 24-patch chart also fixes hue cross-talk.</p>
-  </div>
+    <p class="cap">Below about 2 is hard to notice. In the full photo-to-USD runs, chart error drops from ~8 to ~1.3 (JPEG, uneven light).</p></div>
 </div>
 
 <h2>Learn</h2>
 <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr))">
-  <details><summary>Photogrammetry <span>· photos → mesh</span></summary>
-    <p>It matches features across overlapping photos, solves for the camera positions, then builds a textured surface. Gaussian splatting looks more photoreal but has no clean surface, so simulation still needs a mesh.</p>
-    <p class="where">Comes before the pipeline · M2</p></details>
+  <details><summary>Photogrammetry with COLMAP <span>· photos → points → mesh</span></summary>
+    <p><b>Structure from motion</b> matches features across photos and solves every camera's position. <b>Multi-view stereo</b> then estimates depth per pixel and fuses millions of colored points. A Poisson solve turns the points into a closed surface.</p>
+    <p class="where"><code>reconstruct.py</code> · table plane → Z-up; object kept as the densest footprint above the table</p></details>
+  <details><summary>Accuracy, completeness, F-score <span>· how reconstruction is graded</span></summary>
+    <p>Accuracy: how far the built surface is from the truth. Completeness: how much of the truth was captured. F-score at τ combines both: the share of each surface within τ (2 mm here) of the other. These are the standard metrics of the DTU and Tanks &amp; Temples benchmarks.</p>
+    <p class="where"><code>evaluate.py</code> · yaw search + ICP alignment, then point-to-surface distances</p></details>
   <details><summary>Color calibration <span>· your Physically-Based Calibration, for scans</span></summary>
-    <p>Fit a 3×3 matrix that maps the camera's colors of known chart patches to their true values, in <i>linear</i> light, then apply it to the scan's albedo. ΔE2000 measures the result the way eyes perceive it (≈ 1 is just noticeable).</p>
-    <p class="where"><code>color.py</code> · <code>fit_ccm</code>, <code>fit_neutral</code></p></details>
-  <details><summary>Convex decomposition <span>· why physics wants convex pieces</span></summary>
-    <p>Fast collision tests (GJK) only work on convex shapes. CoACD splits a concave mug into hulls that keep its cavity and handle hole open, so things can go inside it.</p>
-    <p class="where"><code>physics.py</code> · runs on a 4k-triangle proxy for speed</p></details>
-  <details><summary>Mass &amp; inertia <span>· how hard to push and to spin</span></summary>
-    <p>Mass = volume × density, which needs a watertight mesh. The 3×3 inertia tensor is stored as 3 principal moments plus a rotation; it's only physical if I₁ + I₂ ≥ I₃.</p>
-    <p class="where"><code>physics.py</code> · or pass a measured <code>--mass</code></p></details>
-  <details><summary>OpenUSD &amp; UsdPhysics <span>· what's inside the output</span></summary>
-    <p>A tree of prims with physics schemas applied, readable by Isaac Sim, Omniverse, Blender and Houdini.</p>
-<div class="tree">/ceramic_mug          RigidBodyAPI · MassAPI   (Z-up, meters, kg)
-  Looks/M_surface     UsdPreviewSurface
-  Looks/PM_contact    friction · restitution
-  render              visible mesh
-  collision/hull_###  CollisionAPI · convexHull · purpose=guide</div></details>
-  <details><summary>Drop tests <span>· what "stable" means</span></summary>
-    <p>MuJoCo drops the asset in 3 poses and checks for no NaNs, no energy gain, shallow penetration, and coming to rest. Contacts are soft springs, so impact depth depends on the contact time constant.</p>
-    <p class="where"><code>simulate.py</code></p></details>
+    <p>A 3×3 matrix maps the camera's colors of known chart patches to their true values in linear light; it's then applied to the scan's albedo. ΔE2000 ≈ 1 is just noticeable.</p>
+    <p class="where"><code>color.py</code></p></details>
+  <details><summary>Convex decomposition <span>· why the grasp works</span></summary>
+    <p>Physics engines collide convex shapes quickly. One hull around a mug fills its cavity; CoACD splits it into pieces that keep the opening, so fingers and objects can go inside.</p>
+    <p class="where"><code>physics.py</code></p></details>
+  <details><summary>Mass for real, holey scans <span>· voxel fill</span></summary>
+    <p>Mass needs a closed solid. Scans often have holes, so the pipeline voxelizes the surface, closes small gaps, and fills enclosed space; open cavities (bowls, cups) stay empty. Example: bowl 322 g (hull estimate) → 192 g.</p>
+    <p class="where"><code>physics.voxel_solid</code></p></details>
+  <details><summary>Articulations in USD <span>· lids, doors, laptops</span></summary>
+    <p>Each part is its own rigid body; a <code>UsdPhysics.RevoluteJoint</code> joins them with a hinge axis and angle limits, under an <code>ArticulationRootAPI</code> so PhysX solves them as one mechanism.</p>
+    <p class="where"><code>articulation.py</code> · <code>scan2usd articulate</code></p></details>
+  <details><summary>Synthetic data <span>· Replicator</span></summary>
+    <p>Robots learn perception from labeled images. Simulators render perfect labels for free; randomizing cameras and lighting (domain randomization) helps the model transfer to the real world.</p>
+    <p class="where"><code>scripts/isaac_demo.py</code></p></details>
 </div>
 
 <h2>Lessons so far</h2>
 <ul class="small">
-  <li><b>517 g → 372 g:</b> decimation broke watertightness, so the mass estimate fell back to hulls. Fixed with topology-preserving decimation.</li>
-  <li><b>125 s → 25 s:</b> 98% of the time was in convex decomposition. Fixed by running it on a lighter proxy mesh.</li>
-  <li><b>6.7 mm in every pose:</b> the same depth everywhere pointed to contact softness, not geometry. Fixed with stiffer contacts and separate impact / resting checks.</li>
+  <li><b>Texture decides reconstruction.</b> A plain dark glaze and a plain white mug interior both failed to reconstruct. That shows up in the benchmark as holes or a sealed cup (volume +191%).</li>
+  <li><b>Validators can't catch everything.</b> A wrong object pick (a 38 cm ring) still passed every plausibility check; scoring against ground truth caught it.</li>
+  <li><b>Clustering by distance breaks on sparse surfaces.</b> Picking the object by its 2D footprint on the table worked where 3D distance clustering failed.</li>
+  <li><b>Units bite.</b> MuJoCo angles default to degrees; a radian limit produced a 1.8° hinge.</li>
+  <li><b>Contacts need consistent stiffness.</b> Soft default bin walls let objects sink 8 mm; matching the assets' stiffness gave 0.08 mm.</li>
+  <li><b>Versions matter.</b> Isaac Sim 5.1's renderer crashed on this driver; 6.0 works.</li>
 </ul>
 
 <h2>Next: your capture</h2>
-<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr))">
+<div class="grid g2">
   <div class="card small"><h3>Shoot</h3><ul>
-    <li><b>Start easy:</b> a matte, textured object (mug, wooden toy, sneaker).</li>
-    <li><b>Then the Xbox controller:</b> on-brand and a good grasping target, but dark glossy plastic is hard. Use soft light and avoid reflections.</li>
-    <li><b>60–150 photos</b> per object: walk around it in 3 rings (low, eye level, high) with 60–80% overlap. Keep the object and lights still; lock exposure, white balance and focus; no flash.</li>
-    <li>Put a newspaper under the object, and a <b>gray card</b> (or white paper) in a few frames.</li></ul></div>
-  <div class="card small"><h3>Measure</h3><ul>
-    <li>Weight on a kitchen scale (g) and one ruler dimension (mm).</li>
-    <li>That lets us report "predicted vs. measured," a strong result line.</li>
-    <li>Drop files into <code>data\raw\&lt;object&gt;\</code> (git-ignored) with a <code>notes.txt</code>.</li></ul></div>
+    <li><b>Start easy:</b> a matte, textured object (wooden toy, sneaker, speckled mug).</li>
+    <li><b>60–150 photos</b>: walk around it in 3 rings with 60–80% overlap; keep object and lights still; lock exposure, white balance and focus; no flash.</li>
+    <li>Put a newspaper under the object and the <b>ColorChecker</b> beside it in a few frames, plus one close-up.</li>
+    <li>The Xbox controller after that: dark gloss is the hardest case (see the lesson above).</li></ul></div>
+  <div class="card small"><h3>Measure, then run</h3><ul>
+    <li>Weigh it (g) and measure its height (mm).</li>
+    <li><code>scan2usd reconstruct photos\ -o work\</code> then <code>scan2usd build work\object_mesh.ply --scale-to 0.095 --scale-axis z --mass 0.36</code></li>
+    <li>Put files in <code>data\raw\&lt;object&gt;\</code> (git-ignored).</li></ul></div>
 </div>
 
-<footer>Scan2USD · personal R&amp;D project · Yibo Liu · Oct 2026 · Figures: <code>scripts/make_doc_figures.py</code></footer>
+<footer>Scan2USD · personal R&amp;D project · Yibo Liu · Oct 2026 · Ground-truth meshes: Google Scanned Objects (CC-BY 4.0) · Figures: <code>scripts/</code></footer>
 </div></body>
 </html>

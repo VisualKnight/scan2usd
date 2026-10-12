@@ -43,7 +43,7 @@ from pxr import Gf, UsdGeom, UsdLux, UsdPhysics  # noqa: E402
 t0 = time.time()
 assets = sorted(glob.glob(os.path.join(ROOT, "output", "gso_assets", "*", "*.usda")))
 for extra in ("output/demo/asset/ceramic_mug.usda", "data/synthetic/mug/work/asset/mug.usda",
-              "output/articulated/keepsake_box.usda"):
+              "output/articulated/keepsake_box.usda", "output/buddha/buddha_head.usda"):
     pth = os.path.join(ROOT, extra)
     if os.path.exists(pth):
         assets.append(pth)

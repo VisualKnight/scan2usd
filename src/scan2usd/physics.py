@@ -21,6 +21,7 @@ MATERIALS: dict[str, dict[str, float]] = {
     "cardboard": {"density": 690.0,  "static_friction": 0.55, "dynamic_friction": 0.45, "restitution": 0.05},
     "foam":      {"density": 30.0,   "static_friction": 0.70, "dynamic_friction": 0.60, "restitution": 0.40},
     "fruit":     {"density": 900.0,  "static_friction": 0.60, "dynamic_friction": 0.50, "restitution": 0.10},
+    "concrete":  {"density": 2300.0, "static_friction": 0.70, "dynamic_friction": 0.60, "restitution": 0.10},
 }
 
 # PhysX limits a convex hull to 255 vertices; stay well under it.
