@@ -6,6 +6,8 @@
 Shots (written to output/pathtrace/):
   beauty   scanned assets on a table, HDRI dome light + key light, camera depth of field;
            rendered with RTX real-time path tracing and with offline path tracing.
+  hero     square shot for the README hero strip: the Buddha center stage, the other scans grouped
+           around it, focus on the Buddha at f/8 so the whole group stays sharp.
   normals  the Buddha under grazing light: 50k-triangle asset without vs. with the baked normal map.
   lookdev  the Buddha from a real photo's solved camera (scripts/lookdev_camera.py), with an object
            mask, for photo-vs-render comparison (scripts/compare_lookdev.py).
@@ -24,7 +26,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "output", "pathtrace")
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--shots", default="beauty,normals,lookdev")
+parser.add_argument("--shots", default="beauty,hero,normals,lookdev")
+parser.add_argument("--hero-yaw", type=float, default=75.0, help="Buddha yaw in the hero shot (deg)")
 parser.add_argument("--spp", type=int, default=64, help="path-traced samples per pixel per subframe")
 parser.add_argument("--subframes", type=int, default=8, help="accumulated subframes (total spp = spp x subframes)")
 parser.add_argument("--hdri", default="/NVIDIA/Assets/Skies/Indoor/wooden_lounge_4k.hdr")
@@ -218,12 +221,28 @@ if "beauty" in shots:
     settle()
     render("/World/cam", (1920, 1080), "beauty_rt" + args.tag, subframes=1, mode="RealTimePathTracing")
     render("/World/cam", (1920, 1080), "beauty_pt" + args.tag)
-    # Square hero shot for the README strip: the real-photo Buddha in front, the other scans behind.
-    hero_eye = (0.45, -0.32, 0.2)
-    camera(stage, "/World/hero_cam", hero_eye, (0.13, 0.03, 0.08), focal=50, aspect=1.0, fstop=args.fstop,
-           focus=float(np.linalg.norm(np.subtract(hero_eye, (0.21, 0.09, 0.1)))))
-    render("/World/hero_cam", (1024, 1024), "hero_pt" + args.tag)
     results["beauty"] = {"hdri": args.hdri, "spp": args.spp * args.subframes, "fstop": args.fstop}
+
+if "hero" in shots:
+    # Square hero shot for the README strip: the real-photo Buddha center stage, the other scans
+    # grouped close around it, all inside the depth of field (focus on the Buddha, f/8).
+    stage = new_stage()
+    table(stage)
+    dome(stage, args.hdri, intensity=900.0, rotate_z=40)
+    rect_light(stage, "/World/key", (-0.45, -0.55, 0.65), (0, 0, 0.08), 25000, size=(0.6, 0.4), color=(1.0, 0.95, 0.88))
+    rect_light(stage, "/World/rim", (0.35, 0.45, 0.45), (0, 0, 0.1), 9000, size=(0.4, 0.3))
+    place(stage, "/World/buddha", PBR["buddha_head"], 0.0, 0.03, yaw=args.hero_yaw)
+    place(stage, "/World/mug", PBR["speckled_mug"], -0.12, -0.02, yaw=-35)
+    place(stage, "/World/android", GSO("great_dinos_triceratops_toy"), 0.105, -0.06, yaw=-25)
+    place(stage, "/World/lion", GSO("schleich_lion_action_figure"), -0.05, -0.12, yaw=20)
+    place(stage, "/World/printed", GSO("ace_coffee_mug_kristen_16_oz_cup"), -0.17, 0.14, yaw=60)
+    place(stage, "/World/bowl", GSO("cole_hardware_bowl_scirocco_yellowblue"), 0.15, 0.13, yaw=0)
+    hero_eye, hero_target = (0.0, -0.53, 0.19), (0.0, 0.0, 0.095)
+    camera(stage, "/World/hero_cam", hero_eye, hero_target, focal=50, aspect=1.0, fstop=8.0,
+           focus=float(np.linalg.norm(np.subtract(hero_eye, (0.0, 0.0, 0.1)))))
+    settle()
+    render("/World/hero_cam", (1024, 1024), "hero_pt" + args.tag)
+    results["hero"] = {"fstop": 8.0, "spp": args.spp * args.subframes}
 
 if "normals" in shots:
     for name, usd in (("normals_off", os.path.join(ROOT, "output", "buddha", "buddha_head.usda")),
