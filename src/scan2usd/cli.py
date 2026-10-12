@@ -279,6 +279,21 @@ def cmd_library(args) -> int:
     return 0
 
 
+def cmd_grasps(args) -> int:
+    from .schemas import read_grasps
+
+    grasps = read_grasps(args.usd, args.prim, args.gripper)
+    if not grasps:
+        print(f"no grasps in {args.usd} (annotate with scripts/annotate_grasps.py)")
+        return 1
+    print(f"{'#':>3} {'gripper':<12} {'type':<7} {'success':>8} {'trials':>6}  position (m)            by variant")
+    for k, g in enumerate(grasps):
+        pos = " ".join(f"{v:+.3f}" for v in g.position)
+        by = ", ".join(f"{n} {r:.2f}" for n, r in g.by_variant.items())
+        print(f"{k:>3} {g.gripper:<12} {g.type:<7} {g.success_rate:>8.2f} {g.trials:>6}  {pos}  {by}")
+    return 0
+
+
 def cmd_materials(_args) -> int:
     from .physics import MATERIALS
 
@@ -376,6 +391,12 @@ def main(argv: list[str] | None = None) -> int:
     lb.add_argument("-o", "--output", type=Path, required=True, help="library .usda path")
     lb.add_argument("--spacing", type=float, default=0.1, help="gap between assets in the layout (m)")
     lb.set_defaults(func=cmd_library)
+
+    gr = sub.add_parser("grasps", help="list the grasps stored in an asset (Scan2UsdGraspAPI)")
+    gr.add_argument("usd", type=Path)
+    gr.add_argument("--prim", help="asset prim inside a larger stage (e.g. /Library/ceramic_mug)")
+    gr.add_argument("--gripper", choices=["panda", "shadow_hand", "generic_parallel"])
+    gr.set_defaults(func=cmd_grasps)
 
     args = parser.parse_args(argv)
     return args.func(args)

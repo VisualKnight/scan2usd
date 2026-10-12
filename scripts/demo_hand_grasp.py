@@ -23,7 +23,6 @@ import os
 import shutil
 import sys
 import time
-from dataclasses import replace
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -52,14 +51,9 @@ TITLES = {"ace_coffee_mug_kristen_16_oz_cup": "Printed mug", "cole_hardware_bowl
           "speckled_mug": "Speckled mug", "buddha_head": "Buddha (4.6 kg)"}
 
 
-def forearm_pose(site: np.ndarray, yaw_deg: float, mode: str = "side"):
-    """Forearm (mocap) pose for a grasp at `site` (the palm's grasp site).
-
-    side: palm facing the object along `yaw`, thumb up, fingers wrap horizontally (holding a can).
-    top:  palm facing down, fingers pointing along `yaw`, curling down around the object.
-    """
-    from scipy.spatial.transform import Rotation
-
+def palm_rotation(yaw_deg: float, mode: str = "side") -> np.ndarray:
+    """Palm frame for a grasp. side: palm facing the object along `yaw`, thumb up, fingers wrap
+    horizontally (holding a can). top: palm facing down, fingers pointing along `yaw`."""
     a = np.radians(yaw_deg)
     toward = np.array([np.cos(a), np.sin(a), 0.0])
     if mode == "side":
@@ -70,11 +64,43 @@ def forearm_pose(site: np.ndarray, yaw_deg: float, mode: str = "side"):
         y = np.array([0.0, 0.0, 1.0])  # palm faces down
         z = toward  # fingers point along yaw
         x = np.cross(y, z)
-    r_palm = np.c_[x, y, z]
+    return np.c_[x, y, z]
+
+
+def forearm_from_palm(site: np.ndarray, r_palm: np.ndarray):
+    """Forearm (mocap) pose that puts the palm's grasp site at `site` with orientation `r_palm`."""
+    from scipy.spatial.transform import Rotation
+
     r_f = r_palm @ R_FP.T
     pos = site - r_f @ SITE_IN_FOREARM
     q = Rotation.from_matrix(r_f).as_quat()  # x y z w
-    return pos, np.array([q[3], q[0], q[1], q[2]]), toward
+    return pos, np.array([q[3], q[0], q[1], q[2]])
+
+
+def forearm_pose(site: np.ndarray, yaw_deg: float, mode: str = "side"):
+    """Forearm pose for a sampled grasp (see palm_rotation); also returns the approach direction."""
+    a = np.radians(yaw_deg)
+    pos, quat = forearm_from_palm(site, palm_rotation(yaw_deg, mode))
+    return pos, quat, np.array([np.cos(a), np.sin(a), 0.0])
+
+
+def grasp_frame(a, p: dict) -> tuple[np.ndarray, np.ndarray]:
+    """Palm grasp-site frame (position, rotation) in the asset frame for sampled grasp parameters."""
+    lo, hi = a.render_mesh.bounds
+    center = (lo + hi) / 2
+    a_rad = np.radians(p["yaw"])
+    toward = np.array([np.cos(a_rad), np.sin(a_rad), 0.0])
+    if p["mode"] == "side":
+        # Palm on the object's surface (+ standoff b): half the footprint along the approach
+        # direction, minus the 3.5 cm between the palm and its grasp site.
+        v = a.render_mesh.vertices
+        radius = float(np.max(-(v[:, :2] - center[:2]) @ toward[:2]))
+        height = max(0.045, lo[2] + p["a"] * (hi[2] - lo[2]))
+        site = np.r_[center[:2] - toward[:2] * max(0.0, radius - 0.035 + p["b"]), height]
+    else:
+        # Palm a gap `a` above the top; object center `b` behind the grasp site (toward the palm).
+        site = np.r_[center[:2] + toward[:2] * p["b"], hi[2] + p["a"] - 0.035]
+    return site, palm_rotation(p["yaw"], p["mode"])
 
 
 def build(work: Path, body, finger_gain: float | None = None) -> "mujoco.MjModel":  # noqa: F821
@@ -163,37 +189,37 @@ def asset(prim: str, variant: str):
     return _cache[key]
 
 
-def trial(p: dict, render: bool = False):
+def trial(p: dict, render: bool = False, physical=None):
+    """One grasp trial. The grasp is planned on the library asset p["prim"] / p["variant"] (or given
+    as p["pose"]); `physical` optionally replaces the simulated object (e.g. a randomized sample or
+    the ground-truth object) while the plan stays the same."""
     import mujoco
 
     from scan2usd.mjcf import asset_body
 
     t_start = time.time()
-    a = asset(p["prim"], p["variant"])
+    plan_asset = asset(p["prim"], p["variant"])
+    a = physical if physical is not None else plan_asset
     body = asset_body(a, "obj", pos=(0, 0, 0.001), collision="hulls")
-    body = replace(body, body_xml=body.body_xml)
     model = build(ROOT / "data" / "work" / "hand" / p["id"], body)
     data = mujoco.MjData(model)
     obj = model.body("obj").id
     mujoco.mj_forward(model, data)
-    lo, hi = a.render_mesh.bounds
-    center = (lo + hi) / 2
-    a_rad = np.radians(p["yaw"])
-    toward = np.array([np.cos(a_rad), np.sin(a_rad), 0.0])
-    if p["mode"] == "side":
-        # Palm on the object's surface (+ standoff b): half the footprint along the approach
-        # direction, minus the 3.5 cm between the palm and its grasp site.
-        v = a.render_mesh.vertices
-        radius = float(np.max(-(v[:, :2] - center[:2]) @ toward[:2]))
-        height = max(0.045, lo[2] + p["a"] * (hi[2] - lo[2]))
-        site = np.r_[center[:2] - toward[:2] * max(0.0, radius - 0.035 + p["b"]), height]
-        pos, quat, _ = forearm_pose(site, p["yaw"], "side")
-        above = pos - toward * 0.12  # approach horizontally
+    if "pose" in p:  # an explicit grasp frame (e.g. read from the asset's Scan2UsdGraspAPI prims)
+        pose = np.asarray(p["pose"], dtype=float)
+        site, r_palm = pose[:3, 3].copy(), pose[:3, :3]
     else:
-        # Palm a gap `a` above the top; object center `b` behind the grasp site (toward the palm).
-        site = np.r_[center[:2] + toward[:2] * p["b"], hi[2] + p["a"] - 0.035]
-        pos, quat, _ = forearm_pose(site, p["yaw"], "top")
-        above = pos + np.array([0.0, 0.0, 0.12])  # approach from above
+        site, r_palm = grasp_frame(plan_asset if plan_asset is not None else a, p)
+    # Perturbations (grasp execution / perception error): position (m) and yaw about +Z (deg).
+    site = site + np.array([p.get("dx", 0.0), p.get("dy", 0.0), p.get("dz", 0.0)])
+    if p.get("dyaw"):
+        c, s_ = np.cos(np.radians(p["dyaw"])), np.sin(np.radians(p["dyaw"]))
+        rz = np.array([[c, -s_, 0], [s_, c, 0], [0, 0, 1]])
+        site, r_palm = rz @ site, rz @ r_palm
+    pos, quat = forearm_from_palm(site, r_palm)
+    palm_normal = -r_palm[:, 1]  # the palm faces its -y
+    above = pos - palm_normal * 0.12  # approach along the palm normal (sideways or from above)
+    p = {**p, "site": site.round(5).tolist()}
     data.mocap_pos[0], data.mocap_quat[0] = above, quat
     adr = model.joint("forearm_free").qposadr[0]
     data.qpos[adr:adr + 3], data.qpos[adr + 3:adr + 7] = above, quat  # start the hand at its target

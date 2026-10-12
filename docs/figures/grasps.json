@@ -1,0 +1,546 @@
+{
+  "ace_coffee_mug_kristen_16_oz_cup": [
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.8333333333333334
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.16666666666666666
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 1.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 1.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.8333333333333334,
+      "byVariant": {
+        "decomposed": 0.8333333333333334,
+        "convex_hull": 1.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.8333333333333334,
+      "byVariant": {
+        "decomposed": 0.8333333333333334,
+        "convex_hull": 0.6666666666666666
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 0.0,
+      "byVariant": {
+        "decomposed": 0.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 0.0,
+      "byVariant": {
+        "decomposed": 0.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 0.0,
+      "byVariant": {
+        "decomposed": 0.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 0.0,
+      "byVariant": {
+        "decomposed": 0.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 0.0,
+      "byVariant": {
+        "decomposed": 0.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 0.0,
+      "byVariant": {
+        "decomposed": 0.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 0.0,
+      "byVariant": {
+        "decomposed": 0.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 0.0,
+      "byVariant": {
+        "decomposed": 0.0,
+        "convex_hull": 0.0
+      }
+    }
+  ],
+  "cole_hardware_bowl_scirocco_yellowblue": [
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 1.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.8333333333333334,
+      "byVariant": {
+        "decomposed": 0.8333333333333334,
+        "convex_hull": 0.8333333333333334
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.6666666666666666,
+      "byVariant": {
+        "decomposed": 0.6666666666666666,
+        "convex_hull": 0.8333333333333334
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.6666666666666666,
+      "byVariant": {
+        "decomposed": 0.6666666666666666,
+        "convex_hull": 0.6666666666666666
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.5,
+      "byVariant": {
+        "decomposed": 0.5,
+        "convex_hull": 0.8333333333333334
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.5,
+      "byVariant": {
+        "decomposed": 0.5,
+        "convex_hull": 0.5
+      }
+    }
+  ],
+  "great_dinos_triceratops_toy": [
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 1.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 1.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 1.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 1.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 1.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.5,
+      "byVariant": {
+        "decomposed": 0.5,
+        "convex_hull": 0.3333333333333333
+      }
+    }
+  ],
+  "schleich_lion_action_figure": [
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.8333333333333334
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 1.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.8333333333333334
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.8333333333333334
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.8333333333333334,
+      "byVariant": {
+        "decomposed": 0.8333333333333334,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.5,
+      "byVariant": {
+        "decomposed": 0.5,
+        "convex_hull": 0.6666666666666666
+      }
+    }
+  ],
+  "womens_bluefish_2eye_boat_shoe_in_tan": [
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.5,
+      "byVariant": {
+        "decomposed": 0.5,
+        "convex_hull": 0.0
+      }
+    }
+  ],
+  "ceramic_mug": [
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 1.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.5
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 1.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.8333333333333334,
+      "byVariant": {
+        "decomposed": 0.8333333333333334,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.8333333333333334,
+      "byVariant": {
+        "decomposed": 0.8333333333333334,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.6666666666666666,
+      "byVariant": {
+        "decomposed": 0.6666666666666666,
+        "convex_hull": 0.16666666666666666
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.5,
+      "byVariant": {
+        "decomposed": 0.5,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.3333333333333333,
+      "byVariant": {
+        "decomposed": 0.3333333333333333,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    }
+  ],
+  "speckled_mug": [
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.5
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.8333333333333334
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 1.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.8333333333333334,
+      "byVariant": {
+        "decomposed": 0.8333333333333334,
+        "convex_hull": 0.6666666666666666
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.6666666666666666,
+      "byVariant": {
+        "decomposed": 0.6666666666666666,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "shadow_hand",
+      "successRate": 0.5,
+      "byVariant": {
+        "decomposed": 0.5,
+        "convex_hull": 0.5
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    },
+    {
+      "gripper": "panda",
+      "successRate": 1.0,
+      "byVariant": {
+        "decomposed": 1.0,
+        "convex_hull": 0.0
+      }
+    }
+  ],
+  "keepsake_box": [],
+  "buddha_head": []
+}

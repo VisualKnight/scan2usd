@@ -118,6 +118,10 @@ def scene(collision: str):
             d.GetMaxForceAttr().Set(70.0)
     variants["finger_pad_colliders"] = pads
     variants["finger_drives"] = drives
+    g = stage.GetPrimAtPath("/World/mug/grasps")
+    kids = g.GetChildren() if g else []
+    variants["usd_grasps"] = {"count": len(kids),
+                              "schema_recognized": bool(kids) and all(k.HasAPI("Scan2UsdGraspAPI") for k in kids)}
 
     dome = UsdLux.DomeLight.Define(stage, "/World/dome")
     dome.CreateIntensityAttr(900)

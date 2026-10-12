@@ -19,6 +19,7 @@ import mujoco
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from demo_panda import HOME, MUG_POS, PLACE_SHIFT, Arm, build_scene, plan_pick, rim_grasp  # noqa: E402
 
+from scan2usd.schemas import read_grasps  # noqa: E402
 from scan2usd.usd_io import read_usd  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,19 +34,26 @@ def main() -> None:
     model = build_scene(asset, "hulls", ROOT / "data" / "work" / "panda_plan")
     arm = Arm(model)
     mujoco.mj_resetDataKeyframe(model, arm.data, model.key("home").id)
-    grasp, radial = rim_grasp(asset.render_mesh, MUG_POS)
+    stored = read_grasps(args.asset, gripper="panda")
+    if stored:  # grasps travel with the asset (Scan2UsdGraspAPI, scripts/annotate_grasps.py)
+        best = stored[0]
+        grasp, radial = best.position + MUG_POS, best.rotation[:, 1]
+        source = f"asset grasp (success {best.success_rate:.2f} over {best.trials} trials)"
+    else:
+        grasp, radial = rim_grasp(asset.render_mesh, MUG_POS)
+        source = "computed rim grasp"
     plan = plan_pick(model, arm, grasp, radial)
     finger_m = 0.04 / 255.0  # Menagerie gripper ctrl 0..255 -> 0..40 mm per finger
     out = {
         "asset": args.asset.resolve().relative_to(ROOT).as_posix(),
         "mug_pos": MUG_POS.tolist(), "place_shift": PLACE_SHIFT.tolist(), "home": HOME.tolist(),
-        "finger_start_m": 0.022,
+        "finger_start_m": 0.022, "grasp_source": source,
         "waypoints": [{"q": [float(v) for v in q], "finger_m": float(g) * finger_m, "seconds": float(d),
                        "ik_error_mm": float(e) * 1000} for q, g, d, e in plan],
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(out, indent=2))
-    print(f"wrote {args.out}: {len(plan)} waypoints, max IK error {max(w['ik_error_mm'] for w in out['waypoints']):.2f} mm")
+    print(f"wrote {args.out} from the {source}: {len(plan)} waypoints, max IK error {max(w['ik_error_mm'] for w in out['waypoints']):.2f} mm")
 
 
 if __name__ == "__main__":

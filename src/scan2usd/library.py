@@ -198,6 +198,19 @@ def _points_world(body: Usd.Prim, asset_root: Usd.Prim, pts: np.ndarray) -> np.n
     return (np.c_[pts, np.ones(len(pts))] @ np.asarray(xf))[:, :3]
 
 
+def asset_files(path: str | Path) -> dict[str, Path]:
+    """Library prim name -> the asset file it payloads (resolved against the library's folder)."""
+    path = Path(path).resolve()
+    stage = Usd.Stage.Open(str(path), Usd.Stage.LoadNone)
+    out = {}
+    for prim in stage.GetDefaultPrim().GetFilteredChildren(Usd.PrimIsActive & Usd.PrimIsDefined):
+        op = prim.GetMetadata("payload")
+        items = list(op.GetAddedOrExplicitItems()) if op else []
+        if items:
+            out[prim.GetName()] = (path.parent / items[0].assetPath).resolve()
+    return out
+
+
 def library_entries(path: str | Path) -> list[dict]:
     """Summaries of a library file's assets (opens with payloads unloaded: cheap)."""
     stage = Usd.Stage.Open(str(path), Usd.Stage.LoadNone)

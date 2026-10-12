@@ -1,0 +1,79 @@
+#usda 1.0
+(
+    "Scan2USD codeless schemas (hand-written in usdGenSchema's output format; no C++/Python code needed)."
+)
+
+class "Scan2UsdGraspAPI" (
+    doc = """A grasp for this object. Applied to an Xformable prim under the asset (by convention
+    <asset>/grasps/g_NNN) whose local transform is the gripper's tool-center-point frame in the
+    asset frame: +Z approaches the object, +Y is the closing direction."""
+)
+{
+    float scan2usd:grasp:expectedSuccess = 0 (
+        doc = "Success rate averaged over samples of the asset's uncertainty (Scan2UsdUncertaintyAPI)."
+    )
+    token scan2usd:grasp:evaluatedWith = "" (
+        doc = "Simulator and collision variant, e.g. 'mujoco:decomposed'."
+    )
+    uniform token scan2usd:grasp:gripper = "panda" (
+        allowedTokens = ["panda", "shadow_hand", "generic_parallel"]
+        doc = "Gripper the grasp was evaluated with."
+    )
+    float scan2usd:grasp:successRate = 0 (
+        doc = "Fraction of simulated trials that held the object."
+    )
+    int scan2usd:grasp:trials = 0 (
+        doc = "Number of simulated trials behind successRate."
+    )
+    uniform token scan2usd:grasp:type = "parallel" (
+        allowedTokens = ["parallel", "rim", "power", "pinch"]
+        doc = "Grasp taxonomy."
+    )
+    float scan2usd:grasp:width = 0 (
+        doc = "Gripper opening before closing (m)."
+    )
+}
+
+class "Scan2UsdUncertaintyAPI" (
+    doc = """How well the asset's physical properties are known. Applied to the asset root (rigid body).
+    Each property is an interval [min, max] around the authored nominal value, plus its source.
+    Intended use: derive domain-randomization ranges and robust plans from the asset itself."""
+)
+{
+    point3f scan2usd:uncertainty:centerOfMassMax = (0, 0, 0) (
+        doc = "Upper corner of the center-of-mass box (m, asset frame)."
+    )
+    point3f scan2usd:uncertainty:centerOfMassMin = (0, 0, 0) (
+        doc = "Lower corner of the center-of-mass box (m, asset frame)."
+    )
+    float scan2usd:uncertainty:confidenceLevel = 0.9 (
+        doc = "Nominal coverage of the intervals."
+    )
+    float2 scan2usd:uncertainty:dynamicFriction = (0, 0) (
+        doc = "Dynamic friction interval."
+    )
+    float2 scan2usd:uncertainty:mass = (0, 0) (
+        doc = "Mass interval (kg)."
+    )
+    token scan2usd:uncertainty:massSource = "" (
+        doc = "e.g. 'measured', 'density', 'density+sealed-volume'."
+    )
+    float scan2usd:uncertainty:observedFraction = 1 (
+        doc = "Fraction of the surface area seen by cameras."
+    )
+    float2 scan2usd:uncertainty:restitution = (0, 0) (
+        doc = "Restitution interval."
+    )
+    float2 scan2usd:uncertainty:scale = (1, 1) (
+        doc = "Relative scale interval (multiplier on all lengths)."
+    )
+    token scan2usd:uncertainty:scaleSource = "" (
+        doc = "e.g. 'chart', 'ruler', 'assumed'."
+    )
+    float scan2usd:uncertainty:sealedVolumeFraction = 0 (
+        doc = "Fraction of the solid volume that no camera saw into (it may be empty)."
+    )
+    float2 scan2usd:uncertainty:staticFriction = (0, 0) (
+        doc = "Static friction interval."
+    )
+}

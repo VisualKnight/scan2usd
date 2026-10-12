@@ -32,8 +32,12 @@ PLACE_SHIFT = np.array([0.0, 0.25, 0.0])
 HOME = np.array([0, 0, 0, -1.57079, 0, 1.57079, -0.7853])
 
 
-def rim_grasp(mesh, offset):
-    """TCP target on the rim opposite the handle (world frame) and the radial closing direction."""
+def rim_grasp(mesh, offset, yaw: float | None = None):
+    """TCP target on the rim (world frame) and the radial closing direction.
+
+    yaw: direction (rad, asset frame) from the cup axis to the grasped rim point; default is
+    opposite the handle.
+    """
     v = mesh.vertices
     top = v[:, 2].max()
     ring = v[v[:, 2] > top - 0.003]
@@ -41,9 +45,10 @@ def rim_grasp(mesh, offset):
     cx, cy, _ = np.linalg.lstsq(a, (ring[:, :2] ** 2).sum(1), rcond=None)[0]
     radii = np.hypot(ring[:, 0] - cx, ring[:, 1] - cy)
     r_mid = 0.5 * (np.percentile(radii, 5) + np.percentile(radii, 95))
-    band = v[(v[:, 2] > 0.25 * top) & (v[:, 2] < 0.75 * top)]
-    far = band[np.argmax(np.hypot(band[:, 0] - cx, band[:, 1] - cy))]
-    yaw = np.arctan2(far[1] - cy, far[0] - cx) + np.pi
+    if yaw is None:
+        band = v[(v[:, 2] > 0.25 * top) & (v[:, 2] < 0.75 * top)]
+        far = band[np.argmax(np.hypot(band[:, 0] - cx, band[:, 1] - cy))]
+        yaw = np.arctan2(far[1] - cy, far[0] - cx) + np.pi
     radial = np.array([np.cos(yaw), np.sin(yaw), 0.0])
     point = np.array([cx, cy, 0.0]) + r_mid * radial + offset
     point[2] = top - 0.016
@@ -243,6 +248,47 @@ def run(asset, collision: str, fps: int = 30, size=(480, 640)):
     }
     result["success"] = bool(result["lifted_m"] > 0.1 and placed < 0.03 and result["upright_deg"] < 10)
     return frames, result
+
+
+def pick_trial(plan_asset, physical=None, yaw: float | None = None, radial_offset: float = 0.0,
+               grasp_pose=None, work: Path | None = None, friction: float | None = None) -> dict:
+    """Headless pick-and-place: the grasp is planned on `plan_asset` (rim grasp at `yaw`, or an explicit
+    asset-frame `grasp_pose` 4x4 with +Y the closing direction), the simulated mug is `physical`
+    (default: the same asset). Returns lift / placement / success."""
+    from dataclasses import replace as _replace
+
+    physical = physical if physical is not None else plan_asset
+    body = asset_body(physical, "mug", pos=tuple(MUG_POS), collision="hulls", friction=friction)
+    if friction is not None:  # the mug's friction sets the grip (not the rubber pads')
+        body = _replace(body, body_xml=body.body_xml.replace('solref="0.005 1"/>', 'solref="0.005 1" priority="1"/>'))
+    model = build_scene(plan_asset, "hulls", work or ROOT / "data" / "work" / "pick_trial", mug_body=body)
+    arm = Arm(model)
+    data = mujoco.MjData(model)
+    mujoco.mj_resetDataKeyframe(model, data, model.key("home").id)
+    mug_free = model.joint(model.body("mug").jntadr[0]).qposadr[0]
+    data.qpos[mug_free: mug_free + 3] = MUG_POS
+    for fj in ("finger_joint1", "finger_joint2"):
+        data.qpos[model.joint(fj).qposadr[0]] = 0.022
+    data.ctrl[:7] = HOME
+    mujoco.mj_forward(model, data)
+    if grasp_pose is not None:
+        pose = np.asarray(grasp_pose, dtype=float)
+        grasp, radial = pose[:3, 3] + MUG_POS, pose[:3, 1]
+    else:
+        grasp, radial = rim_grasp(plan_asset.render_mesh, MUG_POS, yaw)
+    grasp = grasp + radial * radial_offset
+    plan = plan_pick(model, arm, grasp, radial)
+    _, lifted = execute(model, arm, data, plan)
+    mug = model.body("mug").id
+    final = data.xpos[mug]
+    target = MUG_POS + PLACE_SHIFT
+    up = data.xmat[mug].reshape(3, 3)[:, 2]
+    lift = float(lifted - physical.center_of_mass[2])
+    place = float(np.linalg.norm(final[:2] - target[:2]))
+    tilt = float(np.degrees(np.arccos(np.clip(up[2], -1, 1))))
+    return {"lifted_m": round(lift, 4), "place_error_m": round(place, 4), "tilt_deg": round(tilt, 1),
+            "grasp": (grasp - MUG_POS).round(5).tolist(), "radial": radial.round(5).tolist(),
+            "success": bool(lift > 0.1 and place < 0.03 and tilt < 10)}
 
 
 def main() -> None:
