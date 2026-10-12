@@ -63,6 +63,14 @@ scan2usd materials                     # density / friction presets
 
 Chart corners are the outer corners of the 6×4 patch grid in pixels, ordered top-left (the "dark skin" patch corner), top-right, bottom-right, bottom-left.
 
+To inspect a build in Blender (raw input | asset | collision hulls, each in its own collection):
+
+```powershell
+& "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" -b --factory-startup --python scripts\blender_inspect.py -- `
+    --usd output\demo\asset\ceramic_mug.usda --raw output\demo\inputs\mug_scan.ply --raw-units cm --raw-up y `
+    --save output\demo\inspect.blend
+```
+
 Color reference options, measured on the demo's color cast (mean CIEDE2000; about 2 is barely noticeable):
 
 | Reference | ΔE2000 | Corrects |
