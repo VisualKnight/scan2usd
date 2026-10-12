@@ -229,8 +229,8 @@ if "hero" in shots:
     stage = new_stage()
     table(stage)
     dome(stage, args.hdri, intensity=900.0, rotate_z=40)
-    rect_light(stage, "/World/key", (-0.45, -0.55, 0.65), (0, 0, 0.08), 25000, size=(0.6, 0.4), color=(1.0, 0.95, 0.88))
-    rect_light(stage, "/World/rim", (0.35, 0.45, 0.45), (0, 0, 0.1), 9000, size=(0.4, 0.3))
+    # Same lighting as the beauty shot (its exposure is the reference).
+    rect_light(stage, "/World/key", (-0.5, -0.6, 0.7), (0, 0, 0.05), 25000, size=(0.6, 0.4), color=(1.0, 0.95, 0.88))
     place(stage, "/World/buddha", PBR["buddha_head"], 0.0, 0.03, yaw=args.hero_yaw)
     place(stage, "/World/mug", PBR["speckled_mug"], -0.12, -0.02, yaw=-35)
     place(stage, "/World/android", GSO("great_dinos_triceratops_toy"), 0.105, -0.06, yaw=-25)
