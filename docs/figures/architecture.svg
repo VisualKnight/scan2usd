@@ -171,7 +171,7 @@
     <text x="648" y="390" font-size="10.5" fill="#475569">split + hinge joint</text>
     <use href="#cmp" x="756" y="556"/>
     <text x="648" y="572" font-size="14">mjcf.py</text>
-    <text x="648" y="590" font-size="10.5" fill="#475569">MuJoCo demos</text>
+    <text x="648" y="590" font-size="10.5" fill="#475569">Panda pick · bin · lid</text>
 
     <!-- Sticky note -->
     <g transform="rotate(-2 330 540)">

@@ -1,0 +1,22 @@
+[
+  {
+    "collision": "hulls",
+    "colliders": 25,
+    "max_com_height_m": 0.1827886066628857,
+    "lifted_m": 0.14281823106540875,
+    "place_error_m": 0.01090963712575044,
+    "upright_deg": 0.05758579832136506,
+    "ik_error_mm": 0.057817338207469295,
+    "success": true
+  },
+  {
+    "collision": "single",
+    "colliders": 1,
+    "max_com_height_m": 0.04637412954446046,
+    "lifted_m": 0.006403753946983504,
+    "place_error_m": 0.2507884086573458,
+    "upright_deg": 0.13347186202354192,
+    "ik_error_mm": 0.057817338207469295,
+    "success": false
+  }
+]

@@ -50,7 +50,8 @@
 
 | | |
 |---|---|
-| ![Grasp](docs/figures/grasp_demo.jpg) | **Rim grasp.** One finger inside the cup: with Scan2USD's convex decomposition (25 pieces) the mug lifts 11.6 cm; with one convex hull the cavity is sealed and the grasp fails. `scripts/demo_grasp.py` |
+| ![Panda](docs/figures/panda_demo.jpg) | **Franka Panda pick-and-place** ([animation](docs/figures/panda_demo.webp)). The MuJoCo Menagerie Panda rim-grasps the scanned mug (one finger inside the cup), lifts it 14 cm and places it 25 cm away (11 mm placement error). With a single convex hull the inner finger lands on a phantom "lid" and the pick fails. `scripts/demo_panda.py` |
+| ![Grasp](docs/figures/grasp_demo.jpg) | **Rim grasp, minimal gripper.** Same comparison with a two-finger gripper: decomposition lifts the mug 11.6 cm, one hull lifts it 0 cm. `scripts/demo_grasp.py` |
 | ![Isaac](docs/figures/isaac_dataset.jpg) | **Isaac Sim 6.** 9 assets (incl. the real-photo Buddha) referenced unmodified, settled by PhysX, rendered by Replicator with random cameras and lights: RGB, tight 2D boxes, segmentation, depth. `scripts/isaac_demo.py` |
 | ![Bin](docs/figures/clutter_demo.jpg) | **Bin of scanned objects.** 14 objects, 392 convex colliders; all settle in the tote, resting penetration 0.08 mm. `scripts/demo_clutter.py` |
 | ![Hinge](docs/figures/articulation_demo.jpg) | **Articulated asset.** A closed box scan + seam plane + hinge line → base and lid with a revolute joint (0–105°); the lid opens, a scanned toy drops in, the lid closes. `scripts/demo_articulation.py` |
@@ -108,6 +109,7 @@ Build outputs: `<name>.usd(a)`, `<name>.glb`, `textures/`, `color_calibration.js
 |---|---|
 | `make_synthetic_capture.py` | Render a phone-style capture of a ground-truth mesh in Blender (procedural mug or `--gso <model>`) |
 | `evaluate_synthetic.py`, `run_benchmark.py` | Photos → COLMAP → Scan2USD → score against ground truth |
+| `demo_panda.py` | Franka Panda (MuJoCo Menagerie) pick-and-place of a scanned mug; needs `git clone --depth 1 --filter=blob:none --sparse https://github.com/google-deepmind/mujoco_menagerie data\external\menagerie` then `git -C data\external\menagerie sparse-checkout set franka_emika_panda` |
 | `demo_grasp.py`, `demo_clutter.py`, `demo_articulation.py` | MuJoCo robotics demos (animations in `docs/figures/`) |
 | `isaac_demo.py`, `make_isaac_figure.py` | Isaac Sim 6: PhysX settle test + Replicator dataset (run with Isaac Sim's Python) |
 | `blender_inspect.py` | Open a build in Blender: raw input, asset, colliders |
@@ -133,4 +135,4 @@ Articulated assets put one such body per part under a root with `PhysicsArticula
 
 ## Credits
 
-Ground-truth meshes: [Google Scanned Objects](https://app.gazebosim.org/GoogleResearch/fuel/collections/Scanned%20Objects%20by%20Google%20Research) (CC-BY 4.0; the model id `Great_Dinos_Triceratops_Toy` contains an Android figure). Tools: COLMAP, CoACD, OpenUSD, MuJoCo, NVIDIA Isaac Sim, Blender, trimesh, pymeshlab.
+Ground-truth meshes: [Google Scanned Objects](https://app.gazebosim.org/GoogleResearch/fuel/collections/Scanned%20Objects%20by%20Google%20Research) (CC-BY 4.0; the model id `Great_Dinos_Triceratops_Toy` contains an Android figure). Real photos: [AliceVision Buddha dataset](https://github.com/alicevision/dataset_buddha) (CC-BY 4.0). Robot: [MuJoCo Menagerie Franka Panda](https://github.com/google-deepmind/mujoco_menagerie/tree/main/franka_emika_panda) (Apache-2.0). Tools: COLMAP, CoACD, OpenUSD, MuJoCo, NVIDIA Isaac Sim, Blender, OpenCV, trimesh, pymeshlab.

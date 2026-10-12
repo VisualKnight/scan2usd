@@ -55,7 +55,7 @@
   <div class="card kpi"><b>0.78 mm</b><span>mean surface error, 78 photos → USD (speckled mug vs. ground truth)</span></div>
   <div class="card kpi"><b>±1.4%</b><span>size from the ColorChecker alone, no ruler (worst of 6 objects)</span></div>
   <div class="card kpi"><b>9 / 9</b><span>assets load unmodified in Isaac Sim 6 and settle in PhysX</span></div>
-  <div class="card kpi"><b><span class="good">lift</span> vs <span class="bad">fail</span></b><span>robot rim-grasp: convex decomposition vs. one hull</span></div>
+  <div class="card kpi"><b><span class="good">pick</span> vs <span class="bad">fail</span></b><span>Franka Panda picks the scanned mug: convex decomposition vs. one hull</span></div>
   <div class="card kpi"><b>66 tests</b><span>plus 33 automated checks on every asset</span></div>
 </div>
 
@@ -99,9 +99,11 @@
 </div>
 
 <h2>Robotics demos</h2>
+<div class="card" style="margin-bottom:12px"><h3>Franka Panda pick-and-place (MuJoCo Menagerie robot)</h3><img src="figures/panda_demo.webp" alt="Panda pick and place">
+  <p class="cap">A real robot model rim-grasps the scanned mug (one finger inside), lifts it 14 cm and places it 25 cm away on the green target (11 mm error). Right: with a single convex hull the inner finger hits a phantom "lid" and the pick fails.</p></div>
 <div class="grid g2">
-  <div class="card"><h3>Rim grasp in MuJoCo</h3><img src="figures/grasp_demo.webp" alt="Grasp demo">
-    <p class="cap">One finger inside the cup. With Scan2USD's 25 convex pieces the mug lifts 11.6 cm; with a single convex hull the cavity is "lidded" and the grasp fails.</p></div>
+  <div class="card"><h3>Rim grasp, minimal gripper</h3><img src="figures/grasp_demo.webp" alt="Grasp demo">
+    <p class="cap">Same comparison with a simple two-finger gripper: 25 convex pieces lift the mug 11.6 cm, one convex hull 0 cm.</p></div>
   <div class="card"><h3>Isaac Sim 6 · Replicator dataset</h3><img src="figures/isaac_dataset.jpg" alt="Isaac Sim synthetic data">
     <p class="cap">All 9 assets (incl. the real-photo Buddha) referenced unmodified, settled by PhysX, then rendered with random cameras and lights: RGB, tight 2D boxes, segmentation, depth (12 frames in 9 s).</p></div>
   <div class="card"><h3>Bin of scanned objects</h3><img src="figures/clutter_demo.webp" alt="Clutter demo">
@@ -161,6 +163,7 @@
   <li><b>Contacts need consistent stiffness.</b> Soft default bin walls let objects sink 8 mm; matching the assets' stiffness gave 0.08 mm.</li>
   <li><b>Fast + thin = tunneling.</b> At PhysX's default 60 Hz, a dropped mug moved 4.5 cm per step and passed through a 2 cm table; a thicker slab and 240 Hz fixed it.</li>
   <li><b>Versions matter.</b> Isaac Sim 5.1's renderer crashed on this driver; 6.0 works.</li>
+  <li><b>Robot models need realistic actuators.</b> The Panda's stock gripper servo squeezes ~0.5 N on a thin cup wall, so the mug slipped; a real Panda hand reaches 70 N, and a stiffer servo (~9 N) made the pick work.</li>
 </ul>
 
 <h2>Next: your capture</h2>
@@ -176,6 +179,6 @@
     <li>Put files in <code>data\raw\&lt;object&gt;\</code> (git-ignored).</li></ul></div>
 </div>
 
-<footer>Scan2USD · personal R&amp;D project · Yibo Liu · Oct 2026 · Ground-truth meshes: Google Scanned Objects (CC-BY 4.0) · Figures: <code>scripts/</code></footer>
+<footer>Scan2USD · personal R&amp;D project · Yibo Liu · Oct 2026 · Ground-truth meshes: Google Scanned Objects (CC-BY 4.0) · Real photos: AliceVision Buddha (CC-BY 4.0) · Robot: MuJoCo Menagerie Franka Panda (Apache-2.0) · Figures: <code>scripts/</code></footer>
 </div></body>
 </html>
