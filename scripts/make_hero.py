@@ -3,8 +3,8 @@
     python scripts/make_hero.py
 
 Inputs: AliceVision Buddha photos (data/external/buddha), the built asset
-(output/buddha/buddha_head.usda) and a frame from the Isaac Sim synthetic dataset
-(output/synth_dr, scripts/isaac_synthdata.py). Writes docs/figures/hero.jpg.
+(output/buddha/buddha_head.usda) and a path-traced Isaac Sim render
+(output/pathtrace/hero_pt.png, scripts/isaac_pathtrace.py). Writes docs/figures/hero.jpg.
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--photo", type=Path, default=ROOT / "data" / "external" / "buddha" / "buddha" / "00021._c.png")
     p.add_argument("--asset", type=Path, default=ROOT / "output" / "buddha" / "buddha_head.usda")
-    p.add_argument("--sim-frame", type=Path, default=ROOT / "output" / "synth_dr" / "rgb_0757.png")
+    p.add_argument("--sim-frame", type=Path, default=ROOT / "output" / "pathtrace" / "hero_pt.png")
     p.add_argument("--azimuth", type=float, default=232.0)
     p.add_argument("--tile", type=int, default=400)
     p.add_argument("--out", type=Path, default=ROOT / "docs" / "figures" / "hero.jpg")
@@ -57,8 +57,8 @@ def main() -> None:
          render([asset.render_mesh], size=t, bounds=bounds, **view)),
         ("3 · Physics", f"{len(asset.hulls)} convex colliders, mass, inertia",
          render(list(asset.hulls), colors=hull_colors(len(asset.hulls)), size=t, bounds=bounds, **view)),
-        ("4 · Simulation", "Isaac Sim 6 · MuJoCo · synthetic data",
-         square(Image.open(args.sim_frame).convert("RGB"), 0.42, 0.55, 0.92).resize((t, t), Image.LANCZOS)),
+        ("4 · Simulation", "Isaac Sim 6 · RTX path traced",
+         square(Image.open(args.sim_frame).convert("RGB"), 0.5).resize((t, t), Image.LANCZOS)),
     ]
 
     gap, pad, head = 56, 24, 84

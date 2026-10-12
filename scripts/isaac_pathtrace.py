@@ -28,7 +28,7 @@ parser.add_argument("--shots", default="beauty,normals,lookdev")
 parser.add_argument("--spp", type=int, default=64, help="path-traced samples per pixel per subframe")
 parser.add_argument("--subframes", type=int, default=8, help="accumulated subframes (total spp = spp x subframes)")
 parser.add_argument("--hdri", default="/NVIDIA/Assets/Skies/Indoor/wooden_lounge_4k.hdr")
-parser.add_argument("--fstop", type=float, default=40.0, help="RTX f-stop (see the camera() note)")
+parser.add_argument("--fstop", type=float, default=5.6, help="lens f-number (physical: see camera())")
 parser.add_argument("--tag", default="")
 args = parser.parse_args()
 shots = args.shots.split(",")
@@ -108,13 +108,21 @@ def place(stage, path, usd, x, y, yaw=0.0, prim_path=None):
     return xf
 
 
+MM = 0.001 / (0.1 * 1.0)  # USD lens/filmback units are tenths of a scene unit; this stage is in meters
+
+
 def camera(stage, path, eye, target, focal=50.0, aperture=36.0, aspect=16 / 9, fstop=0.0, focus=None):
-    """USD camera. Physical units: focal length / aperture in mm, focus distance in scene units
-    (meters here), so fStop gives real-world depth of field."""
+    """USD camera with a physical lens: focal length and aperture given in millimeters.
+
+    UsdGeomCamera measures focal length and filmback in *tenths of a scene unit* (millimeters only on a
+    centimeter stage). On this meters stage, writing 50 for a 50 mm lens makes a 5 m lens: the field of
+    view is unchanged (it depends only on ratios), but the aperture diameter, and so the depth-of-field
+    blur, is 100x too big. focusDistance is in scene units (meters).
+    """
     cam = UsdGeom.Camera.Define(stage, path)
-    cam.CreateFocalLengthAttr(focal)
-    cam.CreateHorizontalApertureAttr(aperture)
-    cam.CreateVerticalApertureAttr(aperture / aspect)
+    cam.CreateFocalLengthAttr(focal * MM)
+    cam.CreateHorizontalApertureAttr(aperture * MM)
+    cam.CreateVerticalApertureAttr(aperture / aspect * MM)
     cam.CreateClippingRangeAttr(Gf.Vec2f(0.01, 50.0))
     if fstop:
         cam.CreateFStopAttr(fstop)
@@ -199,18 +207,23 @@ if "beauty" in shots:
     dome(stage, args.hdri, intensity=900.0, rotate_z=40)
     rect_light(stage, "/World/key", (-0.5, -0.6, 0.7), (0, 0, 0.05), 25000, size=(0.6, 0.4), color=(1.0, 0.95, 0.88))
     place(stage, "/World/mug", PBR["speckled_mug"], 0.0, 0.0, yaw=-30)
-    place(stage, "/World/buddha", PBR["buddha_head"], 0.21, 0.09, yaw=-20)
+    place(stage, "/World/buddha", PBR["buddha_head"], 0.21, 0.09, yaw=100)
     place(stage, "/World/printed", GSO("ace_coffee_mug_kristen_16_oz_cup"), -0.19, 0.1, yaw=60)
     place(stage, "/World/lion", GSO("schleich_lion_action_figure"), -0.13, -0.1, yaw=30)
     place(stage, "/World/android", GSO("great_dinos_triceratops_toy"), 0.12, -0.12, yaw=-40)
-    place(stage, "/World/bowl", GSO("cole_hardware_bowl_scirocco_yellowblue"), 0.36, -0.06, yaw=0)
+    place(stage, "/World/bowl", GSO("cole_hardware_bowl_scirocco_yellowblue"), 0.42, 0.3, yaw=0)
     eye, target = (0.06, -0.66, 0.24), (0.06, 0.0, 0.06)
     camera(stage, "/World/cam", eye, target, focal=50, fstop=args.fstop,
            focus=float(np.linalg.norm(np.subtract(eye, (0.0, 0.0, 0.05)))))
     settle()
     render("/World/cam", (1920, 1080), "beauty_rt" + args.tag, subframes=1, mode="RealTimePathTracing")
     render("/World/cam", (1920, 1080), "beauty_pt" + args.tag)
-    results["beauty"] = {"hdri": args.hdri, "spp": args.spp * args.subframes}
+    # Square hero shot for the README strip: the real-photo Buddha in front, the other scans behind.
+    hero_eye = (0.45, -0.32, 0.2)
+    camera(stage, "/World/hero_cam", hero_eye, (0.13, 0.03, 0.08), focal=50, aspect=1.0, fstop=args.fstop,
+           focus=float(np.linalg.norm(np.subtract(hero_eye, (0.21, 0.09, 0.1)))))
+    render("/World/hero_cam", (1024, 1024), "hero_pt" + args.tag)
+    results["beauty"] = {"hdri": args.hdri, "spp": args.spp * args.subframes, "fstop": args.fstop}
 
 if "normals" in shots:
     for name, usd in (("normals_off", os.path.join(ROOT, "output", "buddha", "buddha_head.usda")),
@@ -243,11 +256,11 @@ if "lookdev" in shots:
         rep.modify.semantics([("class", "object")])
     w, h = cam_cfg["width"], cam_cfg["height"]
     cam = UsdGeom.Camera.Define(stage, "/World/cam")
-    cam.CreateFocalLengthAttr(cam_cfg["focal_length_mm"])
-    cam.CreateHorizontalApertureAttr(cam_cfg["horizontal_aperture_mm"])
-    cam.CreateVerticalApertureAttr(cam_cfg["vertical_aperture_mm"])
-    cam.CreateHorizontalApertureOffsetAttr(cam_cfg["horizontal_aperture_offset_mm"])
-    cam.CreateVerticalApertureOffsetAttr(cam_cfg["vertical_aperture_offset_mm"])
+    cam.CreateFocalLengthAttr(cam_cfg["focal_length_mm"] * MM)
+    cam.CreateHorizontalApertureAttr(cam_cfg["horizontal_aperture_mm"] * MM)
+    cam.CreateVerticalApertureAttr(cam_cfg["vertical_aperture_mm"] * MM)
+    cam.CreateHorizontalApertureOffsetAttr(cam_cfg["horizontal_aperture_offset_mm"] * MM)
+    cam.CreateVerticalApertureOffsetAttr(cam_cfg["vertical_aperture_offset_mm"] * MM)
     cam.CreateClippingRangeAttr(Gf.Vec2f(0.01, 50.0))
     cam.AddTransformOp().Set(Gf.Matrix4d(cam_cfg["camera_to_world_usd"]))
     settle()

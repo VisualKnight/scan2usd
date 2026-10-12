@@ -89,6 +89,11 @@ def build(work: Path, body, finger_gain: float | None = None) -> "mujoco.MjModel
         shutil.rmtree(work)
     shutil.copytree(HAND, work)
     xml = (work / "right_hand.xml").read_text()
+    # Brighter look for presentation: Menagerie's hand is near-black plastic.
+    xml = xml.replace('<material name="black" specular="0.5" shininess="0.25" rgba="0.16355 0.16355 0.16355 1"/>',
+                      '<material name="black" specular="0.4" shininess="0.4" rgba="0.93 0.93 0.95 1"/>')
+    xml = xml.replace('<material name="gray" specular="0.0" shininess="0.25" rgba="0.80848 0.80848 0.80848 1"/>',
+                      '<material name="gray" specular="0.2" shininess="0.3" rgba="0.18 0.45 0.85 1"/>')
     # The forearm is a free body welded to a mocap target. Moving a mocap body directly teleports it
     # (zero velocity to the solver), so friction never drags the object along; a weld gives the hand
     # real velocity.
@@ -100,7 +105,7 @@ def build(work: Path, body, finger_gain: float | None = None) -> "mujoco.MjModel
     scene = f"""<mujoco model="hand_grasp">
   <include file="right_hand.xml"/>
   <option timestep="0.002" integrator="implicitfast" cone="elliptic" impratio="10"/>
-  <visual><global offwidth="960" offheight="720"/><quality shadowsize="4096"/></visual>
+  <visual><global offwidth="960" offheight="720"/><quality shadowsize="4096"/><headlight ambient="0.35 0.35 0.35" diffuse="0.45 0.45 0.45" specular="0.1 0.1 0.1"/></visual>
   <asset>{body.assets_xml}
     <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="0.80 0.84 0.90" width="512" height="512"/>
     <texture name="grid" type="2d" builtin="checker" rgb1=".82 .82 .80" rgb2=".74 .74 .72" width="512" height="512"/>
@@ -202,8 +207,8 @@ def trial(p: dict, render: bool = False):
     if render:
         renderer = mujoco.Renderer(model, 480, 640)
         cam = mujoco.MjvCamera()
-        cam.lookat[:] = (site[0], site[1], 0.1)
-        cam.distance, cam.elevation, cam.azimuth = 0.75, -18, 130
+        cam.lookat[:] = (site[0], site[1], 0.13)
+        cam.distance, cam.elevation, cam.azimuth = 0.5, -15, 130
 
     def run(seconds, fn):
         n = int(seconds / dt)

@@ -131,7 +131,7 @@
 
 <h2>Path-traced rendering</h2>
 <div class="card" style="margin-bottom:12px"><h3>Scanned assets in Isaac Sim 6 RTX</h3><img src="figures/render_beauty.jpg" alt="Path-traced scanned assets">
-  <p class="cap">Offline path tracing, 1,024 samples per pixel, AI denoiser, 6 bounces. HDRI dome + area key light, NVIDIA MDL oak table, depth of field. Assets carry PBR look presets from their material (the speckled mug's glaze is a clearcoat over a rough body) and baked 2K albedo + normal maps. <a href="figures/render_modes.jpg">Real-time vs offline path tracing</a>.</p></div>
+  <p class="cap">Offline path tracing, 1,024 samples per pixel, AI denoiser, 6 bounces. HDRI dome + area key light, NVIDIA MDL oak table, physically correct 50 mm f/5.6 depth of field. Assets carry PBR look presets from their material (the speckled mug's glaze is a clearcoat over a rough body) and baked 2K albedo + normal maps. <a href="figures/render_modes.jpg">Real-time vs offline path tracing</a>.</p></div>
 <div class="grid g2">
   <div class="card"><h3>High-to-low normal map bake</h3><img src="figures/render_normals.jpg" alt="Normal map comparison">
     <p class="cap">4.3M-triangle scan → 50k triangles. Left: vertex colors only. Right: the scan's detail baked into a tangent-space normal map, under grazing light. A cage-style test ignores source points facing away (the far side of thin walls).</p></div>
@@ -257,7 +257,7 @@
   <li><b>Know your camera model.</b> Back-projected depth was 3 cm off because MuJoCo's scene stores two stereo eye cameras; a mono render uses their average. One line fixed it.</li>
   <li><b>Some things can't be observed.</b> With the handle hidden from both cameras, the mug's yaw has no answer. Design the action not to need it: the rim grasp works at any yaw.</li>
   <li><b>Bake with a cage.</b> The first normal-map bake picked up the mug's inside wall from the outside (nearest points, wrong side). Ignoring source normals that face away from the low-poly surface fixed it: mean detail angle 11.4° → 6.2°.</li>
-  <li><b>Renderers have their own units.</b> RTX depth of field at f/2.8 blurred everything: on this stage it behaved far stronger than a physical lens, so I tuned the f-stop by eye (f/40). Rigid bodies also kept falling during path-traced accumulation until physics was switched off for the render.</li>
+  <li><b>Read the units, don't tune by eye.</b> Depth of field was absurdly strong, and my first fix was a fake f/40. The real cause: USD camera lens values are in <i>tenths of a scene unit</i>, so on a meters stage "50" is a 5 m lens. The view looks identical (only ratios matter), but the aperture is 100&times; too wide. Writing 0.05 gives a real 50 mm f/5.6 lens. Rigid bodies also kept falling during path-traced accumulation until physics was switched off for the render.</li>
   <li><b>Don't teleport a hand.</b> Driving the Shadow Hand's forearm as a MuJoCo mocap body moves it without velocity, and friction there is velocity-based: 120 N of squeeze and the object still stayed on the table. Welding a free forearm to the mocap target took grasp success from 0% to ~23%.</li>
   <li><b>Look at a cross-section before believing an explanation.</b> I had blamed the bowl's +82% volume on thick walls; slicing the solid showed it was mostly an unseen underside filled into a pedestal. And carving can't help where no camera looked.</li>
 </ul>
@@ -276,5 +276,6 @@
 </div>
 
 <footer>Scan2USD · personal R&amp;D project · Yibo Liu · Oct 2026 · Ground-truth meshes: Google Scanned Objects (CC-BY 4.0) · Real photos: AliceVision Buddha (CC-BY 4.0) · Robot: MuJoCo Menagerie Franka Panda (Apache-2.0) · Figures: <code>scripts/</code></footer>
-</div></body>
+</div>
+<script>if (location.protocol === 'file:') { const b = document.createElement('div'); b.style.cssText = 'position:sticky;top:0;z-index:9;background:#fef3c7;border-bottom:1px solid #f59e0b;padding:8px 16px;font:14px system-ui'; b.innerHTML = 'Local preview of the repository file. The published version is <a href=\"https://visualknight.github.io/scan2usd/\">visualknight.github.io/scan2usd</a> (updates a minute after each push).'; document.body.prepend(b); }</script></body>
 </html>
