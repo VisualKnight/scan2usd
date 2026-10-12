@@ -1,0 +1,14 @@
+{
+  "asset": "output/articulated/keepsake_box.usda",
+  "limits_deg": [
+    0.0,
+    105.0
+  ],
+  "open_target_deg": 90.0,
+  "open_reached_deg": 90.08,
+  "over_limit_target_deg": 150.0,
+  "over_limit_reached_deg": 105.0,
+  "closed_deg": 0.01,
+  "base_drift_mm": 0.018572930615967112,
+  "pass": true
+}

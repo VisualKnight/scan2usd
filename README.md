@@ -61,6 +61,7 @@
 | ![Sim-to-real](docs/figures/sim2real_compare.jpg) | **Sim-to-real detection.** Faster R-CNN fine-tuned only on synthetic frames (900 images, 5.5 min), then run on the 67 real Buddha photos it never saw. Objects-only data: top detection is the Buddha in 88% of photos, but markers and lab clutter trigger 4.3 false detections per photo. Adding distractors: **100% top-1, 0.69 false positives per photo (−84%)**. `scripts/train_detector.py` |
 | ![Bin](docs/figures/clutter_demo.jpg) | **Bin of scanned objects.** 14 objects, 392 convex colliders; all settle in the tote, resting penetration 0.08 mm. `scripts/demo_clutter.py` |
 | ![Hinge](docs/figures/articulation_demo.jpg) | **Articulated asset.** A closed box scan + seam plane + hinge line → base and lid with a revolute joint (0–105°); the lid opens, a scanned toy drops in, the lid closes. `scripts/demo_articulation.py` |
+| ![Isaac hinge](docs/figures/isaac_articulation.jpg) | **Same USD in Isaac Sim 6 PhysX** ([animation](docs/figures/isaac_articulation.webp)). Referenced unmodified; an angular drive on the hinge opens the lid to 90.1° (target 90°), holds at **105.0°** when commanded 150° (the asset's limit), closes to 0.0°; the base drifts 0.02 mm. `scripts/isaac_articulation.py` |
 
 ## Quickstart
 
@@ -121,6 +122,7 @@ Build outputs: `<name>.usd(a)`, `<name>.glb`, `textures/`, `color_calibration.js
 | `isaac_demo.py`, `make_isaac_figure.py` | Isaac Sim 6: PhysX settle test + Replicator dataset (run with Isaac Sim's Python) |
 | `replicator_to_coco.py` | Replicator output → COCO (boxes from the bbox annotator, instance masks where they agree; multi-part assets merged per object) |
 | `isaac_synthdata.py` | Isaac Sim 6: domain-randomized detection dataset (`--frames 1000 --distractors 12 --panels 5`) |
+| `isaac_articulation.py` | Isaac Sim 6: drive the articulated asset's hinge, check tracking and the joint limit in PhysX |
 | `train_detector.py`, `make_coco_figure.py` | Train Faster R-CNN on the synthetic COCO set (needs `torch`/`torchvision`), score on held-out synthetic frames and on real photos |
 | `blender_inspect.py` | Open a build in Blender: raw input, asset, colliders |
 | `make_gallery.py` | Interactive web gallery (glTF + model-viewer) with a collision toggle → `docs/gallery/` |
