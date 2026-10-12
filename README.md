@@ -2,7 +2,7 @@
 
 **Scan-to-Sim asset pipeline**: phone photos of everyday objects in, physics-ready **OpenUSD** assets out, verified in NVIDIA **Isaac Sim** and **MuJoCo**.
 
-> Personal R&D project · Oct 2026 · visual overview: [docs/overview.html](docs/overview.html) · benchmark: [docs/benchmark.md](docs/benchmark.md)
+> Personal R&D project · Oct 2026 · visual overview: [docs/overview.html](docs/overview.html) · benchmark: [docs/benchmark.md](docs/benchmark.md) · interactive 3D gallery: [docs/gallery/](docs/gallery/index.html) (`python -m http.server -d docs`, then open `/gallery/`)
 
 ![Architecture](docs/figures/architecture.svg)
 
@@ -117,6 +117,7 @@ Build outputs: `<name>.usd(a)`, `<name>.glb`, `textures/`, `color_calibration.js
 | `isaac_demo.py`, `make_isaac_figure.py` | Isaac Sim 6: PhysX settle test + Replicator dataset (run with Isaac Sim's Python) |
 | `replicator_to_coco.py` | Replicator output → COCO instance segmentation (multi-part assets merged per object) |
 | `blender_inspect.py` | Open a build in Blender: raw input, asset, colliders |
+| `make_gallery.py` | Interactive web gallery (glTF + model-viewer) with a collision toggle → `docs/gallery/` |
 
 ## Asset layout
 
