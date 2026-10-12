@@ -116,6 +116,10 @@ def main() -> None:
     writer = imageio.get_writer(args.out, fps=FPS, codec="libx264", quality=7, pixelformat="yuv420p",
                                 macro_block_size=16, ffmpeg_log_level="error")
     total = 0
+    title = end_card()  # the same card opens and closes the reel
+    for _ in range(int(2.5 * FPS)):
+        writer.append_data(title)
+    total += int(2.5 * FPS)
     for name, title, subtitle, seconds in SEGMENTS:
         path = FIG / name
         if path.suffix in (".webp", ".mp4"):

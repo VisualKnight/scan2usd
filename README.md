@@ -9,7 +9,7 @@
 - **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets finds the object in **100%** of 67 real photos, and drives a perception-to-grasp loop (10/10 picks).
 - **Assets that know what they don't know:** grasps and measurement uncertainty stored in the USD file (codeless schemas), guidance on which photos to take next, and a **Gaussian-splat look riding on the physics hulls** that beats the textured mesh on 18/18 held-out photos.
 
-> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[87 s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
+> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[90 s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
 
 ## What it does
 
