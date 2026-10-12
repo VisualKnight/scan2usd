@@ -58,6 +58,7 @@
     <rect x="952" y="550" width="140" height="68" rx="6" fill="#e0f2fe" stroke="#1e293b" stroke-width="2"/>
     <rect x="636" y="350" width="140" height="56" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
     <rect x="636" y="550" width="140" height="56" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
+    <rect x="478" y="552" width="140" height="56" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
     <rect x="250" y="600" width="150" height="54" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
     <rect x="20" y="512" width="160" height="58" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
     <path d="M20,604 H180 V650 Q140,638 100,650 Q60,662 20,650 Z" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
@@ -91,6 +92,7 @@
       <path d="M864,502 V546" stroke="#7c3aed" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
       <path d="M936,500 C960,520 990,530 1010,546" marker-end="url(#arrowr)"/>
       <path d="M812,506 C795,525 785,535 774,546" marker-end="url(#arrowr)"/>
+      <path d="M806,504 C800,522 760,528 700,528 H560 Q548,528 548,548" marker-end="url(#arrowr)"/>
       <path d="M776,398 C790,420 800,435 812,448" marker-end="url(#arrowr)"/>
     </g>
     <!-- Read-back loops -->
@@ -172,7 +174,10 @@
     <text x="648" y="390" font-size="10.5" fill="#475569">split + hinge joint</text>
     <use href="#cmp" x="756" y="556"/>
     <text x="648" y="572" font-size="14">mjcf.py</text>
-    <text x="648" y="590" font-size="10.5" fill="#475569">Panda pick · bin · lid</text>
+    <use href="#cmp" x="598" y="558"/>
+    <text x="490" y="574" font-size="14">library.py</text>
+    <text x="490" y="592" font-size="10.5" fill="#475569">payloads · variants</text>
+    <text x="648" y="590" font-size="10.5" fill="#475569">Panda · bin · robustness</text>
 
     <!-- Sticky note -->
     <g transform="rotate(-2 330 540)">
