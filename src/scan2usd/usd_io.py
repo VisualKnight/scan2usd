@@ -104,18 +104,37 @@ def write_usd(
     if metadata:
         root.SetCustomDataByKey("scan2usd:build", json.dumps(metadata, default=str))
 
-    # Rigid body with explicit mass properties (principal frame).
-    UsdPhysics.RigidBodyAPI.Apply(root)
-    mass_api = UsdPhysics.MassAPI.Apply(root)
+    looks = UsdGeom.Scope.Define(stage, f"{root_path}/Looks").GetPath()
+    phys_mat = define_physics_material(stage, looks.AppendChild("PM_contact"), physics_material)
+    author_body(stage, root, path, mesh, hulls, mass_props, surface, looks.AppendChild("M_surface"), phys_mat)
+
+    stage.GetRootLayer().Save()
+    return path
+
+
+def define_physics_material(stage: Usd.Stage, path: Sdf.Path, physics_material: PhysicsMaterial) -> UsdShade.Material:
+    phys_mat = UsdShade.Material.Define(stage, path)
+    pm = UsdPhysics.MaterialAPI.Apply(phys_mat.GetPrim())
+    pm.CreateStaticFrictionAttr(float(physics_material.static_friction))
+    pm.CreateDynamicFrictionAttr(float(physics_material.dynamic_friction))
+    pm.CreateRestitutionAttr(float(physics_material.restitution))
+    return phys_mat
+
+
+def author_body(stage: Usd.Stage, body: Usd.Prim, usd_path: Path, mesh: trimesh.Trimesh,
+                hulls: list[trimesh.Trimesh], mass_props: MassProperties, surface: SurfaceMaterial,
+                material_path: Sdf.Path, phys_mat: UsdShade.Material) -> None:
+    """Make `body` a rigid body with a render mesh, material, convex colliders and mass properties."""
+    body_path = body.GetPath()
+    UsdPhysics.RigidBodyAPI.Apply(body)
+    mass_api = UsdPhysics.MassAPI.Apply(body)
     mass_api.CreateMassAttr(float(mass_props.mass))
     mass_api.CreateCenterOfMassAttr(Gf.Vec3f(*mass_props.center_of_mass))
     mass_api.CreateDiagonalInertiaAttr(Gf.Vec3f(*mass_props.principal_moments))
     w, x, y, z = mass_props.principal_axes_quat_wxyz
     mass_api.CreatePrincipalAxesAttr(Gf.Quatf(float(w), float(x), float(y), float(z)))
 
-    # Render material (UsdPreviewSurface).
-    looks = UsdGeom.Scope.Define(stage, f"{root_path}/Looks").GetPath()
-    mat = UsdShade.Material.Define(stage, looks.AppendChild("M_surface"))
+    mat = UsdShade.Material.Define(stage, material_path)
     pbr = UsdShade.Shader.Define(stage, mat.GetPath().AppendChild("PreviewSurface"))
     pbr.CreateIdAttr("UsdPreviewSurface")
     pbr.CreateInput("roughness", Sdf.ValueTypeNames.Float).Set(float(surface.roughness))
@@ -123,7 +142,7 @@ def write_usd(
     diffuse = pbr.CreateInput("diffuseColor", Sdf.ValueTypeNames.Color3f)
     mat.CreateSurfaceOutput().ConnectToSource(pbr.ConnectableAPI(), "surface")
 
-    render = _define_mesh(stage, f"{root_path}/render", mesh)
+    render = _define_mesh(stage, str(body_path.AppendChild("render")), mesh)
     render.CreateNormalsAttr(Vt.Vec3fArray.FromNumpy(np.asarray(mesh.vertex_normals, dtype=np.float32)))
     render.SetNormalsInterpolation(UsdGeom.Tokens.vertex)
     pv_api = UsdGeom.PrimvarsAPI(render)
@@ -138,7 +157,7 @@ def write_usd(
         reader.CreateInput("varname", Sdf.ValueTypeNames.Token).Set("st")
         tex = UsdShade.Shader.Define(stage, mat.GetPath().AppendChild("albedoTexture"))
         tex.CreateIdAttr("UsdUVTexture")
-        rel = Path(surface.texture).resolve().relative_to(path.parent.resolve()).as_posix()
+        rel = Path(surface.texture).resolve().relative_to(Path(usd_path).parent.resolve()).as_posix()
         tex.CreateInput("file", Sdf.ValueTypeNames.Asset).Set(Sdf.AssetPath(f"./{rel}"))
         tex.CreateInput("sourceColorSpace", Sdf.ValueTypeNames.Token).Set("sRGB")
         tex.CreateInput("wrapS", Sdf.ValueTypeNames.Token).Set("repeat")
@@ -159,26 +178,14 @@ def write_usd(
         render.CreateDisplayColorPrimvar(UsdGeom.Tokens.constant).Set(Vt.Vec3fArray([Gf.Vec3f(*surface.base_color)]))
     UsdShade.MaterialBindingAPI.Apply(render.GetPrim()).Bind(mat)
 
-    # Physics material bound with the "physics" purpose on every collider.
-    phys_mat = UsdShade.Material.Define(stage, looks.AppendChild("PM_contact"))
-    pm = UsdPhysics.MaterialAPI.Apply(phys_mat.GetPrim())
-    pm.CreateStaticFrictionAttr(float(physics_material.static_friction))
-    pm.CreateDynamicFrictionAttr(float(physics_material.dynamic_friction))
-    pm.CreateRestitutionAttr(float(physics_material.restitution))
-
-    UsdGeom.Scope.Define(stage, f"{root_path}/collision")
+    UsdGeom.Scope.Define(stage, str(body_path.AppendChild("collision")))
     for i, hull in enumerate(hulls):
-        col = _define_mesh(stage, f"{root_path}/collision/hull_{i:03d}", hull)
+        col = _define_mesh(stage, str(body_path.AppendPath(f"collision/hull_{i:03d}")), hull)
         col.CreatePurposeAttr(UsdGeom.Tokens.guide)
         prim = col.GetPrim()
         UsdPhysics.CollisionAPI.Apply(prim)
         UsdPhysics.MeshCollisionAPI.Apply(prim).CreateApproximationAttr(UsdPhysics.Tokens.convexHull)
-        UsdShade.MaterialBindingAPI.Apply(prim).Bind(
-            phys_mat, UsdShade.Tokens.weakerThanDescendants, "physics"
-        )
-
-    stage.GetRootLayer().Save()
-    return path
+        UsdShade.MaterialBindingAPI.Apply(prim).Bind(phys_mat, UsdShade.Tokens.weakerThanDescendants, "physics")
 
 
 def _mesh_from_prim(prim: Usd.Prim, root: Usd.Prim, cache: UsdGeom.XformCache) -> trimesh.Trimesh:

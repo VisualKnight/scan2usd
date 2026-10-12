@@ -98,6 +98,44 @@ def union_volume_mesh(hulls: list[trimesh.Trimesh]) -> trimesh.Trimesh:
     return trimesh.boolean.union(hulls, engine="manifold")
 
 
+def voxel_solid(mesh: trimesh.Trimesh, resolution: int = 160):
+    """Solid voxel centers for a mesh with small holes (typical of raw scans).
+
+    Surface voxels are dilated once to seal gaps, enclosed space is filled, then the
+    dilation is undone. Open cavities (a bowl, the inside of a mug) stay empty because
+    they connect to the outside. Returns (centers, pitch, weights), or None if nothing
+    was enclosed.
+    """
+    from scipy import ndimage
+
+    pitch = float(max(mesh.extents)) / resolution
+    vox = mesh.voxelized(pitch)
+    pad = 10
+    shell = np.pad(vox.matrix, pad)
+    # Escalate the closing until the interior is sealed; capped so real openings stay open.
+    for k in (1, 2, 4, 8):
+        closed = ndimage.binary_dilation(shell, iterations=k)
+        filled = ndimage.binary_fill_holes(closed)
+        if filled.sum() > closed.sum() * 1.02:
+            break
+    else:
+        return None
+    solid = ndimage.binary_erosion(filled, iterations=k) | shell
+    # Surface voxels straddle the true surface: count them as half inside.
+    weights = np.where(shell, 0.5, 1.0)[solid]
+    idx = np.argwhere(solid) - pad
+    return vox.indices_to_points(idx), pitch, weights
+
+
+def _mass_properties_from_points(points: np.ndarray, weights: np.ndarray, rho: float, pitch: float):
+    m = rho * pitch ** 3 * weights
+    com = (points * m[:, None]).sum(0) / m.sum()
+    r = points - com
+    inertia = (m * (r ** 2).sum(1)).sum() * np.eye(3) - (r * m[:, None]).T @ r
+    inertia += np.eye(3) * m.sum() * pitch ** 2 / 6.0  # each voxel's own inertia
+    return com, inertia
+
+
 def principal_frame(inertia: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Eigen-decompose an inertia tensor into principal moments and a proper rotation."""
     moments, axes = np.linalg.eigh(np.asarray(inertia, dtype=np.float64))
@@ -114,14 +152,25 @@ def estimate_mass_properties(
 ) -> MassProperties:
     """Mass, center of mass and inertia of a solid body.
 
-    Uses the watertight render mesh when possible, otherwise the union of collision
-    hulls. Give either a material `density` (kg/m^3) or a measured `mass` (kg).
+    Uses the watertight render mesh when possible; for scans with holes, a voxel-filled
+    solid; and as a last resort the union of collision hulls (which over-fills cavities).
+    Give either a material `density` (kg/m^3) or a measured `mass` (kg).
     """
     if (density is None) == (mass is None):
         raise ValueError("specify exactly one of density or mass")
-    if mesh.is_watertight and mesh.is_winding_consistent and mesh.volume > 0:
-        solid, source = mesh, "render_mesh"
+    # Textured meshes duplicate vertices along UV seams; judge closedness by position only.
+    welded = trimesh.Trimesh(mesh.vertices, mesh.faces, process=True)
+    welded.merge_vertices()
+    if welded.is_watertight and welded.is_winding_consistent and welded.volume > 0:
+        solid, source = welded, "render_mesh"
     else:
+        vs = voxel_solid(welded)
+        if vs is not None:
+            points, pitch, weights = vs
+            volume = float(weights.sum()) * pitch ** 3
+            rho = float(mass / volume) if mass is not None else float(density)
+            com, inertia = _mass_properties_from_points(points, weights, rho, pitch)
+            return _pack(rho * volume, volume, rho, com, inertia, "voxel_fill")
         solid, source = union_volume_mesh(hulls or single_hull(mesh)), "collision_hull_union"
     volume = float(solid.volume)
     if volume <= 0:
@@ -130,15 +179,19 @@ def estimate_mass_properties(
 
     solid = solid.copy()
     solid.density = rho
-    inertia = np.asarray(solid.moment_inertia, dtype=np.float64)
+    return _pack(rho * volume, volume, rho, solid.center_mass, np.asarray(solid.moment_inertia, dtype=np.float64),
+                 source)
+
+
+def _pack(mass: float, volume: float, rho: float, com, inertia: np.ndarray, source: str) -> MassProperties:
     moments, axes = principal_frame(inertia)
     x, y, z, w = Rotation.from_matrix(axes).as_quat()
     return MassProperties(
-        mass=float(rho * volume),
-        volume=volume,
-        density=rho,
-        center_of_mass=[float(v) for v in solid.center_mass],
-        inertia_tensor=inertia.tolist(),
+        mass=float(mass),
+        volume=float(volume),
+        density=float(rho),
+        center_of_mass=[float(v) for v in com],
+        inertia_tensor=np.asarray(inertia).tolist(),
         principal_moments=[float(v) for v in moments],
         principal_axes_quat_wxyz=[float(w), float(x), float(y), float(z)],
         volume_source=source,

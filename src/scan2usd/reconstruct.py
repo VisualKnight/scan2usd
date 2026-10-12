@@ -218,18 +218,24 @@ def reconstruct(images: str | Path, workspace: str | Path, quality: str = "mediu
     if not fused.exists():
         # Sparse via the automatic pipeline, then dense steps explicitly: the automatic
         # dense mode also Poisson-meshes the whole scene (table included), which is slow and unused.
-        _run([colmap, "automatic_reconstructor", "--workspace_path", str(workspace), "--image_path", str(images),
-              "--data_type", "individual", "--quality", quality, "--single_camera", str(int(single_camera)),
-              "--dense", "0", "--use_gpu", "1"], log)
         sparse = workspace / "sparse" / "0"
+        if not (sparse / "images.bin").exists():
+            _run([colmap, "automatic_reconstructor", "--workspace_path", str(workspace), "--image_path", str(images),
+                  "--data_type", "individual", "--quality", quality, "--single_camera", str(int(single_camera)),
+                  "--dense", "0", "--use_gpu", "1"], log)
         if not sparse.exists():
             raise RuntimeError(f"COLMAP could not register the photos; see {log}")
         max_size = {"low": 1000, "medium": 1600, "high": 2400, "extreme": -1}[quality]
         dense.mkdir(parents=True, exist_ok=True)  # image_undistorter crashes if it's missing
         _run([colmap, "image_undistorter", "--image_path", str(images), "--input_path", str(sparse),
               "--output_path", str(dense), "--output_type", "COLMAP", "--max_image_size", str(max_size)], log)
+        # Mirrors COLMAP's automatic quality presets (coarser = faster), keeping geometric filtering.
+        speed = {"low": ["--PatchMatchStereo.window_step", "2", "--PatchMatchStereo.window_radius", "4",
+                         "--PatchMatchStereo.num_samples", "7", "--PatchMatchStereo.num_iterations", "3"],
+                 "medium": ["--PatchMatchStereo.window_step", "2", "--PatchMatchStereo.window_radius", "4",
+                            "--PatchMatchStereo.num_samples", "10", "--PatchMatchStereo.num_iterations", "4"]}
         _run([colmap, "patch_match_stereo", "--workspace_path", str(dense), "--workspace_format", "COLMAP",
-              "--PatchMatchStereo.geom_consistency", "true"], log)
+              "--PatchMatchStereo.geom_consistency", "true", *speed.get(quality, [])], log)
         _run([colmap, "stereo_fusion", "--workspace_path", str(dense), "--workspace_format", "COLMAP",
               "--input_type", "geometric", "--output_path", str(fused)], log)
     else:
