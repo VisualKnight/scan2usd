@@ -58,6 +58,7 @@
     <rect x="952" y="550" width="140" height="56" rx="6" fill="#e0f2fe" stroke="#1e293b" stroke-width="2"/>
     <rect x="636" y="350" width="140" height="56" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
     <rect x="636" y="550" width="140" height="56" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
+    <rect x="250" y="600" width="150" height="54" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
     <rect x="20" y="512" width="160" height="58" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
     <path d="M20,604 H180 V650 Q140,638 100,650 Q60,662 20,650 Z" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
 
@@ -80,6 +81,7 @@
       <path d="M100,602 V574" marker-end="url(#arrowg)"/>
       <path d="M182,628 H194 V478 L176,472" marker-end="url(#arrowg)"/>
       <path d="M22,520 C6,480 6,400 18,372" marker-end="url(#arrowg)"/>
+      <path d="M182,642 C210,640 225,632 246,628" marker-end="url(#arrowg)"/>
     </g>
     <!-- Data out -->
     <g stroke="#b91c1c" stroke-width="2" fill="none">
@@ -159,6 +161,9 @@
     <use href="#cmp" x="914" y="556"/>
     <text x="806" y="572" font-size="14.5">evaluate.py</text>
     <text x="806" y="590" font-size="10.5" fill="#475569">scores vs ground truth</text>
+    <use href="#cmp" x="380" y="606"/>
+    <text x="262" y="622" font-size="14">chart.py</text>
+    <text x="258" y="640" font-size="10" fill="#475569">chart: color + metric scale</text>
     <text x="964" y="572" font-size="14">Isaac Sim 6</text>
     <text x="964" y="590" font-size="10.5" fill="#475569">PhysX + Replicator</text>
     <use href="#cmp" x="756" y="356"/>
@@ -173,7 +178,7 @@
       <rect x="250" y="515" width="200" height="62" fill="#fde68a" stroke="#d97706" stroke-width="1"/>
       <text x="262" y="538" font-size="11.5">each stage = one module,</text>
       <text x="262" y="555" font-size="11.5">plain functions in, data out</text>
-      <text x="262" y="571" font-size="11.5" fill="#92400e">→ easy to test (61 tests)</text>
+      <text x="262" y="571" font-size="11.5" fill="#92400e">→ easy to test (66 tests)</text>
     </g>
   </g>
 </svg>

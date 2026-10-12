@@ -172,20 +172,44 @@ def cmd_preview(args) -> int:
 
 def cmd_scan(args) -> int:
     """Photos -> COLMAP -> Scan2USD asset in one go."""
-    from .pipeline import build_asset
-    from .reconstruct import reconstruct
+    import trimesh
 
-    if args.scale_to is None:
-        print("note: no --scale-to given; COLMAP's scale is arbitrary, so the asset size will be wrong")
+    from .pipeline import build_asset
+    from .reconstruct import IMAGE_EXTS, reconstruct
+
+    use_chart = args.auto_chart or args.chart_pitch_mm is not None
+    if args.scale_to is None and args.chart_pitch_mm is None:
+        print("note: no --scale-to or --chart-pitch-mm; COLMAP's scale is arbitrary, so the asset size will be wrong")
     out = Path(args.output)
-    mesh, rep = reconstruct(args.photos, out / "colmap", quality=args.quality)
+    mesh_path, rep = reconstruct(args.photos, out / "colmap", quality=args.quality)
     print(f"reconstructed: {rep.registered_images}/{rep.images} photos registered, "
           f"{rep.object_points:,} object points, {'watertight' if rep.watertight else 'open'} mesh")
     opts = _options(args, args.name or Path(args.photos).resolve().name)
     opts.up_axis, opts.units = "z", "m"
     if args.scale_to is not None and args.scale_axis == "max":
         opts.scale_axis = "z"  # the table plane is known, so "height" is unambiguous
-    res = build_asset(mesh, out / "asset", opts)
+
+    if use_chart:
+        from .chart import best_chart_image, chart_metric_scale
+
+        photos = sorted(p for p in Path(args.photos).iterdir() if p.suffix.lower() in IMAGE_EXTS)
+        if args.chart_image is None and args.gray_card_image is None and args.ccm is None:
+            best = best_chart_image(photos)
+            if best is None:
+                print("note: no ColorChecker found in the photos; skipping color calibration")
+            else:
+                opts.chart_image, opts.chart_corners = best.image, best.lattice_corners().tolist()
+                print(f"color chart: detected in {best.image.name} ({best.pitch_px:.0f} px per patch)")
+        if args.chart_pitch_mm is not None and args.scale_to is None:
+            s = chart_metric_scale(args.photos, out / "colmap" / "sparse" / "0", args.chart_pitch_mm / 1000.0)
+            # Hand the build a height, exactly like a ruler measurement (pre-scaling the raw mesh
+            # would shrink its tiniest triangles below the vertex-merge tolerance).
+            height_units = float(trimesh.load(str(mesh_path), force="mesh").extents[2])
+            opts.scale_to, opts.scale_axis = height_units * s["meters_per_unit"], "z"
+            print(f"metric scale from the chart: {s['inlier_views']}/{s['views']} views agree, "
+                  f"patch-grid spread {s['pitch_spread'] * 100:.2f}% -> height {opts.scale_to * 1000:.1f} mm")
+
+    res = build_asset(mesh_path, out / "asset", opts)
     _report_build(res)
     return 0 if res.validation.status != "fail" else 2
 
@@ -300,6 +324,11 @@ def main(argv: list[str] | None = None) -> int:
     sc.add_argument("-o", "--output", type=Path, required=True)
     sc.add_argument("--name", help="asset name (default: photo folder name)")
     sc.add_argument("--quality", default="medium", choices=["low", "medium", "high", "extreme"])
+    sc.add_argument("--auto-chart", action="store_true",
+                    help="find the ColorChecker in the photos and calibrate color from it")
+    sc.add_argument("--chart-pitch-mm", type=float,
+                    help="center-to-center patch spacing of your ColorChecker (mm): enables --auto-chart and "
+                         "metric scale from the chart (no ruler needed)")
     _add_build_args(sc)
     sc.set_defaults(func=cmd_scan)
 

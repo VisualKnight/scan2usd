@@ -53,9 +53,10 @@
 <p class="muted">Phone photos in, physics-ready <b>OpenUSD</b> assets out, verified in NVIDIA Isaac Sim and MuJoCo.</p>
 <div class="grid g4">
   <div class="card kpi"><b>0.78 mm</b><span>mean surface error, 78 photos → USD (speckled mug vs. ground truth)</span></div>
+  <div class="card kpi"><b>±1.4%</b><span>size from the ColorChecker alone, no ruler (worst of 6 objects)</span></div>
   <div class="card kpi"><b>9 / 9</b><span>assets load unmodified in Isaac Sim 6 and settle in PhysX</span></div>
   <div class="card kpi"><b><span class="good">lift</span> vs <span class="bad">fail</span></b><span>robot rim-grasp: convex decomposition vs. one hull</span></div>
-  <div class="card kpi"><b>61 tests</b><span>plus 33 automated checks on every asset</span></div>
+  <div class="card kpi"><b>66 tests</b><span>plus 33 automated checks on every asset</span></div>
 </div>
 
 <h2>Architecture</h2>
@@ -134,6 +135,9 @@
   <details><summary>Color calibration <span>· your Physically-Based Calibration, for scans</span></summary>
     <p>A 3×3 matrix maps the camera's colors of known chart patches to their true values in linear light; it's then applied to the scan's albedo. ΔE2000 ≈ 1 is just noticeable.</p>
     <p class="where"><code>color.py</code></p></details>
+  <details><summary>Metric scale from the chart <span>· no ruler needed</span></summary>
+    <p>Photogrammetry alone can't tell a mug from a giant mug: its scale is arbitrary. The ColorChecker's patches are a known distance apart (16 mm on the Mini), so the pipeline finds the chart in many photos, triangulates its 24 patch centers with the solved cameras, and reads off meters per unit. RANSAC drops misdetections. On the benchmark: 0.35–1.43% error.</p>
+    <p class="where"><code>chart.py</code> · <code>scan2usd scan --chart-pitch-mm 16</code></p></details>
   <details><summary>Convex decomposition <span>· why the grasp works</span></summary>
     <p>Physics engines collide convex shapes quickly. One hull around a mug fills its cavity; CoACD splits it into pieces that keep the opening, so fingers and objects can go inside.</p>
     <p class="where"><code>physics.py</code></p></details>
@@ -167,8 +171,8 @@
     <li>Put a newspaper under the object and the <b>ColorChecker</b> beside it in a few frames, plus one close-up.</li>
     <li>The Xbox controller after that: dark gloss is the hardest case (see the lesson above).</li></ul></div>
   <div class="card small"><h3>Measure, then run</h3><ul>
-    <li>Weigh it (g) and measure its height (mm).</li>
-    <li><code>scan2usd scan photos\ -o out\ --scale-to 0.095 --mass 0.36 --material ceramic</code> (photos → USD in one step)</li>
+    <li>Weigh it (g). A ruler measurement (mm) is optional if the ColorChecker is in the photos.</li>
+    <li><code>scan2usd scan photos\ -o out\ --chart-pitch-mm 16 --mass 0.36 --material ceramic</code> (photos → USD in one step; measure your chart's patch spacing once)</li>
     <li>Put files in <code>data\raw\&lt;object&gt;\</code> (git-ignored).</li></ul></div>
 </div>
 

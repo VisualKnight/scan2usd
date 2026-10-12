@@ -15,3 +15,18 @@ Each object is rendered as a 78-photo phone-style capture in Blender (3 rings + 
 | Boat shoe | 78/78 | 1.73 / 7.20 | 2.53 | 0.747 | 0.739 | +32.2% | 8.9 → 1.31 | pass | 627 |
 
 Ground-truth meshes: Google Scanned Objects (CC-BY 4.0) and a procedural mug. *The GSO model id `Great_Dinos_Triceratops_Toy` actually contains an Android figure.
+
+## Metric scale from the ColorChecker (no ruler)
+
+Scale estimated by triangulating the chart's patch centers in the photos (RANSAC over views), compared with the true scale from the ground-truth cameras.
+
+| Object | Chart views used | Scale error |
+|---|---|---|
+| Speckled stoneware mug (procedural) | 20/22 | +0.96% |
+| Printed coffee mug | 20/24 | +0.62% |
+| Ceramic bowl | 9/12 | -0.91% |
+| Android figure toy* | 23/26 | +0.42% |
+| Lion figure | 24/26 | +1.43% |
+| Boat shoe | 35/43 | +0.35% |
+
+Mean absolute scale error: **0.78%** (max 1.43%).

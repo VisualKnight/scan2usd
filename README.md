@@ -12,7 +12,8 @@
 |---|---|---|
 | Reconstruct | COLMAP structure-from-motion + multi-view stereo; the table plane becomes z = 0 (Z-up); the object is isolated as the densest footprint above the table; screened Poisson surface; flat base | `reconstruct.py` |
 | Clean | Debris removed, holes filled, meters / Z-up, origin at the base, topology-preserving decimation | `mesh_ops.py` |
-| Color | 3×3 color-correction matrix from a ColorChecker (or gray card) applied to the albedo; CIEDE2000 reported | `color.py` |
+| Color | 3×3 color-correction matrix from a ColorChecker (or gray card) applied to the albedo; CIEDE2000 reported. The chart is found automatically in the photos (OpenCV mcc) | `color.py`, `chart.py` |
+| Scale | Metric scale without a ruler: the chart's patch centers are triangulated with COLMAP's camera poses (RANSAC over views) and compared with its physical patch pitch; **0.35–1.4% error** on the benchmark | `chart.py` |
 | Physics | CoACD convex decomposition; mass, center of mass and principal inertia from volume × density or a measured mass; voxel-fill solids for scans with holes | `physics.py` |
 | Articulation | Split a scan by a seam plane, one rigid body per part, `UsdPhysics.RevoluteJoint` with limits under an articulation root | `articulation.py` |
 | Export | OpenUSD (`UsdGeom`, `UsdShade` preview surface, `UsdPhysics` rigid body / mass / colliders / physics material) and glTF | `usd_io.py` |
@@ -62,7 +63,7 @@ Python 3.10–3.12, with [uv](https://docs.astral.sh/uv/):
 uv venv --python 3.11
 uv pip install -e ".[dev]"
 .venv\Scripts\scan2usd demo            # synthetic mug -> output\demo\ (see preview.png)
-.venv\Scripts\python -m pytest         # 61 tests
+.venv\Scripts\python -m pytest         # 66 tests
 ```
 
 Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (CUDA build): unzip it to `tools\colmap\` or set `SCAN2USD_COLMAP`.
@@ -73,6 +74,10 @@ Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (
 # Photos -> USD in one step (reconstruct + build); --scale-to is the measured height
 scan2usd scan photos\ -o output\mug --scale-to 0.095 --mass 0.36 --material ceramic `
     --chart-image chart.jpg --chart-corners "412,310;1630,322;1622,1140;405,1128"
+
+# ColorChecker in some of the photos? Find it automatically for color, and get metric scale
+# from its patch spacing (no ruler): pitch = center-to-center patch distance of your chart
+scan2usd scan photos\ -o output\mug --material ceramic --chart-pitch-mm 16
 
 # Or step by step: photos -> object mesh (Z-up, table at z=0, arbitrary scale)
 scan2usd reconstruct photos\ -o work\mug
