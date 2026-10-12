@@ -21,3 +21,8 @@ output/
 Thumbs.db
 .vscode/*
 !.vscode/extensions.json
+
+# Third-party binaries (COLMAP etc.)
+tools/
+data/synthetic/
+data/external/

@@ -170,6 +170,21 @@ def cmd_preview(args) -> int:
     return 0
 
 
+def cmd_reconstruct(args) -> int:
+    from .reconstruct import reconstruct
+
+    mesh, rep = reconstruct(args.images, args.output, quality=args.quality, poisson_depth=args.depth)
+    print(f"registered {rep.registered_images}/{rep.images} images, {rep.dense_points:,} dense points, "
+          f"{rep.object_points:,} on the object")
+    print(f"wrote {mesh} ({rep.mesh_faces:,} faces, {'watertight' if rep.watertight else 'open'}; "
+          f"Z-up, table at z=0, arbitrary scale)")
+    for note in rep.notes:
+        print(f"  note: {note}")
+    print(f"  time: {sum(rep.timings_s.values()):.0f} s {rep.timings_s}")
+    print("next: scan2usd build", mesh, "-o <out> --scale-to <measured height in m> --scale-axis z --material <m>")
+    return 0
+
+
 def cmd_materials(_args) -> int:
     from .physics import MATERIALS
 
@@ -220,6 +235,13 @@ def main(argv: list[str] | None = None) -> int:
     pv.add_argument("-o", "--output", type=Path, help="PNG path (default: <input>.preview.png)")
     pv.add_argument("--size", type=int, default=420)
     pv.set_defaults(func=cmd_preview)
+
+    r = sub.add_parser("reconstruct", help="photos -> object mesh with COLMAP (table removed, Z-up)")
+    r.add_argument("images", type=Path, help="folder of photos")
+    r.add_argument("-o", "--output", type=Path, required=True, help="workspace folder")
+    r.add_argument("--quality", default="medium", choices=["low", "medium", "high", "extreme"])
+    r.add_argument("--depth", type=int, help="Poisson octree depth (default: from point spacing)")
+    r.set_defaults(func=cmd_reconstruct)
 
     args = parser.parse_args(argv)
     return args.func(args)

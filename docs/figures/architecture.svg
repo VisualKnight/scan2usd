@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 600" font-family="'Segoe Print', 'Comic Sans MS', cursive">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 670" font-family="'Segoe Print', 'Comic Sans MS', cursive">
   <defs>
     <!-- Slight wobble so lines look marker-drawn -->
     <filter id="marker" x="-5%" y="-5%" width="110%" height="110%">
@@ -18,7 +18,7 @@
     <g id="cmp"><rect x="0" y="0" width="14" height="16" fill="none" stroke="#334155" stroke-width="1.2"/><rect x="-4" y="3" width="8" height="3" fill="#fff" stroke="#334155" stroke-width="1.1"/><rect x="-4" y="9" width="8" height="3" fill="#fff" stroke="#334155" stroke-width="1.1"/></g>
   </defs>
 
-  <rect width="1120" height="600" fill="#fbfbf7"/>
+  <rect width="1120" height="670" fill="#fbfbf7"/>
   <text x="24" y="40" font-size="22" fill="#1e293b">Scan2USD · how the code fits together</text>
   <text x="24" y="62" font-size="12.5" fill="#64748b">UML-ish component view · blue = calls · green = data in · red = data out</text>
 
@@ -54,8 +54,10 @@
     <rect x="636" y="450" width="140" height="50" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
 
     <!-- Future (ghost) -->
-    <rect x="794" y="548" width="298" height="38" rx="6" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="7 6"/>
-    <rect x="20" y="520" width="160" height="38" rx="6" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="7 6"/>
+    <rect x="794" y="550" width="140" height="56" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
+    <rect x="952" y="556" width="140" height="44" rx="6" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="7 6"/>
+    <rect x="20" y="512" width="160" height="58" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
+    <path d="M20,604 H180 V650 Q140,638 100,650 Q60,662 20,650 Z" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
 
     <!-- Calls -->
     <g stroke="#1d4ed8" stroke-width="2" fill="none">
@@ -73,15 +75,17 @@
       <path d="M182,352 C240,352 270,300 316,290" marker-end="url(#arrowg)"/>
       <path d="M182,444 H548 V328" marker-end="url(#arrowg)"/>
       <path d="M150,258 C150,290 120,300 110,326" stroke-dasharray="6 5" marker-end="url(#arrowg)"/>
-      <path d="M100,518 V472" stroke="#94a3b8" stroke-dasharray="6 5" marker-end="url(#arrowg)"/>
-      <path d="M26,518 C2,480 2,420 22,384" stroke="#94a3b8" stroke-dasharray="6 5" marker-end="url(#arrowg)"/>
+      <path d="M100,602 V574" marker-end="url(#arrowg)"/>
+      <path d="M182,628 H194 V478 L176,472" marker-end="url(#arrowg)"/>
+      <path d="M22,520 C6,480 6,400 18,372" marker-end="url(#arrowg)"/>
     </g>
     <!-- Data out -->
     <g stroke="#b91c1c" stroke-width="2" fill="none">
       <path d="M864,324 V446" marker-end="url(#arrowr)"/>
       <path d="M1022,358 V446" marker-end="url(#arrowr)"/>
       <path d="M636,475 H622" marker-end="url(#arrowr)"/>
-      <path d="M864,502 V544" stroke="#94a3b8" stroke-dasharray="6 5" marker-end="url(#arrowr)"/>
+      <path d="M864,502 V546" stroke="#7c3aed" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+      <path d="M936,500 C960,520 990,530 1010,552" stroke="#94a3b8" stroke-dasharray="6 5" marker-end="url(#arrowr)"/>
     </g>
     <!-- Read-back loops -->
     <g stroke="#7c3aed" stroke-width="2" fill="none" stroke-dasharray="7 5">
@@ -96,7 +100,7 @@
 
     <use href="#cmp" x="246" y="104"/>
     <text x="122" y="120" font-size="15">cli.py</text>
-    <text x="122" y="141" font-size="11" fill="#475569">build · demo · preview</text>
+    <text x="122" y="141" font-size="11" fill="#475569">build · reconstruct · demo</text>
     <use href="#cmp" x="246" y="208"/>
     <text x="122" y="224" font-size="15">demo.py</text>
     <text x="122" y="245" font-size="11" fill="#475569">synthetic mug "scan"</text>
@@ -140,15 +144,24 @@
     </g>
     <text x="966" y="402" font-size="10.5" fill="#7c3aed">reads the</text>
     <text x="966" y="416" font-size="10.5" fill="#7c3aed">file back</text>
-    <text x="40" y="544" font-size="11.5" fill="#64748b">phone capture (M2)</text>
-    <text x="806" y="572" font-size="11.5" fill="#64748b">Isaac Sim · synthetic data (M4)</text>
+    <use href="#cmp" x="160" y="518"/>
+    <text x="32" y="532" font-size="14.5">reconstruct.py</text>
+    <text x="32" y="548" font-size="10.5" fill="#475569">photos → mesh, Z-up</text>
+    <text x="32" y="563" font-size="10.5" fill="#7c3aed">COLMAP (CUDA)</text>
+    <text x="30" y="624" font-size="12.5">photos</text>
+    <text x="30" y="640" font-size="10.5" fill="#475569">phone · Blender renders</text>
+    <use href="#cmp" x="914" y="556"/>
+    <text x="806" y="572" font-size="14.5">evaluate.py</text>
+    <text x="806" y="590" font-size="10.5" fill="#475569">scores vs ground truth</text>
+    <text x="964" y="576" font-size="11.5" fill="#64748b">Isaac Sim (M4)</text>
+    <text x="964" y="592" font-size="10.5" fill="#94a3b8">synthetic data</text>
 
     <!-- Sticky note -->
     <g transform="rotate(-2 330 540)">
       <rect x="250" y="515" width="200" height="62" fill="#fde68a" stroke="#d97706" stroke-width="1"/>
       <text x="262" y="538" font-size="11.5">each stage = one module,</text>
       <text x="262" y="555" font-size="11.5">plain functions in, data out</text>
-      <text x="262" y="571" font-size="11.5" fill="#92400e">→ easy to test (45 tests)</text>
+      <text x="262" y="571" font-size="11.5" fill="#92400e">→ easy to test (50 tests)</text>
     </g>
   </g>
 </svg>
