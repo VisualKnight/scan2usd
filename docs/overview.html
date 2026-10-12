@@ -129,6 +129,8 @@
 <h2>Robotics demos</h2>
 <div class="card" style="margin-bottom:12px"><h3>Franka Panda pick-and-place (MuJoCo Menagerie robot)</h3><img src="figures/panda_demo.webp" alt="Panda pick and place">
   <p class="cap">A real robot model rim-grasps the scanned mug (one finger inside), lifts it 14 cm and places it 25 cm away on the green target (11 mm error). Right: with a single convex hull the inner finger hits a phantom "lid" and the pick fails.</p></div>
+<div class="card" style="margin-bottom:12px"><h3>Same pick in Isaac Sim 6: one plan, two physics engines</h3><img src="figures/isaac_franka_pick.webp" alt="Franka pick in Isaac Sim">
+  <p class="cap">The MuJoCo joint plan replayed on NVIDIA's Franka with PhysX contacts, mug loaded from the USD library. Decomposition: lifted 14.3 cm, placed with 14 mm error (MuJoCo: 14.3 cm, 11 mm). The <code>convex_hull</code> variant fails the same way in both engines. Hand poses agree to 0.5 mm.</p></div>
 <div class="grid g2">
   <div class="card"><h3>Rim grasp, minimal gripper</h3><img src="figures/grasp_demo.webp" alt="Grasp demo">
     <p class="cap">Same comparison with a simple two-finger gripper: 25 convex pieces lift the mug 11.6 cm, one convex hull 0 cm.</p></div>
@@ -224,7 +226,8 @@
   <li><b>Contacts need consistent stiffness.</b> Soft default bin walls let objects sink 8 mm; matching the assets' stiffness gave 0.08 mm.</li>
   <li><b>Fast + thin = tunneling.</b> At PhysX's default 60 Hz, a dropped mug moved 4.5 cm per step and passed through a 2 cm table; a thicker slab and 240 Hz fixed it.</li>
   <li><b>Versions matter.</b> Isaac Sim 5.1's renderer crashed on this driver; 6.0 works.</li>
-  <li><b>Robot models need realistic actuators.</b> The Panda's stock gripper servo squeezes ~0.5 N on a thin cup wall, so the mug slipped; a real Panda hand reaches 70 N, and a stiffer servo (~9 N) made the pick work.</li>
+  <li><b>Robot models need realistic actuators.</b> The Panda's stock gripper squeezes a thin cup wall with ~0.5 N in MuJoCo Menagerie and ~2 N in Isaac Sim's Franka, so the mug slipped in both; a real Franka hand reaches 70 N. Stiffening the gripper drive (~10 N) made the pick work in both engines.</li>
+  <li><b>Don't debug someone else's sample forever.</b> Isaac's experimental pick-and-place example didn't reach its own cube here. Planning once and replaying the joints in Isaac was faster and gave a cross-engine check for free.</li>
   <li><b>Test on real data, not just synthetic.</b> The detector scored a perfect 1.00 on held-out renders and still made 4.3 false detections per real photo. Teaching it what to ignore (unlabeled distractors) fixed most of it.</li>
   <li><b>Labels can be wrong too.</b> Replicator's instance masks sometimes dropped or shrank an object; the converter now trusts the box annotator and keeps a mask only when it agrees.</li>
   <li><b>Know your camera model.</b> Back-projected depth was 3 cm off because MuJoCo's scene stores two stereo eye cameras; a mono render uses their average. One line fixed it.</li>

@@ -1,0 +1,69 @@
+{
+  "plan": "output/panda_plan.json (scripts/export_panda_plan.py)",
+  "results": [
+    {
+      "collision": "decomposed",
+      "lifted_m": 0.1426,
+      "place_error_m": 0.0144,
+      "tilt_deg": 0.1,
+      "success": true,
+      "joint_tracking_error_rad": 0.0027,
+      "robot_variants": {
+        "Mesh": [
+          "Performance",
+          "Quality"
+        ],
+        "Gripper": [
+          "AlternateFinger",
+          "Default",
+          "None",
+          "Robotiq_2F_85"
+        ],
+        "finger_pad_colliders": 2,
+        "finger_drives": {
+          "panda_finger_joint1": {
+            "stiffness": 400.0,
+            "damping": 80.0,
+            "max_force": 7.199999809265137
+          }
+        }
+      },
+      "robot_variant_selection": {
+        "Mesh": "Performance",
+        "Gripper": "Default"
+      }
+    },
+    {
+      "collision": "convex_hull",
+      "lifted_m": 0.0004,
+      "place_error_m": 0.2511,
+      "tilt_deg": 0.1,
+      "success": false,
+      "joint_tracking_error_rad": 0.0027,
+      "robot_variants": {
+        "Mesh": [
+          "Performance",
+          "Quality"
+        ],
+        "Gripper": [
+          "AlternateFinger",
+          "Default",
+          "None",
+          "Robotiq_2F_85"
+        ],
+        "finger_pad_colliders": 2,
+        "finger_drives": {
+          "panda_finger_joint1": {
+            "stiffness": 400.0,
+            "damping": 80.0,
+            "max_force": 7.199999809265137
+          }
+        }
+      },
+      "robot_variant_selection": {
+        "Mesh": "Performance",
+        "Gripper": "Default"
+      }
+    }
+  ]
+}
