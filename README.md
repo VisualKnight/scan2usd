@@ -2,11 +2,17 @@
 
 **Scan-to-Sim asset pipeline**: phone photos of everyday objects in, physics-ready **OpenUSD** assets out, verified in NVIDIA **Isaac Sim** and **MuJoCo**.
 
+![Scan2USD: real photos to a simulation-ready OpenUSD asset](docs/figures/hero.jpg)
+
+- **Accurate:** 0.6–0.8 mm mean surface error on textured objects, scored against ground-truth meshes; metric size within ±1.4% from a ColorChecker alone, no ruler.
+- **Physics-ready:** convex decomposition, mass and inertia, articulated joints. A Franka Panda picks a scanned mug that it can't pick when the mug has a single convex hull.
+- **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets finds the object in **100%** of 67 real photos, and drives a perception-to-grasp loop (10/10 picks).
+
 > Personal R&D project · Oct 2026 · visual overview: [docs/overview.html](docs/overview.html) · benchmark: [docs/benchmark.md](docs/benchmark.md) · interactive 3D gallery: [docs/gallery/](docs/gallery/index.html) (`python -m http.server -d docs`, then open `/gallery/`)
 
-![Architecture](docs/figures/architecture.svg)
-
 ## What it does
+
+![Architecture](docs/figures/architecture.svg)
 
 | Stage | What happens | Module |
 |---|---|---|
@@ -126,6 +132,7 @@ Build outputs: `<name>.usd(a)`, `<name>.glb`, `textures/`, `color_calibration.js
 | `train_detector.py`, `make_coco_figure.py` | Train Faster R-CNN on the synthetic COCO set (needs `torch`/`torchvision`), score on held-out synthetic frames and on real photos |
 | `blender_inspect.py` | Open a build in Blender: raw input, asset, colliders |
 | `make_gallery.py` | Interactive web gallery (glTF + model-viewer) with a collision toggle → `docs/gallery/` |
+| `make_hero.py` | The README hero strip: real photo → asset → colliders → Isaac Sim frame |
 
 ## Asset layout
 
