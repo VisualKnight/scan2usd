@@ -87,3 +87,20 @@ def test_main_body_prefers_point_support_over_size():
     points = obj.sample(5000, seed=0)
     assert sheet.area > obj.volume and not sheet.is_watertight
     assert _main_body([sheet, obj], points) == 1
+
+
+def test_isolate_object_drops_paper_skirt():
+    """Paper under the object curls a few mm off the table and joins its footprint: drop it."""
+    rng = np.random.default_rng(5)
+    table = np.c_[rng.uniform(-0.3, 0.3, (40000, 2)), rng.normal(0, 0.0003, 40000)]
+    paper = np.c_[rng.uniform(-0.15, 0.15, (20000, 2)), rng.uniform(0.003, 0.005, (20000, 1))]  # ~1.5% of the height, like the real scan
+    fig = trimesh.creation.cylinder(radius=0.03, height=0.25)
+    fig.apply_translation([0, 0, 0.125 + 0.005])
+    obj = fig.sample(15000, seed=5)
+    pts = np.vstack([table, paper, obj])
+    aligned, keep, _, _, _ = isolate_object(pts, spacing=0.002, plane_threshold=0.001)
+    is_kept = np.zeros(len(pts), bool)
+    is_kept[keep] = True
+    n_t, n_p = len(table), len(paper)
+    assert is_kept[n_t:n_t + n_p].mean() < 0.25  # only a margin around the object's footprint remains
+    assert is_kept[n_t + n_p:].mean() > 0.8 and np.ptp(aligned[keep][:, 2]) > 0.2

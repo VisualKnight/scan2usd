@@ -165,6 +165,7 @@ def isolate_object(xyz: np.ndarray, spacing: float, plane_threshold: float):
     weights = np.bincount(point_labels, minlength=num + 1)
     weights[0] = 0
     keep = idx[point_labels == weights.argmax()]
+    keep = _drop_low_skirt(aligned, keep, cell)
 
     # Statistical outlier removal: drop points far from their neighbors.
     tree = cKDTree(aligned[keep])
@@ -185,6 +186,53 @@ def _main_body(bodies, points: np.ndarray) -> int:
     near = 3.0 * _median_spacing(points)
     support = [int((tree.query(b.vertices, distance_upper_bound=near)[0] <= near).sum()) for b in bodies]
     return int(np.argmax(support))
+
+
+def _drop_low_skirt(aligned: np.ndarray, keep: np.ndarray, cell: float) -> np.ndarray:
+    """Drop the sheet under the object: points outside the object's own footprint.
+
+    Paper, a mat or a cloth under the object lifts and curls off the table, so it survives the plane
+    cut and, touching the object, joins its footprint blob. Per table cell, take the 90th-percentile
+    height: sheet cells form a low mode, the object rises far above it. The footprint is the tall
+    core grown through adjacent cells clearly above the sheet level (a base disc, a lip), plus a
+    small margin; points outside it are dropped.
+    """
+    from scipy import ndimage
+
+    pts = aligned[keep]
+    lo = pts[:, :2].min(0)
+    ij = np.floor((pts[:, :2] - lo) / cell).astype(int)
+    shape = ij.max(0) + 1
+    flat = np.ravel_multi_index((ij[:, 0], ij[:, 1]), shape)
+    order = np.argsort(flat)
+    cells, start = np.unique(flat[order], return_index=True)
+    z = pts[order, 2]
+    p90 = np.array([np.percentile(seg, 90) for seg in np.split(z, start[1:])])
+    top = np.percentile(p90, 99)
+    if top <= 0:
+        return keep
+    sheet = p90[p90 < 0.15 * top]
+    if len(sheet) < 0.2 * len(p90):  # no sheet to speak of
+        return keep
+    level = np.median(sheet)
+    spread = np.median(np.abs(sheet - level)) * 1.4826
+    grow_above = max(level + 4 * spread, 2 * level)
+    tall = np.zeros(int(np.prod(shape)), bool)
+    tall[cells[p90 > 0.25 * top]] = True
+    raised = np.zeros(int(np.prod(shape)), bool)
+    raised[cells[p90 > grow_above]] = True
+    # Footprint: the tall core, grown through adjacent raised cells (a base, a lip), plus a margin.
+    foot = ndimage.binary_propagation(tall.reshape(shape), mask=raised.reshape(shape) | tall.reshape(shape))
+    labels, n = ndimage.label(foot)
+    if n == 0:
+        return keep
+    counts = np.bincount(labels.ravel(), minlength=n + 1)
+    counts[0] = 0
+    # Holes are part of the object (a cup's floor is low but enclosed by its walls).
+    foot = ndimage.binary_fill_holes(ndimage.binary_closing(labels == counts.argmax(), iterations=2))
+    foot = ndimage.binary_dilation(foot, iterations=2)
+    inside = foot[ij[:, 0], ij[:, 1]]
+    return keep[inside] if (~inside).mean() > 0.02 else keep
 
 
 def _median_spacing(xyz: np.ndarray, sample: int = 20000, seed: int = 0) -> float:
