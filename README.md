@@ -47,15 +47,34 @@
 
 Textured objects reconstruct to 0.6–0.8 mm. Plain or hidden surfaces (the printed mug's white interior, the bowl's underside) never get matched and are sealed, so their volume is off; the asset records this as uncertainty (below), and a measured `--mass` keeps physics right. Metric scale from the ColorChecker alone, no ruler: 0.35–1.43% error.
 
-| | |
-|---|---|
-| ![Holder fit](docs/figures/holder_fit.jpg) | **Real-world check: scan, simulate, compare** ([animation](docs/figures/holder_fit.webp), [per-drop errors](docs/figures/holder_fit_results.png)). Own iPhone photos of a controller holder (81) and a controller (78 + 38, two passes merged by similarity ICP at 0.5 mm RMSE), then of the two together. In MuJoCo, the scanned controller dropped into the scanned holder settles **12/12** times, median **7.7 mm / 9°** from where the real one sits in the combined scan. With a single convex hull for the holder it slides off every time. Scale came from two tape measurements; the combined scan agrees within 0.8%. `scripts/study_holder_fit.py` |
-| ![Panda](docs/figures/panda_demo.jpg) | **Why collision geometry matters** ([animation](docs/figures/panda_demo.webp)). A Franka Panda (MuJoCo Menagerie) rim-grasps the scanned mug with one finger inside the cup and places it 25 cm away. With a single convex hull, that finger lands on a phantom "lid" and the pick fails. `scripts/demo_panda.py` |
-| ![Isaac pick](docs/figures/isaac_franka_pick.jpg) | **Same plan, second physics engine** ([animation](docs/figures/isaac_franka_pick.webp)). The plan, built from the grasp stored in the USD asset, replayed on Isaac Sim 6's Franka with PhysX: lifted 14.1 cm, placed within 5.5 mm. The `convex_hull` variant fails the same way as in MuJoCo. `scripts/isaac_franka_pick.py` |
-| ![Sim-to-real](docs/figures/sim2real_compare.jpg) | **Sim-to-real perception.** A detector trained only on 900 domain-randomized Isaac Sim renders of the scanned assets finds the object in **100%** of 67 real photos; unlabeled distractors in training cut false positives by 84%. It then drives a [see-locate-pick loop](docs/figures/perception_pick.webp): detector → fit the scanned mesh to RGB-D → 10/10 picks. `scripts/train_detector.py` |
-| ![Uncertainty](docs/figures/uncertainty.png) | **Assets that know what they don't know** (`scan2usd uncertainty`). Each vertex is labeled observed / inferred / sealed, and mass, scale and friction are stored as intervals in a codeless USD schema. The true mass falls inside the interval for 5/6 objects; a single value is within 10% for only 2/6. A stored "carved" hypothesis fixes the bowl (F-score 0.49 → 0.95). Tested grasps live in the asset too (`Scan2UsdGraspAPI`), read by MuJoCo and Isaac Sim. |
-| ![Splat vs mesh](docs/figures/splat_buddha.jpg) | **Gaussian splat for looks, convex hulls for physics** (`scan2usd splat`). A splat trained on the same photos, using the mesh's silhouettes as masks, goes under the rigid body as a `UsdVol.ParticleField3DGaussianSplat`. Rendered in Isaac Sim RTX from photos it never saw, it beats the textured mesh on all 18 (Buddha PSNR 19.7 → 27.0 dB; mug 17.1 → 28.9 dB). The splats [ride on PhysX](docs/figures/splat_drop.mp4) and the [Franka picks a splat mug](docs/figures/isaac_franka_pick_splat.webp). |
-| ![Path traced](docs/figures/render_modes.jpg) | **Path-traced look-dev.** PBR look presets, baked 2K albedo + normal maps from the 4.3M-triangle scan, HDRI lighting, physical 50 mm f/5.6 depth of field (Isaac Sim 6 RTX). Rendered from a real photo's solved camera, 63% of the silhouette lies within 3 px of the photo's edges. `scripts/isaac_pathtrace.py` |
+![Holder fit](docs/figures/holder_fit.jpg)
+
+**Real-world check: scan, simulate, compare** ([animation](docs/figures/holder_fit.webp), [per-drop errors](docs/figures/holder_fit_results.png)). Own iPhone photos of a controller holder (81) and a controller (78 + 38, two passes merged by similarity ICP at 0.5 mm RMSE), then of the two together. In MuJoCo, the scanned controller dropped into the scanned holder settles **12/12** times, median **7.7 mm / 9°** from where the real one sits in the combined scan. With a single convex hull for the holder it slides off every time. Scale came from two tape measurements; the combined scan agrees within 0.8%. `scripts/study_holder_fit.py`
+
+![Panda](docs/figures/panda_demo.jpg)
+
+**Why collision geometry matters** ([animation](docs/figures/panda_demo.webp)). A Franka Panda (MuJoCo Menagerie) rim-grasps the scanned mug with one finger inside the cup and places it 25 cm away. With a single convex hull, that finger lands on a phantom "lid" and the pick fails. `scripts/demo_panda.py`
+
+![Isaac pick](docs/figures/isaac_franka_pick.jpg)
+
+**Same plan, second physics engine** ([animation](docs/figures/isaac_franka_pick.webp)). The plan, built from the grasp stored in the USD asset, replayed on Isaac Sim 6's Franka with PhysX: lifted 14.1 cm, placed within 5.5 mm. The `convex_hull` variant fails the same way as in MuJoCo. `scripts/isaac_franka_pick.py`
+
+![Sim-to-real](docs/figures/sim2real_compare.jpg)
+
+**Sim-to-real perception.** A detector trained only on 900 domain-randomized Isaac Sim renders of the scanned assets finds the object in **100%** of 67 real photos; unlabeled distractors in training cut false positives by 84%. It then drives a [see-locate-pick loop](docs/figures/perception_pick.webp): detector → fit the scanned mesh to RGB-D → 10/10 picks. `scripts/train_detector.py`
+
+![Uncertainty](docs/figures/uncertainty.png)
+
+**Assets that know what they don't know** (`scan2usd uncertainty`). Each vertex is labeled observed / inferred / sealed, and mass, scale and friction are stored as intervals in a codeless USD schema. The true mass falls inside the interval for 5/6 objects; a single value is within 10% for only 2/6. A stored "carved" hypothesis fixes the bowl (F-score 0.49 → 0.95). Tested grasps live in the asset too (`Scan2UsdGraspAPI`), read by MuJoCo and Isaac Sim.
+
+![Splat vs mesh](docs/figures/splat_buddha.jpg)
+
+**Gaussian splat for looks, convex hulls for physics** (`scan2usd splat`). A splat trained on the same photos, using the mesh's silhouettes as masks, goes under the rigid body as a `UsdVol.ParticleField3DGaussianSplat`. Rendered in Isaac Sim RTX from photos it never saw, it beats the textured mesh on all 18 (Buddha PSNR 19.7 → 27.0 dB; mug 17.1 → 28.9 dB). The splats [ride on PhysX](docs/figures/splat_drop.mp4) and the [Franka picks a splat mug](docs/figures/isaac_franka_pick_splat.webp).
+
+![Path traced](docs/figures/render_modes.jpg)
+
+**Path-traced look-dev.** PBR look presets, baked 2K albedo + normal maps from the 4.3M-triangle scan, HDRI lighting, physical 50 mm f/5.6 depth of field (Isaac Sim 6 RTX). Rendered from a real photo's solved camera, 63% of the silhouette lies within 3 px of the photo's edges. `scripts/isaac_pathtrace.py`
+
 
 **More on the [overview page](https://visualknight.github.io/scan2usd/):** Shadow Hand grasp benchmark (1,440 trials), how accurate a scan must be (93 picks vs. collider, friction, mass and size error), articulated assets in both engines, a bin of 14 scans, the USD asset library, color calibration, and capture guidance (work in progress).
 ## Quickstart
