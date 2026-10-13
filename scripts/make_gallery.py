@@ -55,10 +55,13 @@ def export_render(asset, path: Path, faces: int = 25000, tex: int = 1024) -> Non
         if image is not None and max(image.size) > tex:
             image = image.convert("RGB").resize((tex, tex), Image.LANCZOS)
         out = trimesh.Trimesh(mesh.vertices, mesh.faces, process=False)
-        out.visual = trimesh.visual.TextureVisuals(uv=mesh.visual.uv, image=image)
+        # glTF's default metallicFactor is 1.0: unset, a scan's albedo renders as dark metal. Scans are
+        # dielectric, so say so explicitly.
+        mat = trimesh.visual.material.PBRMaterial(baseColorTexture=image, metallicFactor=0.0, roughnessFactor=0.75)
+        out.visual = trimesh.visual.TextureVisuals(uv=mesh.visual.uv, material=mat)
     else:
         out, _ = decimate(mesh, faces)
-    to_y_up(out).export(str(path))
+    to_y_up(out).export(str(path), include_normals=True)
 
 
 def export_hulls(asset, path: Path) -> None:
@@ -121,8 +124,8 @@ for (const it of items) {
   const card = document.createElement('div');
   card.className = 'card';
   card.innerHTML = `
-    <model-viewer src="${it.slug}.glb" camera-controls auto-rotate shadow-intensity="1" exposure="1.05"
-      environment-image="neutral" alt="${it.title}"></model-viewer>
+    <model-viewer src="${it.slug}.glb" camera-controls auto-rotate shadow-intensity="0.6" exposure="1.3"
+      tone-mapping="neutral" environment-image="neutral" alt="${it.title}"></model-viewer>
     <div class="meta"><h3>${it.title}</h3><p>${it.caption}</p>
       <p>${it.size_cm} cm · ${it.mass_g} g · ${it.hulls} convex colliders</p>
       <label><input type="checkbox"> collision</label></div>`;
