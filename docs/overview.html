@@ -5,68 +5,150 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Scan2USD · Overview</title>
 <style>
-  :root { --ink: #1e293b; --muted: #64748b; --line: #e2e8f0; --bg: #f8fafc; --card: #fff;
-          --done: #15803d; --next: #b45309; --plan: #64748b; --bad: #b91c1c; }
+  :root { --ink: #1c1917; --soft: #57534e; --faint: #a8a29e; --rule: #e7e2d8; --paper: #faf8f3; --plate: #fff;
+          --cap: #0e7490; --bld: #6d28d9; --ver: #047857; --use: #c2410c; --note: #78716c;
+          --good: #047857; --bad: #b91c1c;
+          --serif: Charter, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+          --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+          --mono: "Cascadia Code", "Cascadia Mono", Consolas, monospace; }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 "Segoe UI", system-ui, sans-serif; }
-  .wrap { max-width: 1160px; margin: 0 auto; padding: 32px 24px 64px; }
-  h1 { font-size: 34px; margin: 4px 0 0; }
-  h2 { font-size: 21px; margin: 44px 0 12px; }
-  h3 { font-size: 15px; margin: 0 0 4px; }
+  html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 15.5px/1.6 var(--sans); }
+  a { color: inherit; text-decoration-color: var(--faint); text-underline-offset: 3px; }
+  a:hover { color: var(--use); }
+  .shell { display: grid; grid-template-columns: 236px minmax(0, 1fr); max-width: 1440px; margin: 0 auto; }
+  @media (max-width: 1060px) { .shell { grid-template-columns: minmax(0, 1fr); } .toc { display: none; } }
+  @media (max-width: 700px) { h1 { font-size: 52px; } h2 { font-size: 27px; } .chap { grid-template-columns: 52px 1fr; } .chap .no { font-size: 40px; } .g2 { grid-template-columns: minmax(0, 1fr); } }
+
+  /* contents sidebar */
+  .toc { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; padding: 40px 18px 24px 28px; border-right: 1px solid var(--rule); }
+  .toc .brand { font: 600 22px/1 var(--serif); letter-spacing: -.01em; text-decoration: none; }
+  .toc .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin: 18px 0 20px; font-size: 11.5px; color: var(--soft); }
+  .toc .legend span::before, .toc a::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 7px; vertical-align: 1px; }
+  .toc nav a { display: flex; align-items: baseline; gap: 0; padding: 5px 0; font-size: 13.5px; color: var(--soft); text-decoration: none; border-left: 2px solid transparent; margin-left: -12px; padding-left: 10px; }
+  .toc nav a::before { flex: none; }
+  .toc nav a i { font: normal 11px var(--mono); color: var(--faint); margin-right: 8px; }
+  .toc nav a.on { color: var(--ink); font-weight: 600; border-left-color: var(--c); }
+  .toc .out { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--rule); font-size: 13px; line-height: 2; }
+  .toc .out a { text-decoration: none; color: var(--soft); } .toc .out a:hover { color: var(--use); }
+  .s-cap { --c: var(--cap); } .s-bld { --c: var(--bld); } .s-ver { --c: var(--ver); } .s-use { --c: var(--use); } .s-note { --c: var(--note); }
+
+  .wrap { padding: 52px 48px 72px; max-width: 1180px; }
+  @media (max-width: 700px) { .wrap { padding: 32px 18px 56px; } }
+
+  /* masthead */
+  .kicker { font: 600 11.5px/1 var(--sans); letter-spacing: .18em; text-transform: uppercase; color: var(--use); }
+  h1 { font: 600 76px/0.95 var(--serif); letter-spacing: -.025em; margin: 14px 0 14px; }
+  .dek { font: italic 22px/1.45 var(--serif); color: var(--soft); max-width: 780px; margin: 0; }
+  .links { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .links a { font-size: 13px; font-weight: 600; text-decoration: none; padding: 6px 13px; border: 1px solid var(--ink); border-radius: 99px; background: var(--plate); }
+  .links a:hover { background: var(--ink); color: #fff; }
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); margin: 36px 0 22px; }
+  .flow div { padding: 12px 18px 4px 0; border-top: 3px solid var(--c); margin-right: 14px; }
+  .flow b { font: 700 11.5px var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--c); }
+  .flow p { margin: 4px 0 0; font-size: 13.5px; color: var(--soft); line-height: 1.5; }
+  @media (max-width: 800px) { .flow { grid-template-columns: 1fr 1fr; } }
+
+  /* chapters */
+  .chap { display: grid; grid-template-columns: 72px 1fr; gap: 6px 18px; margin: 88px 0 22px; align-items: end; padding-bottom: 14px; border-bottom: 1px solid var(--rule); }
+  .chap .no { font: 500 54px/0.85 var(--serif); color: var(--c); }
+  .chap .eb { font: 700 11.5px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--c); margin-bottom: 8px; }
+  h2 { font: 600 34px/1.12 var(--serif); letter-spacing: -.012em; margin: 0; }
+  h3 { font: 600 18px/1.3 var(--serif); margin: 0 0 8px; }
   p { margin: 0 0 10px; }
-  code { font-family: "Cascadia Code", Consolas, monospace; font-size: .86em; background: #f1f5f9; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
-  .muted { color: var(--muted); } .small { font-size: 13px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
-  .grid { display: grid; gap: 12px; }
+  .muted { color: var(--soft); } .small { font-size: 14px; }
+  p.muted { font: 18px/1.55 var(--serif); max-width: 820px !important; }
+  code { font: .84em var(--mono); background: #f3efe6; border-radius: 3px; padding: 1px 5px; }
+
+  /* plates */
+  .card { background: var(--plate); border: 1px solid var(--rule); border-radius: 4px; padding: 16px 18px; }
+  .card > img, .card > a > img { margin: 2px 0 0; }
+  .grid { display: grid; gap: 16px; }
   .g2 { grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); }
   .g4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-  .g5 { grid-template-columns: repeat(5, 1fr); }
-  .g6 { grid-template-columns: repeat(6, 1fr); }
-  @media (max-width: 900px) { .g5, .g6, .g2 { grid-template-columns: 1fr; } }
-  .pill { display: inline-block; padding: 1px 9px; border-radius: 99px; font-size: 12px; font-weight: 600; border: 1px solid; }
-  .done { color: var(--done); background: #f0fdf4; border-color: #bbf7d0; }
-  .next { color: var(--next); background: #fffbeb; border-color: #fde68a; }
-  .plan { color: var(--plan); background: #f8fafc; border-color: var(--line); }
-  .kpi b { display: block; font-size: 24px; } .kpi > span { color: var(--muted); font-size: 13px; }
-  .good { color: var(--done); } .bad { color: var(--bad); }
-  img { max-width: 100%; display: block; border-radius: 8px; }
-  .board { border: 1px solid var(--line); box-shadow: 0 1px 3px rgba(0,0,0,.05); }
-  .ms { border-top: 4px solid var(--line); }
-  .ms.m-done { border-top-color: var(--done); } .ms.m-next { border-top-color: #f59e0b; }
-  table { border-collapse: collapse; font-size: 13.5px; width: 100%; }
-  td, th { padding: 5px 10px 5px 0; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
-  th { font-size: 12px; color: var(--muted); font-weight: 600; }
-  details { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
-  details summary { cursor: pointer; font-weight: 600; }
-  details summary span { font-weight: 400; color: var(--muted); font-size: 13px; }
-  details p { margin: 8px 0 0; font-size: 14px; }
-  details .where { color: var(--muted); font-size: 12.5px; }
-  ul { margin: 6px 0; padding-left: 20px; } li { margin: 3px 0; }
-  .cap { color: var(--muted); font-size: 13px; margin-top: 8px; }
-  footer { color: var(--muted); font-size: 12.5px; margin-top: 40px; }
+  @media (max-width: 900px) { .g2 { grid-template-columns: 1fr; } }
+  img { max-width: 100%; display: block; border-radius: 2px; }
+  .board { background: var(--plate); border: 1px solid var(--rule); padding: 10px; border-radius: 4px; }
+  .cap { color: var(--soft); font-size: 13.5px; line-height: 1.55; margin: 12px 0 0; }
+  .cap > b:first-child { color: var(--ink); }
+  .good { color: var(--good); } .bad { color: var(--bad); }
+
+  /* numbers */
+  .numbers { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--rule); margin: 28px 0 0; }
+  .numbers .kpi { padding: 18px 20px 16px 0; border-bottom: 1px solid var(--rule); }
+  .numbers .kpi:nth-child(3n+2), .numbers .kpi:nth-child(3n) { padding-left: 20px; border-left: 1px solid var(--rule); }
+  .numbers .kpi:nth-last-child(-n+3) { border-bottom: 0; }
+  @media (max-width: 800px) { .numbers { grid-template-columns: 1fr; } .numbers .kpi { padding-left: 0 !important; border-left: 0 !important; border-bottom: 1px solid var(--rule) !important; } }
+  .kpi b { display: block; font: 500 36px/1.05 var(--serif); letter-spacing: -.02em; }
+  .kpi > span { display: block; color: var(--soft); font-size: 13.5px; margin-top: 8px; line-height: 1.45; }
+  .card.kpi b { font-size: 30px; }
+
+  /* demo video */
+  details.demo { margin: 0 0 6px; background: none; border: 0; padding: 0; }
+  details.demo summary { list-style: none; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; font-size: 14.5px; padding: 8px 16px 8px 8px; border-radius: 99px; background: var(--ink); color: #fff; }
+  details.demo summary::-webkit-details-marker { display: none; }
+  details.demo summary::before { content: "\25B6"; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--use); font-size: 10px; padding-left: 2px; }
+  details.demo summary span { font-weight: 400; color: #d6d3d1; font-size: 13px; }
+
+  /* tables */
+  table { border-collapse: collapse; font-size: 13.5px; width: 100%; font-variant-numeric: tabular-nums; }
+  td, th { padding: 7px 12px 7px 0; text-align: left; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--soft); font-weight: 600; border-bottom: 1px solid var(--ink); }
+  tr:last-child td { border-bottom: 0; }
+
+  /* learn */
+  details { background: var(--plate); border: 1px solid var(--rule); border-radius: 4px; padding: 12px 16px; }
+  details summary { cursor: pointer; font: 600 16px/1.4 var(--serif); }
+  details summary span { font: 400 13px var(--sans); color: var(--soft); }
+  details[open] { border-color: #d6cfc0; }
+  details p { margin: 10px 0 0; font-size: 14.5px; }
+  details .where { color: var(--soft); font-size: 12.5px; }
+
+  /* lessons */
+  ol.lessons { list-style: none; counter-reset: l; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 0 32px; }
+  ol.lessons li { counter-increment: l; position: relative; padding: 14px 0 14px 46px; border-bottom: 1px solid var(--rule); font-size: 14.5px; }
+  ol.lessons li::before { content: counter(l); position: absolute; left: 0; top: 8px; font: 500 30px/1 var(--serif); color: var(--note); }
+  ol.lessons li b { font-family: var(--serif); font-size: 16px; }
+  ul { margin: 6px 0; padding-left: 20px; } li { margin: 4px 0; }
+  footer { color: var(--soft); font-size: 12.5px; margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--ink); }
 </style>
 </head>
-<body><div class="wrap">
+<body><div class="shell" id="top">
+<aside class="toc">
+  <a class="brand" href="#top">Scan2USD</a>
+  <div class="legend"><span class="s-cap">Capture</span><span class="s-bld">Build</span><span class="s-ver">Verify</span><span class="s-use">Use</span></div>
+  <nav><a class="s-bld" href="#architecture"><i>01</i>Architecture</a><a class="s-ver" href="#real"><i>02</i>Real-world check</a><a class="s-use" href="#robotics"><i>03</i>Robotics demos</a><a class="s-use" href="#hand"><i>04</i>Shadow Hand</a><a class="s-use" href="#perception"><i>05</i>Perception</a><a class="s-ver" href="#tolerance"><i>06</i>Accuracy needed</a><a class="s-ver" href="#benchmark"><i>07</i>Benchmark</a><a class="s-use" href="#rendering"><i>08</i>Rendering</a><a class="s-bld" href="#uncertainty"><i>09</i>Uncertainty</a><a class="s-cap" href="#color"><i>10</i>Color</a><a class="s-note" href="#learn"><i>11</i>Learn</a><a class="s-note" href="#lessons"><i>12</i>Lessons</a><a class="s-note" href="#timeline"><i>13</i>Timeline</a><a class="s-cap" href="#capture"><i>14</i>Capture your own</a></nav>
+  <div class="out"><a href="gallery/index.html">3D gallery &#8599;</a><br><a href="library/index.html">USD asset library &#8599;</a><br><a href="https://github.com/VisualKnight/scan2usd">Source on GitHub &#8599;</a></div>
+</aside>
+<main class="wrap">
 
+<div class="kicker">A scan-to-simulation pipeline · Yibo Liu</div>
 <h1>Scan2USD</h1>
-<p class="muted">Phone photos in, physics-ready <b>OpenUSD</b> assets out, verified in NVIDIA Isaac Sim and MuJoCo. · <a href="gallery/index.html"><b>Interactive 3D gallery</b></a> · <a href="library/index.html"><b>USD asset library</b></a> · <a href="https://github.com/VisualKnight/scan2usd"><b>Source on GitHub</b></a></p>
-<img class="board" src="figures/hero.jpg" alt="Real photos to a simulation-ready OpenUSD asset" style="margin-bottom:12px">
-<details style="margin-bottom:12px"><summary>▶ Watch the 88-second demo <span>· photos → USD → MuJoCo, Isaac Sim, perception, own phone scans, splats</span></summary>
+<p class="dek">Phone photos in, physics-ready OpenUSD assets out, and every claim checked in NVIDIA Isaac Sim and MuJoCo.</p>
+<div class="links"><a href="gallery/index.html">Interactive 3D gallery &#8599;</a><a href="library/index.html">USD asset library &#8599;</a><a href="https://github.com/VisualKnight/scan2usd">Source on GitHub &#8599;</a></div>
+<div class="flow">
+  <div class="s-cap"><b>1 · Capture</b><p>Phone photos, a color chart, and a guide to the next shots</p></div>
+  <div class="s-bld"><b>2 · Build</b><p>Mesh, calibrated color and scale, mass, convex colliders, USD</p></div>
+  <div class="s-ver"><b>3 · Verify</b><p>33 checks on the file, two physics engines, ground truth</p></div>
+  <div class="s-use"><b>4 · Use</b><p>Robot picks, synthetic training data, path-traced renders</p></div>
+</div>
+<img class="board" src="figures/hero.jpg" alt="Real photos to a simulation-ready OpenUSD asset" style="margin-bottom:16px">
+<details class="demo"><summary>Watch the 88-second demo <span>· photos → USD → MuJoCo, Isaac Sim, perception, own phone scans, splats</span></summary>
   <video controls preload="none" poster="figures/demo_poster.jpg" style="width:100%;border-radius:8px;margin-top:8px"><source src="scan2usd_demo.mp4" type="video/mp4"></video></details>
-<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(330px, 1fr))">
-  <div class="card kpi"><b>0.78 mm</b><span>mean surface error, 78 photos → USD (speckled mug vs. ground truth)</span></div>
-  <div class="card kpi"><b>≤1.43%</b><span>size error from the ColorChecker alone, no ruler (worst of 6 objects)</span></div>
-  <div class="card kpi"><b><span class="good">pick</span> vs <span class="bad">fail</span></b><span>Franka picks the scanned mug with convex decomposition, fails with one hull, in MuJoCo and Isaac Sim</span></div>
-  <div class="card kpi"><b>59/67 → 67/67</b><span>real Buddha photos where a detector trained only on synthetic Isaac Sim data ranks the Buddha first (adding unlabeled distractors to training)</span></div>
-  <div class="card kpi"><b><!--n:sim_held-->12/12<!--/n--></b><span>drops where a scanned controller settles into a scanned holder, median <!--n:sim_add-->9.1<!--/n--> mm from where the real one sits (phone photos)</span></div>
-  <div class="card kpi"><b>18 / 18</b><span>unseen photos where the asset's Gaussian splat looks closer to reality than its textured mesh</span></div>
+<div class="numbers">
+  <div class="kpi"><b>0.78 mm</b><span>mean surface error, 78 photos → USD (speckled mug vs. ground truth)</span></div>
+  <div class="kpi"><b>≤1.43%</b><span>size error from the ColorChecker alone, no ruler (worst of 6 objects)</span></div>
+  <div class="kpi"><b><span class="good">pick</span> vs <span class="bad">fail</span></b><span>Franka picks the scanned mug with convex decomposition, fails with one hull, in MuJoCo and Isaac Sim</span></div>
+  <div class="kpi"><b>59/67 → 67/67</b><span>real Buddha photos where a detector trained only on synthetic Isaac Sim data ranks the Buddha first (adding unlabeled distractors to training)</span></div>
+  <div class="kpi"><b><!--n:sim_held-->12/12<!--/n--></b><span>drops where a scanned controller settles into a scanned holder, median <!--n:sim_add-->9.1<!--/n--> mm from where the real one sits (phone photos)</span></div>
+  <div class="kpi"><b>18 / 18</b><span>unseen photos where the asset's Gaussian splat looks closer to reality than its textured mesh</span></div>
 </div>
 
-<h2>Architecture</h2>
+<div class="chap s-bld" id="architecture"><div class="no">01</div><div><div class="eb">Build</div><h2>Architecture</h2></div></div>
 <img class="board" src="figures/architecture.svg" alt="Whiteboard architecture diagram">
 <p class="cap">Photos become a mesh (COLMAP), the pipeline turns it into a simulation asset, and the validator re-opens the written file. Downstream: MuJoCo demos, Isaac Sim, and scoring against ground truth. Bottom row: what the asset knows about itself, and the loop back to the camera.</p>
 
-<h2>Real-world check: scan, simulate, compare</h2>
+<div class="chap s-ver" id="real"><div class="no">02</div><div><div class="eb">Verify</div><h2>Real-world check: scan, simulate, compare</h2></div></div>
 <p class="muted" style="max-width:900px">Own iPhone 13 Pro photos of a controller holder and a game controller, each scanned on its own, then photographed together. The combined scan is the answer key: does the simulated controller settle where the real one sits?</p>
 <div class="card" style="margin-bottom:12px"><img src="figures/holder_fit_lead.jpg" alt="The real pair, each object scanned alone, and the simulated drop">
   <p class="cap">One of the 58 photos of the real pair (left), the two objects each scanned on their own, and the simulation that puts them back together.</p></div>
@@ -85,7 +167,7 @@
     <li><b>Leg gap:</b> Poisson had filled in the space between the figure's legs. From the front, the dark legs stand against bright paper, so each photo votes for the 3D points it sees background through; those are cut out of the mesh (<a href="figures/holder_gap.jpg">before/after</a>). Below 35 mm the gap is seen only against the black base, so its outline is extended down from there. <code>carve.py</code></li>
     <li><code>scripts/study_holder_fit.py</code> · <code>register.py</code> · <code>carve.py</code></li></ul></div>
 
-<h2>Robotics demos</h2>
+<div class="chap s-use" id="robotics"><div class="no">03</div><div><div class="eb">Use</div><h2>Robotics demos</h2></div></div>
 <div class="card" style="margin-bottom:12px"><h3>Franka Panda pick-and-place (MuJoCo Menagerie robot)</h3><img src="figures/panda_demo.webp" alt="Panda pick and place">
   <p class="cap">A real robot model rim-grasps the scanned mug (one finger inside), lifts it 14 cm and places it 25 cm away on the green target (11 mm error). Right: with a single convex hull the inner finger hits a phantom "lid" and the pick fails.</p></div>
 <div class="card" style="margin-bottom:12px"><h3>Same pick in Isaac Sim 6: one plan, two physics engines</h3><img src="figures/isaac_franka_pick.webp" alt="Franka pick in Isaac Sim">
@@ -99,7 +181,7 @@
     <p class="cap">11 assets (including the two phone scans) as payloads with <code>collision</code> and <code>friction</code> variant sets (<a href="library/index.html">catalog</a>). Every variant settles in PhysX, about 2 ms per step.</p></div>
 </div>
 
-<h2>Dexterous grasping: Shadow Hand</h2>
+<div class="chap s-use" id="hand"><div class="no">04</div><div><div class="eb">Use</div><h2>Dexterous grasping: Shadow Hand</h2></div></div>
 <div class="grid" style="grid-template-columns: 1.15fr 1fr">
   <div class="card"><img src="figures/hand_grasp.webp" alt="Shadow Hand grasps scanned objects">
     <p class="cap">The 24-joint Shadow Hand (MuJoCo Menagerie) lifts scanned objects and survives a ±2 cm / 3 Hz shake. The camera picks the side where the thumb is visible.</p></div>
@@ -107,7 +189,7 @@
     <p class="cap">A benchmark for comparing <b>assets</b>, not a grasp planner: 90 random, unoptimized power grasps for each of 8 benchmark assets and 2 collision variants (1,440 trials, ~1 min on 16 cores). Convex decomposition holds more of them than one hull on the six hand-sized objects (23.5% vs 18.9%), and grasps from above beat grasps from the side (34% vs 4%). The best of these grasps are stored in the assets (see <i>Assets that know what they don’t know</i>).</p></div>
 </div>
 
-<h2>Sim-to-real perception</h2>
+<div class="chap s-use" id="perception"><div class="no">05</div><div><div class="eb">Use</div><h2>Sim-to-real perception</h2></div></div>
 <div class="card" style="margin-bottom:12px">
   <h3>Train on synthetic images, test on real photos</h3>
   <img src="figures/sim2real_compare.jpg" alt="Detector on real photos: objects-only vs. with distractors">
@@ -127,13 +209,13 @@
 <div class="card" style="margin-top:12px"><h3>Closing the loop: see it, locate it, pick it</h3><img src="figures/perception_pick.webp" alt="Perception-in-the-loop pick">
     <p class="cap">In MuJoCo, the lion figure lands at a random pose among other scans (our scanned mug is now a distractor). Two RGB-D scene cameras → the synthetic-trained detector finds it (left, green) → depth inside the box is fitted with the <b>scanned mesh</b> → the Panda pinches the torso from above, across the body, at the <b>estimated</b> pose. <b>10/10 picks</b>, median pose error 0.6 mm / 0.3°. Unlike the mug (whose handle can hide from both cameras), the lion's head and tail make yaw unambiguous, and the grasp needs it: closing along the body instead of across it would miss. The scan is used three times: training images, pose model, and physics.</p></div>
 
-<h2>How accurate must a scan be?</h2>
+<div class="chap s-ver" id="tolerance"><div class="no">06</div><div><div class="eb">Verify</div><h2>How accurate must a scan be?</h2></div></div>
 <div class="card" style="margin-bottom:12px">
   <img src="figures/robustness.png" alt="Pick success vs collider, friction, mass, size error">
   <p class="cap">93 simulated Panda picks. The robot always plans with the nominal scan; the simulated "real" mug differs. <b>A</b>: collision geometry decides it. One hull or a bounding box (library variants) fails at every friction. <b>B</b>: doubling the mass breaks the grip, so weigh your object. <b>C</b>: size errors within ±5% are tolerated even with ±8 mm grasp error; the ColorChecker's ≤1.43% scale error is well inside. A real mug 10–15% smaller than the scan makes the fingers miss the rim. Grip force ~9 N (a real Panda hand: up to 70 N).</p>
 </div>
 
-<h2>Photos → USD, scored against ground truth</h2>
+<div class="chap s-ver" id="benchmark"><div class="no">07</div><div><div class="eb">Verify</div><h2>Photos → USD, scored against ground truth</h2></div></div>
 <div class="grid g2">
   <div class="card"><img src="figures/synthetic_capture.jpg" alt="Synthetic phone capture">
     <p class="cap">A fake phone capture rendered in Blender: 78 photos in 3 rings plus top views, warm light, ColorChecker in the scene, known camera poses and shape.</p></div>
@@ -187,7 +269,7 @@
     <p class="cap">A ColorChecker in the scene is also a ruler: its patches are 16 mm apart on the Mini.</p></div>
 </div>
 
-<h2>Path-traced rendering</h2>
+<div class="chap s-use" id="rendering"><div class="no">08</div><div><div class="eb">Use</div><h2>Path-traced rendering</h2></div></div>
 <div class="card" style="margin-bottom:12px"><h3>Scanned assets in Isaac Sim 6 RTX</h3><img src="figures/render_beauty.jpg" alt="Path-traced scanned assets">
   <p class="cap">Offline path tracing, 1,024 samples per pixel, AI denoiser, 6 bounces. HDRI dome + area key light, NVIDIA MDL oak table, physically correct 50 mm f/5.6 depth of field. Assets carry PBR look presets from their material (the speckled mug's glaze is a clearcoat over a rough body) and baked 2K albedo + normal maps. <a href="figures/render_modes.jpg">Real-time vs offline path tracing</a>.</p></div>
 <div class="grid g2">
@@ -197,7 +279,7 @@
     <p class="cap">Render from the photo's solved camera. 63% of the silhouette lies within 3 px of a photo edge (median 2 px), which checks geometry, scale and camera at once. After white balance, color is median ΔE2000 6.4; the rest is the unknown room lighting.</p></div>
 </div>
 
-<h2>Assets that know what they don't know</h2>
+<div class="chap s-bld" id="uncertainty"><div class="no">09</div><div><div class="eb">Build</div><h2>Assets that know what they don't know</h2></div></div>
 <p class="muted" style="max-width:900px">Scan-to-sim tools usually output one confident mesh. These assets also store what the camera actually saw, what was guessed, how to hold them, and how they really look: all inside the USD file, where any simulator can read it.</p>
 <div class="grid g4" style="margin-bottom:12px">
   <div class="card kpi"><b>5 / 6</b><span>true masses inside the stored interval; the single nominal value is within 10% for only 2 / 6</span></div>
@@ -220,7 +302,7 @@
     <p class="cap"><code>scan2usd guide</code> lists the camera positions that would see the physics-relevant surface no photo saw twice. Tested by rendering 8 extra photos exactly where asked: it wins on the bowl, loses to a higher ring on the shoe, and is worst on the printed mug, whose white interior is visible but has no texture for stereo to match. Next step: score views by texture, not visibility alone. The test also caught a meshing bug, now fixed.</p></div>
 </div>
 
-<h2>Color calibration</h2>
+<div class="chap s-cap" id="color"><div class="no">10</div><div><div class="eb">Capture</div><h2>Color calibration</h2></div></div>
 <div class="grid" style="grid-template-columns: 1.6fr 1fr">
   <div class="card"><img src="figures/color_chart.svg" alt="ColorChecker before/after"><p class="cap">Each patch: as captured · corrected · reference, with ΔE2000.</p></div>
   <div class="card"><h3>What each reference buys you</h3>
@@ -234,7 +316,7 @@
     <p class="cap">Below about 2 is hard to notice. In the full photo-to-USD runs, chart error drops from ~8 to ~1.3 (JPEG, uneven light).</p></div>
 </div>
 
-<h2>Learn</h2>
+<div class="chap s-note" id="learn"><div class="no">11</div><div><div class="eb">Notes</div><h2>Learn</h2></div></div>
 <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr))">
   <details><summary>Photogrammetry with COLMAP <span>· photos → points → mesh</span></summary>
     <p><b>Structure from motion</b> matches features across photos and solves every camera's position. <b>Multi-view stereo</b> then estimates depth per pixel and fuses millions of colored points. A Poisson solve turns the points into a closed surface.</p>
@@ -274,8 +356,8 @@
     <p class="where"><code>uncertainty.py</code> · <code>schemas.py</code> · <code>guide.py</code> · <code>scan2usd uncertainty | grasps | guide</code></p></details>
 </div>
 
-<h2>Lessons</h2>
-<ul class="small">
+<div class="chap s-note" id="lessons"><div class="no">12</div><div><div class="eb">Notes</div><h2>Lessons</h2></div></div>
+<ol class="lessons">
   <li><b>Test on real data, not just synthetic.</b> The detector scored a perfect 1.00 on held-out renders and still made 4.3 false detections per real photo. Unlabeled distractors in training cut that by 84%.</li>
   <li><b>Read the units, don't tune by eye.</b> Depth of field was far too strong. USD camera lens values are in <i>tenths of a scene unit</i>, so on a meters stage "50" is a 5 m lens: same framing, 100&times; the aperture. Writing 0.05 gives a real 50 mm f/5.6 lens.</li>
   <li><b>Look at a cross-section before believing an explanation.</b> The bowl's +82% volume looked like thick walls; slicing the solid showed an unseen underside filled into a pedestal. No line of sight, so carving can't fix it, but a stored "carved" hypothesis can.</li>
@@ -283,12 +365,12 @@
   <li><b>Don't teleport a hand.</b> A mocap-driven forearm moves without velocity, and MuJoCo friction is velocity-based: 120 N of squeeze and the object stayed put. Welding a free forearm to the target fixed it.</li>
   <li><b>Visible isn't reconstructable.</b> The capture guide aimed into the printed mug's white interior: in view, but nothing for stereo to match. Measuring the guide on three objects, not one, is what showed it.</li>
   <li><b>Let the mesh help the splat.</b> Trained on raw photos, a splat spends its Gaussians on the background. Masking every photo with the mesh's silhouette raised held-out PSNR from 21.6 to 28.9 dB.</li>
-</ul>
+</ol>
 
-<h2>Timeline</h2>
+<div class="chap s-note" id="timeline"><div class="no">13</div><div><div class="eb">Notes</div><h2>Timeline</h2></div></div>
 <p class="small muted">Pipeline core (clean, color, collide, weigh, export, validate) → photos to USD with COLMAP, scored against ground truth → articulation → Isaac Sim + MuJoCo demos, sim-to-real detector → path-traced look-dev, asset library → grasps, uncertainty and Gaussian splats inside the USD asset → own phone captures: scanned controller settles into a scanned holder, checked against a scan of the real pair. <b>Next:</b> real phone captures with a ColorChecker (no-ruler scale on real photos); texture-aware capture guidance.</p>
 
-<h2>Capture your own</h2>
+<div class="chap s-cap" id="capture"><div class="no">14</div><div><div class="eb">Capture</div><h2>Capture your own</h2></div></div>
 <div class="grid g2">
   <div class="card small"><h3>Shoot</h3><ul>
     <li><b>Start easy:</b> a matte, textured object (wooden toy, sneaker, speckled mug). Dark, glossy or plain surfaces are the hardest; masking tape with pen marks helps inside plain cups.</li>
@@ -300,6 +382,13 @@
     <li><code>scan2usd guide out\asset\&lt;name&gt;.usda --workspace out\colmap</code> suggests extra shots.</li></ul></div>
 </div>
 <footer>Scan2USD · personal R&amp;D project · Yibo Liu · Oct 2026 · Ground-truth meshes: Google Scanned Objects (CC-BY 4.0) · Real photos: AliceVision Buddha (CC-BY 4.0) · Robot: MuJoCo Menagerie Franka Panda (Apache-2.0) · Figures: <code>scripts/</code></footer>
-</div>
+</main></div>
+<script>
+const links = [...document.querySelectorAll('.toc nav a')];
+const obs = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id));
+}), { rootMargin: '0px 0px -75% 0px' });
+document.querySelectorAll('.chap').forEach(c => obs.observe(c));
+</script>
 <script>if (location.protocol === 'file:') { const b = document.createElement('div'); b.style.cssText = 'position:sticky;top:0;z-index:9;background:#fef3c7;border-bottom:1px solid #f59e0b;padding:8px 16px;font:14px system-ui'; b.innerHTML = 'Local preview of the repository file. The published version is <a href=\"https://visualknight.github.io/scan2usd/\">visualknight.github.io/scan2usd</a> (updates a minute after each push).'; document.body.prepend(b); }</script></body>
 </html>
