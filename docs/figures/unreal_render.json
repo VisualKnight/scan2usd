@@ -7,48 +7,48 @@
     "repeats": 3,
     "on": {
       "frames": 600,
-      "gpu_ms": 8.84,
-      "frame_ms": 9.28,
+      "gpu_ms": 8.8,
+      "frame_ms": 9.29,
       "passes_ms": {
-        "MegaLights": 3.03,
-        "LumenReflections": 2.853,
+        "MegaLights": 3.227,
+        "LumenReflections": 2.793,
         "Unaccounted": 0.575,
-        "TemporalSuperResolution": 0.408,
-        "RenderDeferredLighting": 0.188,
-        "DepthOfField": 0.141,
+        "TemporalSuperResolution": 0.411,
+        "RenderDeferredLighting": 0.19,
+        "DepthOfField": 0.124,
         "Postprocessing": 0.121,
-        "LumenSceneUpdate": 0.11
+        "LumenSceneUpdate": 0.108
       },
       "gpu_ms_runs": [
-        8.63,
-        8.84,
-        9.09
+        7.83,
+        8.8,
+        9.18
       ]
     },
     "off": {
       "frames": 600,
-      "gpu_ms": 14.36,
-      "frame_ms": 14.67,
+      "gpu_ms": 14.77,
+      "frame_ms": 15.12,
       "passes_ms": {
-        "Lights": 5.347,
-        "LumenReflections": 4.005,
-        "ShadowDepths": 1.789,
+        "Lights": 5.38,
+        "LumenReflections": 3.992,
+        "ShadowDepths": 2.1,
         "Unaccounted": 0.731,
-        "TemporalSuperResolution": 0.407,
-        "RenderDeferredLighting": 0.248,
-        "Postprocessing": 0.135,
-        "DepthOfField": 0.114
+        "TemporalSuperResolution": 0.408,
+        "RenderDeferredLighting": 0.244,
+        "Postprocessing": 0.134,
+        "LumenSceneUpdate": 0.11
       },
       "gpu_ms_runs": [
-        13.22,
-        14.36,
-        14.97
+        14.77,
+        14.77,
+        15.05
       ]
     }
   },
   "vs_path_tracer": {
-    "megalights_psnr_db": 24.69,
-    "no_megalights_psnr_db": 23.48,
+    "megalights_psnr_db": 24.79,
+    "no_megalights_psnr_db": 23.31,
     "path_tracer_spp": 4096
   },
   "scene": {
@@ -64,12 +64,12 @@
         0.065
       ],
       "focus": [
-        -0.01,
-        -0.02,
-        0.035
+        -0.039,
+        -0.04,
+        0.045
       ],
       "focal_mm": 40.0,
-      "fstop": 3.5
+      "fstop": 8.0
     },
     "bulbs": {
       "table": 41,

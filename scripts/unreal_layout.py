@@ -47,8 +47,8 @@ GARLAND_Y, GARLAND_X, GARLAND_TOP, GARLAND_SAG = 0.62, (-0.75, 0.75), 0.32, 0.14
 BULB_SPACING = 0.042
 WIRE_R, BULB_R = 0.0007, 0.0032
 WARM = (1.0, 0.62, 0.30)  # ~2200 K LED
-CAMERA = {"eye": (0.03, -0.40, 0.09), "target": (0.0, 0.10, 0.065), "focus": (-0.01, -0.02, 0.035),
-          "focal_mm": 40.0, "fstop": 3.5}
+CAMERA = {"eye": (0.03, -0.40, 0.09), "target": (0.0, 0.10, 0.065), "focus": (-0.039, -0.040, 0.045),
+          "focal_mm": 40.0, "fstop": 8.0}  # focus: the lion's neck
 # Look-dev in the scene layer: a stronger USD opinion than the referenced asset, the asset file is
 # untouched. The holder's painted figure is satin, not the generic plastic preset (roughness 0.42), and
 # with a scan's surface noise a glossier value reads as chrome.
