@@ -25,7 +25,8 @@ TITLES = {
     "great_dinos_triceratops_toy": "Android figure", "schleich_lion_action_figure": "Lion figure",
     "womens_bluefish_2eye_boat_shoe_in_tan": "Boat shoe", "ceramic_mug": "Ceramic mug (synthetic scan)",
     "speckled_mug": "Speckled mug (78 photos → USD)", "keepsake_box": "Hinged box (articulated)",
-    "buddha_head": "Buddha head (67 real photos)",
+    "buddha_head": "Buddha head (67 real photos)", "cod_holder": "Controller holder (own phone photos)",
+    "controller": "Game controller (own phone photos)",
 }
 
 PAGE = """<!doctype html>
