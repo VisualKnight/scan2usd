@@ -4,10 +4,10 @@
 
 ![Scan2USD: real photos to a simulation-ready OpenUSD asset](docs/figures/hero.jpg)
 
-- **Accurate:** 0.6–0.8 mm mean surface error on textured objects, scored against ground-truth meshes; metric size within ±1.4% from a ColorChecker alone, no ruler.
+- **Accurate:** 0.6–0.8 mm mean surface error on textured objects, scored against ground-truth meshes; metric size within 1.43% (worst of six objects) from a ColorChecker alone, no ruler.
 - **Physics-ready:** convex decomposition, mass and inertia, articulated joints. A Franka Panda picks a scanned mug that it can't pick when the mug has a single convex hull.
-- **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets finds the object in **100%** of 67 real photos, and drives a perception-to-grasp loop (10/10 picks). From my own phone photos, a scanned controller settles into a scanned holder within <!--n:sim_add-->9.9<!--/n--> mm of where the real one sits.
-- **Assets that know what they don't know:** grasps and measurement uncertainty stored in the USD file (codeless schemas), guidance on which photos to take next, and a **Gaussian-splat look riding on the physics hulls** that beats the textured mesh on 18/18 held-out photos.
+- **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets finds the object in **100%** of 67 real photos; in simulation, the same detector drives a perception-to-grasp loop (10/10 picks). From my own phone photos: a scanned controller dropped into a scanned holder comes to rest a median <!--n:sim_add-->9.9<!--/n--> mm from where the real one sits.
+- **Assets that know what they don't know:** grasps and measurement uncertainty stored in the USD file (codeless schemas), an experimental next-photo planner, and a **Gaussian-splat look riding on the physics hulls** that beats the textured mesh on 18/18 held-out photos.
 
 > Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[88 s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
 
@@ -20,7 +20,7 @@
 | Reconstruct | COLMAP structure-from-motion + multi-view stereo; the table plane becomes z = 0 (Z-up); the object is isolated as the densest footprint above the table; screened Poisson surface; flat base | `reconstruct.py` |
 | Clean | Debris removed, holes filled, meters / Z-up, origin at the base, topology-preserving decimation, optional texture bake (xatlas UV atlas, color transfer, island padding) and high-to-low tangent-space normal map bake | `mesh_ops.py`, `bake.py` |
 | Color | 3×3 color-correction matrix from a ColorChecker (or gray card) applied to the albedo; CIEDE2000 reported. The chart is found automatically in the photos (OpenCV mcc) | `color.py`, `chart.py` |
-| Scale | Metric scale without a ruler: the chart's patch centers are triangulated with COLMAP's camera poses (RANSAC over views) and compared with its physical patch pitch; **0.35–1.4% error** on the benchmark | `chart.py` |
+| Scale | Metric scale without a ruler: the chart's patch centers are triangulated with COLMAP's camera poses (RANSAC over views) and compared with its physical patch pitch; **0.35–1.43% error** on the benchmark | `chart.py` |
 | Physics | CoACD convex decomposition; mass, center of mass and principal inertia from volume × density or a measured mass; voxel-fill solids for scans with holes | `physics.py` |
 | Articulation | Split a scan by a seam plane, one rigid body per part, `UsdPhysics.RevoluteJoint` with limits under an articulation root | `articulation.py` |
 | Export | OpenUSD (`UsdGeom`, `UsdShade` preview surface with per-material PBR look presets (roughness, IOR, clearcoat for glazes, metallic) and normal maps, `UsdPhysics` rigid body / mass / colliders / physics material) and glTF | `usd_io.py` |
@@ -31,10 +31,11 @@
 | Splat hybrid | Mesh silhouettes as alpha masks for splat training; the trained Gaussian splat (`UsdVol.ParticleField3DGaussianSplat`) added under the rigid body with an `appearance` variant set (mesh / splat / splat + shadow proxy) | `splat.py` |
 | Validate | 33 checks on the written file, including MuJoCo drop tests | `validate.py`, `simulate.py` |
 | Evaluate | Accuracy / completeness / F-score / volume against ground truth after alignment | `evaluate.py` |
+| Register | Align two scans, or a scan with a scene that contains it, up to scale: trimmed similarity ICP over a rotation search (merging capture passes, finding where an object really rests) | `register.py` |
 
 ## Results
 
-**Photos → USD, scored against ground truth.** Each object is a 78-photo phone-style capture rendered in Blender (with a ColorChecker in the scene), reconstructed with COLMAP, and built with one ruler measurement. Full table: [docs/benchmark.md](docs/benchmark.md).
+**Photos → USD, scored against ground truth.** Each object is a 78-photo phone-style capture rendered in Blender (with a ColorChecker in the scene), reconstructed with COLMAP, and scaled for geometry scoring with one known height. Full table: [docs/benchmark.md](docs/benchmark.md).
 
 | Object | Accuracy mean / p95 (mm) | F-score @2 mm | Volume error | Chart ΔE2000 |
 |---|---|---|---|---|
@@ -45,11 +46,11 @@
 | Printed coffee mug | 2.00 / 10.20 | 0.731 | +191.5% | 8.0 → 1.30 |
 | Ceramic bowl | 3.03 / 9.61 | 0.494 | +82.0% | 7.8 → 1.32 |
 
-Textured objects reconstruct to 0.6–0.8 mm. Plain or hidden surfaces (the printed mug's white interior, the bowl's underside) never get matched and are sealed, so their volume is off; the asset records this as uncertainty (below), and a measured `--mass` keeps physics right. Metric scale from the ColorChecker alone, no ruler: 0.35–1.43% error.
+Textured objects reconstruct to 0.6–0.8 mm. Plain or hidden surfaces (the printed mug's white interior, the bowl's underside) never get matched and are sealed, so their volume is off; the asset records this as uncertainty (below), and a measured `--mass` keeps physics right. In a separate test on the same captures, the ColorChecker alone (no ruler) gives the scale to 0.35–1.43%.
 
 ![Real pair, each scan, simulated drop](docs/figures/holder_fit_lead.jpg)
 
-**Real-world check: scan, simulate, compare** ([drop animation](docs/figures/holder_fit.webp), [per-drop errors](docs/figures/holder_fit_results.png)). Own iPhone photos of a controller holder (81) and a controller (78 + 38 in two passes, merged by similarity ICP at <!--n:merge_rmse-->0.5<!--/n--> mm RMSE), then of the two together. In MuJoCo, the scanned controller dropped into the scanned holder settles <!--n:sim_held-->12/12<!--/n--> times, median **<!--n:sim_add-->9.9<!--/n--> mm / <!--n:sim_rot-->14<!--/n-->°** from where the real one sits in the combined scan. With a single convex hull for the holder it slides off (<!--n:hull_held-->0/12<!--/n--> held). The same drops in [Isaac Sim 6 PhysX](docs/figures/isaac_holder_fit.webp): <!--n:isaac_held-->11/12<!--/n--> held, median <!--n:isaac_add-->11.0<!--/n--> mm. [Path traced](docs/figures/holder_fit_render.jpg) beside the other scans. Scale came from two tape measurements; the combined scan agrees within <!--n:scale_agree-->1.1<!--/n-->%. The holder's glossy base, pitted in the scan, is replaced by a cylinder fitted to its measured top (<!--n:base_rms-->0.25<!--/n--> mm rim error). `scripts/study_holder_fit.py`
+**Real-world check: scan, simulate, compare** ([drop animation](docs/figures/holder_fit.webp), [per-drop errors](docs/figures/holder_fit_results.png)). I photographed a controller holder (81 photos) and a controller (two passes of 78 and 38, merged by similarity ICP at <!--n:merge_rmse-->0.5<!--/n--> mm RMSE), then the two together, which gives the reference pose. In MuJoCo, the scanned controller dropped into the scanned holder settles <!--n:sim_held-->12/12<!--/n--> times, median **<!--n:sim_add-->9.9<!--/n--> mm / <!--n:sim_rot-->14<!--/n-->°** from where the real one sits in the combined scan. With a single convex hull for the holder it slides off (<!--n:hull_held-->0/12<!--/n--> held). The same drops in [Isaac Sim 6 PhysX](docs/figures/isaac_holder_fit.webp): <!--n:isaac_held-->11/12<!--/n--> held, median <!--n:isaac_add-->11.0<!--/n--> mm. [Path traced](docs/figures/holder_fit_render.jpg) beside the other scans. Scale came from two tape measurements; the combined scan agrees within <!--n:scale_agree-->1.1<!--/n-->%. The holder's glossy base, pitted in the scan, is replaced by a cylinder fitted to its measured top (<!--n:base_rms-->0.25<!--/n--> mm rim error). `scripts/study_holder_fit.py`
 
 ![Panda](docs/figures/panda_demo.jpg)
 
@@ -65,7 +66,7 @@ Textured objects reconstruct to 0.6–0.8 mm. Plain or hidden surfaces (the prin
 
 ![Uncertainty](docs/figures/uncertainty.png)
 
-**Assets that know what they don't know** (`scan2usd uncertainty`). Each vertex is labeled observed / inferred / sealed, and mass, scale and friction are stored as intervals in a codeless USD schema. The true mass falls inside the interval for 5/6 objects; a single value is within 10% for only 2/6. A stored "carved" hypothesis fixes the bowl (F-score 0.49 → 0.95). Tested grasps live in the asset too (`Scan2UsdGraspAPI`), read by MuJoCo and Isaac Sim.
+**Assets that know what they don't know** (`scan2usd uncertainty`). Each vertex is labeled observed / inferred / sealed, and mass, scale and friction are stored as intervals in a codeless USD schema. The true mass falls inside the stored interval for 5/6 objects; a single value is within 10% for only 2/6. A stored "carved" hypothesis fixes the bowl (F-score 0.49 → 0.95). Tested grasps live in the benchmark assets too (`Scan2UsdGraspAPI`), read by MuJoCo and Isaac Sim.
 
 ![Splat vs mesh](docs/figures/splat_buddha.jpg)
 
