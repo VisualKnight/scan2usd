@@ -1,5 +1,7 @@
 {
   "plan": "output/panda_plan.json (scripts/export_panda_plan.py)",
+  "asset": "ceramic_mug",
+  "splat": false,
   "results": [
     {
       "collision": "decomposed",
