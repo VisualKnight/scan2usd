@@ -186,7 +186,7 @@ def build_library(assets: list[str | Path], out: str | Path, spacing: float = 0.
                              bodies=[str(b.GetPath()) for b in bodies], mass_kg=mass,
                              size_m=[float(v) for v in size], colliders=colliders)
         prim.SetCustomDataByKey("scan2usd:library", json.dumps(
-            {"mass_kg": round(mass, 4), "size_m": [round(float(v), 4) for v in size], "colliders": colliders}))
+            {"mass_kg": round(mass, 4), "size_m": [round(float(v), 5) for v in size], "colliders": colliders}))
         entries.append(entry)
 
     stage.GetRootLayer().Save()

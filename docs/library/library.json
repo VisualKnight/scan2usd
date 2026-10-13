@@ -4,9 +4,9 @@
     "path": "/Library/ace_coffee_mug_kristen_16_oz_cup",
     "mass_kg": 0.466,
     "size_m": [
-      0.1263,
-      0.0906,
-      0.1349
+      0.12632,
+      0.09062,
+      0.13494
     ],
     "colliders": {
       "decomposed": 32,
@@ -31,9 +31,9 @@
     "path": "/Library/cole_hardware_bowl_scirocco_yellowblue",
     "mass_kg": 0.1918,
     "size_m": [
-      0.1135,
+      0.11349,
       0.1149,
-      0.0619
+      0.06186
     ],
     "colliders": {
       "decomposed": 32,
@@ -58,9 +58,9 @@
     "path": "/Library/great_dinos_triceratops_toy",
     "mass_kg": 0.1043,
     "size_m": [
-      0.0695,
-      0.0458,
-      0.0792
+      0.06947,
+      0.04581,
+      0.07918
     ],
     "colliders": {
       "decomposed": 11,
@@ -85,9 +85,9 @@
     "path": "/Library/schleich_lion_action_figure",
     "mass_kg": 0.0546,
     "size_m": [
-      0.115,
-      0.0417,
-      0.0704
+      0.11502,
+      0.04168,
+      0.07044
     ],
     "colliders": {
       "decomposed": 32,
@@ -112,9 +112,9 @@
     "path": "/Library/womens_bluefish_2eye_boat_shoe_in_tan",
     "mass_kg": 0.6527,
     "size_m": [
-      0.2493,
-      0.0899,
-      0.0897
+      0.24929,
+      0.08993,
+      0.08972
     ],
     "colliders": {
       "decomposed": 32,
@@ -139,9 +139,9 @@
     "path": "/Library/ceramic_mug",
     "mass_kg": 0.3719,
     "size_m": [
-      0.1197,
-      0.0824,
-      0.0958
+      0.11972,
+      0.08236,
+      0.09582
     ],
     "colliders": {
       "decomposed": 25,
@@ -167,8 +167,8 @@
     "mass_kg": 0.4365,
     "size_m": [
       0.0883,
-      0.1164,
-      0.0964
+      0.11639,
+      0.09642
     ],
     "colliders": {
       "decomposed": 32,
@@ -220,8 +220,8 @@
     "path": "/Library/buddha_head",
     "mass_kg": 4.6238,
     "size_m": [
-      0.1515,
-      0.1615,
+      0.15155,
+      0.16154,
       0.2
     ],
     "colliders": {
@@ -247,8 +247,8 @@
     "path": "/Library/cod_holder",
     "mass_kg": 0.528,
     "size_m": [
-      0.1015,
-      0.1082,
+      0.10147,
+      0.10824,
       0.21
     ],
     "colliders": {
@@ -274,9 +274,9 @@
     "path": "/Library/controller",
     "mass_kg": 0.243,
     "size_m": [
-      0.1463,
-      0.1353,
-      0.056
+      0.14634,
+      0.13534,
+      0.05603
     ],
     "colliders": {
       "decomposed": 39,

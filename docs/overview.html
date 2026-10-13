@@ -57,7 +57,7 @@
   <div class="card kpi"><b>0.78 mm</b><span>mean surface error, 78 photos → USD (speckled mug vs. ground truth)</span></div>
   <div class="card kpi"><b>≤1.43%</b><span>size error from the ColorChecker alone, no ruler (worst of 6 objects)</span></div>
   <div class="card kpi"><b><span class="good">pick</span> vs <span class="bad">fail</span></b><span>Franka picks the scanned mug with convex decomposition, fails with one hull, in MuJoCo and Isaac Sim</span></div>
-  <div class="card kpi"><b>88% → 100%</b><span>real photos where a detector trained only on our synthetic Isaac Sim data finds the object</span></div>
+  <div class="card kpi"><b>59/67 → 67/67</b><span>real Buddha photos where a detector trained only on synthetic Isaac Sim data ranks the Buddha first (adding unlabeled distractors to training)</span></div>
   <div class="card kpi"><b><!--n:sim_held-->12/12<!--/n--></b><span>drops where a scanned controller settles into a scanned holder, median <!--n:sim_add-->9.9<!--/n--> mm from where the real one sits (phone photos)</span></div>
   <div class="card kpi"><b>18 / 18</b><span>unseen photos where the asset's Gaussian splat looks closer to reality than its textured mesh</span></div>
 </div>
@@ -103,7 +103,7 @@
   <div class="card"><img src="figures/hand_grasp.webp" alt="Shadow Hand grasps scanned objects">
     <p class="cap">The 24-joint Shadow Hand (MuJoCo Menagerie) lifts scanned objects and survives a ±2 cm / 3 Hz shake. The camera picks the side where the thumb is visible.</p></div>
   <div class="card"><img src="figures/hand_grasp.png" alt="Grasp success per asset">
-    <p class="cap">A benchmark for comparing <b>assets</b>, not a grasp planner: 90 random, unoptimized power grasps per asset and collision variant (1,440 trials, ~1 min on 16 cores). Convex decomposition holds more of them than one hull on the six hand-sized objects (23.5% vs 18.9%), and grasps from above beat grasps from the side (34% vs 4%). The best of these grasps are stored in the assets (see <i>Assets that know what they don’t know</i>).</p></div>
+    <p class="cap">A benchmark for comparing <b>assets</b>, not a grasp planner: 90 random, unoptimized power grasps for each of 8 benchmark assets and 2 collision variants (1,440 trials, ~1 min on 16 cores). Convex decomposition holds more of them than one hull on the six hand-sized objects (23.5% vs 18.9%), and grasps from above beat grasps from the side (34% vs 4%). The best of these grasps are stored in the assets (see <i>Assets that know what they don’t know</i>).</p></div>
 </div>
 
 <h2>Sim-to-real perception</h2>
@@ -294,7 +294,7 @@
     <li><b>60–150 photos</b>: walk around it in 3 rings with 60–80% overlap; keep object and lights still; lock exposure, white balance and focus; no flash.</li>
     <li>Put a newspaper under the object and a <b>ColorChecker</b> beside it in a few frames, plus one close-up.</li></ul></div>
   <div class="card small"><h3>Measure, then run</h3><ul>
-    <li>Weigh it (g). A ruler measurement (mm) is optional if the ColorChecker is in the photos.</li>
+    <li>Weigh it; <code>--mass</code> is in kilograms (360 g → <code>--mass 0.36</code>). A ruler measurement (mm) is optional if the ColorChecker is in the photos.</li>
     <li><code>scan2usd scan photos\ -o out\ --chart-pitch-mm 16 --mass 0.36 --material ceramic</code> (photos → USD in one step; measure your chart's patch spacing once)</li>
     <li><code>scan2usd guide out\asset\&lt;name&gt;.usda --workspace out\colmap</code> suggests extra shots.</li></ul></div>
 </div>

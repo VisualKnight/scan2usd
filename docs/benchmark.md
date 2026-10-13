@@ -1,11 +1,12 @@
 # Scan2USD synthetic benchmark
 
-Each object is rendered as a 78-photo phone-style capture in Blender (3 rings + top views, warm light, ColorChecker in the scene), reconstructed with COLMAP, and built by Scan2USD using one ruler measurement (height, rounded to 1 mm). Scores compare the final USD render mesh against the ground-truth mesh after rigid alignment.
+Each object is rendered as a 78-photo phone-style capture in Blender (3 rings + top views, warm light, ColorChecker in the scene), reconstructed with COLMAP, and built by Scan2USD, scaled for scoring with one known height (rounded to 1 mm); the chart-only scale is tested separately below. Scores compare the final USD render mesh against the ground-truth mesh after rigid alignment.
 
 - **Accuracy**: distance from the reconstruction to the true surface. **Completeness**: distance from the true surface to the reconstruction.
 - **F-score @2 mm**: share of both surfaces within 2 mm of each other (1.0 = perfect).
+- **Asset-file checks**: `scan2usd validate` on the exported USD (schema, physics, MuJoCo drop test); pass/warn is independent of the ground-truth geometry scores (a sealed mug is still a valid asset).
 
-| Object | Photos registered | Accuracy mean / p95 (mm) | Completeness mean (mm) | F-score @2 mm | F-score @2 mm, above base | Volume error | Chart ΔE2000 | Validation | Time (s) |
+| Object | Photos registered | Accuracy mean / p95 (mm) | Completeness mean (mm) | F-score @2 mm | F-score @2 mm, above base | Volume error | Chart ΔE2000 | Asset-file checks | Time (s) |
 |---|---|---|---|---|---|---|---|---|---|
 | Speckled stoneware mug (procedural) | 78/78 | 0.78 / 2.87 | 0.64 | 0.934 | 0.921 | +11.8% | 7.6 → 1.31 | warn | 315 |
 | Printed coffee mug | 78/78 | 2.00 / 10.20 | 2.38 | 0.731 | 0.748 | +191.5% | 8.0 → 1.30 | pass | 684 |

@@ -4,9 +4,9 @@
 
 ![Scan2USD: real photos to a simulation-ready OpenUSD asset](docs/figures/hero.jpg)
 
-- **Accurate:** 0.6–0.8 mm mean surface error on textured objects, scored against ground-truth meshes; metric size within 1.43% (worst of six objects) from a ColorChecker alone, no ruler.
+- **Accurate:** 0.6–0.8 mm mean surface error on the well-textured benchmark objects, scored against ground-truth meshes; metric size within 1.43% (worst of six objects) from a ColorChecker alone, no ruler.
 - **Physics-ready:** convex decomposition, mass and inertia, articulated joints. A Franka Panda picks a scanned mug that it can't pick when the mug has a single convex hull.
-- **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets finds the object in **100%** of 67 real photos; in simulation, the same detector drives a perception-to-grasp loop (10/10 picks). From my own phone photos: a scanned controller dropped into a scanned holder comes to rest a median <!--n:sim_add-->9.9<!--/n--> mm from where the real one sits.
+- **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets ranks the Buddha first in **67/67** real photos of the Buddha dataset; in simulation, the same detector drives a perception-to-grasp loop (10/10 picks). From my own phone photos: a scanned controller dropped into a scanned holder comes to rest a median <!--n:sim_add-->9.9<!--/n--> mm from where the real one sits.
 - **Assets that know what they don't know:** grasps and measurement uncertainty stored in the USD file (codeless schemas), an experimental next-photo planner, and a **Gaussian-splat look riding on the physics hulls** that beats the textured mesh on 18/18 held-out photos.
 
 > Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[88 s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
@@ -46,7 +46,7 @@
 | Printed coffee mug | 2.00 / 10.20 | 0.731 | +191.5% | 8.0 → 1.30 |
 | Ceramic bowl | 3.03 / 9.61 | 0.494 | +82.0% | 7.8 → 1.32 |
 
-Textured objects reconstruct to 0.6–0.8 mm. Plain or hidden surfaces (the printed mug's white interior, the bowl's underside) never get matched and are sealed, so their volume is off; the asset records this as uncertainty (below), and a measured `--mass` keeps physics right. In a separate test on the same captures, the ColorChecker alone (no ruler) gives the scale to 0.35–1.43%.
+The three well-textured benchmark objects reconstruct to 0.6–0.8 mm. Plain or hidden surfaces (the printed mug's white interior, the bowl's underside) never get matched and are sealed, so their volume is off; the asset records this as uncertainty (below), and a measured `--mass` keeps physics right. In a separate test on the same captures, the ColorChecker alone (no ruler) gives the scale to 0.35–1.43%.
 
 ![Real pair, each scan, simulated drop](docs/figures/holder_fit_lead.jpg)
 
@@ -152,7 +152,7 @@ Isaac Sim scripts (`isaac_*.py`) run with Isaac Sim 6's Python (`set OMNI_KIT_AC
 | `demo_grasp.py`, `demo_clutter.py`, `demo_articulation.py` | MuJoCo robotics demos (animations in `docs/figures/`) |
 | `demo_perception_pick.py` | Detect (synthetic-trained detector) → fit the scanned mesh to RGB-D → Panda picks at the estimated pose; needs `train_detector.py` output |
 | `study_robustness.py` | Pick success vs. collision variant, friction, mass, scan size error and grasp error (93 MuJoCo trials in parallel, ~10 s) |
-| `demo_hand_grasp.py` | Shadow Hand grasp sampling on every library asset (needs `git -C data\external\menagerie sparse-checkout add shadow_hand`) |
+| `demo_hand_grasp.py` | Shadow Hand grasp sampling on the rigid benchmark assets (8 assets, 1,440 trials) (needs `git -C data\external\menagerie sparse-checkout add shadow_hand`) |
 | `isaac_pathtrace.py`, `make_render_figures.py` | Isaac Sim 6 RTX path tracing: beauty shot, normal-map comparison, look-dev render from a photo's camera |
 | `lookdev_camera.py`, `compare_lookdev.py` | Photo camera → USD camera in the asset frame; render-vs-photo silhouette and color metrics |
 | `study_carving.py` | Visibility-carving experiment and cross-sections of the sealed benchmark objects |
