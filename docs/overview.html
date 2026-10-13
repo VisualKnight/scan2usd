@@ -141,6 +141,8 @@
     <p class="cap">12 drops with ±8 mm / ±8° jitter. Decomposition: held 12/12, median 9.7 mm / 13?° from the real pose (released 31 mm away). One hull: 0/12 held.</p></div>
 <div class="card" style="margin-bottom:12px"><h3>Same drop in Isaac Sim 6 (PhysX)</h3><img src="figures/isaac_holder_fit.webp" alt="Isaac Sim drop">
   <p class="cap">The same USD assets and the same 12 jittered releases in PhysX: 11/12 held, median 11.2 mm / 14? from the real pose (MuJoCo: 12/12, 9.7 mm). The one drop that falls is the one MuJoCo also scored worst, so both engines find that start marginal. With one convex hull: 0/12 in both. <code>scripts/isaac_holder_fit.py</code></p></div>
+<div class="card" style="margin-bottom:12px"><h3>Path traced with the other scans (Isaac Sim 6 RTX)</h3><img src="figures/holder_fit_render.jpg" alt="Path-traced holder and controller">
+  <p class="cap">The two phone-scanned assets, the controller in its measured resting pose, beside the speckled mug and lion from the benchmark. Same lights and camera settings as the other renders; textures are the scans' own photo colors (2K baked). <code>isaac_pathtrace.py --shots real</code></p></div>
 <div class="card small"><h3>How the answer key is made</h3><ul>
     <li><b>Scale:</b> from two tape measurements (holder 21 cm tall; controller 5.5 cm thick). The combined scan, fitted with the holder at free scale, agrees within 1.0%.</li>
     <li><b>Two passes, one controller:</b> face-up and standing scans aligned by a similarity ICP over a rotation search (0.5 mm RMSE), pen box and paper removed, colors matched on the overlap, Poisson-meshed.</li>
