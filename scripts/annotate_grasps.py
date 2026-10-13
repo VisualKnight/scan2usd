@@ -10,6 +10,8 @@ Franka Panda: rim grasps on the cups are sampled at 12 directions around the rim
 
 Grasps are written to the asset files the USD library payloads, so they show up in the library
 (and in Isaac Sim) under /Library/<asset>/grasps. Results: docs/figures/grasps.json.
+Rebuilding an asset (e.g. `scan2usd demo` rewrites output/demo/asset/ceramic_mug.usda) drops its
+grasps: re-run this script afterwards (about 1 min).
 """
 
 from __future__ import annotations
