@@ -194,27 +194,30 @@ sec.set_range(0, frames)
 sec.set_camera_binding_id(seq.get_binding_id(binding))
 
 if CFG.get("animate"):
-    # A slow orbit around the holder: yaw sweeps 36 degrees at a constant distance, rising slightly,
-    # always looking at the target. Constant distance keeps the focus point sharp with a fixed focus.
-    eye0, tgt = cam_cfg["eye"], cam_cfg["target"]
-    focus_pt = cam_cfg.get("focus", tgt)
-    r0 = math.hypot(eye0[0] - tgt[0], eye0[1] - tgt[1])
-    a0 = math.atan2(eye0[1] - tgt[1], eye0[0] - tgt[0])
+    # A slow orbit around the hero (the focus point): eye and aim point rotate together about it, 36
+    # degrees, rising slightly. The hero stays at the same distance, so a fixed focus keeps it sharp.
+    eye0, tgt0 = cam_cfg["eye"], cam_cfg["target"]
+    pivot = cam_cfg.get("focus", tgt0)
     xf = binding.add_track(unreal.MovieScene3DTransformTrack).add_section()
     xf.set_range(0, frames)
     ch = xf.get_all_channels()  # loc x, y, z, rot x (roll), y (pitch), z (yaw), scale x, y, z
+
+    def about_pivot(p, ang, dz=0.0):
+        dx, dy = p[0] - pivot[0], p[1] - pivot[1]
+        c, s = math.cos(ang), math.sin(ang)
+        return (pivot[0] + c * dx - s * dy, pivot[1] + s * dx + c * dy, p[2] + dz)
+
     keys = 9
     for i in range(keys):
         u = i / (keys - 1)
         e = 0.5 - 0.5 * math.cos(math.pi * u)  # ease in and out
-        a = a0 + math.radians(-18 + 36 * e)
-        eye = (tgt[0] + r0 * math.cos(a), tgt[1] + r0 * math.sin(a), eye0[2] + 0.02 * e)
+        a = math.radians(-18 + 36 * e)
+        eye, tgt = about_pivot(eye0, a, 0.015 * e), about_pivot(tgt0, a)
         loc, rot = ue_location(eye), look_rotation(eye, tgt)
         t = unreal.FrameNumber(round(u * frames))
         for c, v in zip(ch[:6], (loc.x, loc.y, loc.z, 0.0, rot.pitch, rot.yaw)):
             c.add_key(t, v, interpolation=unreal.MovieSceneKeyInterpolation.AUTO)
-    mid = (tgt[0] + r0 * math.cos(a0), tgt[1] + r0 * math.sin(a0), eye0[2] + 0.01)
-    fs.set_editor_property("manual_focus_distance", 100.0 * math.dist(mid, focus_pt))
+    fs.set_editor_property("manual_focus_distance", 100.0 * math.dist(eye0, pivot))
     cc.set_editor_property("focus_settings", fs)
     log(f"animated camera: {keys} keys over {frames} frames")
 

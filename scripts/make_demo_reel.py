@@ -64,7 +64,7 @@ SEGMENTS = [
     ("holder_fit_render.jpg", "Path traced beside the other scans",
      "Phone-scanned holder and controller in the measured resting pose, Isaac Sim 6 RTX", 4),
     ("unreal_flythrough.mp4", "The same USD files in Unreal Engine 5.8",
-     "Lumen + MegaLights: 89 shadow-casting fairy lights, real time on an RTX 4090", 6),
+     "Lumen + MegaLights: 80 shadow-casting fairy lights, real time on an RTX 4090", 6),
     ("uncertainty.png", "Assets that know what they don't know",
      "Seen / guessed / sealed surface and mass intervals stored in USD: truth inside for 5 of 6 objects", 4),
     ("splat_buddha.jpg", "Gaussian splat for looks, convex hulls for physics",

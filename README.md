@@ -79,7 +79,7 @@ The three well-textured benchmark objects reconstruct to 0.6–0.8 mm. Plain or 
 
 ![Unreal Engine 5.8, Lumen + MegaLights](docs/figures/unreal_render.jpg)
 
-**The same USD files in Unreal Engine 5.8.** One USD stage holds the scans, a table and 89 shadow-casting fairy lights; Unreal's USD importer brings it in as is. Lumen (hardware ray tracing) and MegaLights at 1080p: <!--n:ue_on-->7.8<!--/n--> ms GPU per frame vs <!--n:ue_off-->11.6<!--/n--> ms with MegaLights off, and closer to Unreal's path tracer (<!--n:ue_on_db-->27.4<!--/n--> vs <!--n:ue_off_db-->20.5<!--/n--> dB PSNR; [comparison](docs/figures/unreal_megalights.jpg), [10 s orbit](docs/figures/unreal_flythrough.mp4)). `scripts/unreal_layout.py`, `scripts/unreal_render.py`
+**The same USD files in Unreal Engine 5.8.** One USD stage holds the scans (the lion in focus, the phone-scanned holder pair soft in the background), a table and 80 shadow-casting fairy lights; Unreal's USD importer brings it in as is. Lumen (hardware ray tracing) and MegaLights at 1080p: <!--n:ue_on-->8.8<!--/n--> ms GPU per frame vs <!--n:ue_off-->14.4<!--/n--> ms with MegaLights off, and slightly closer to Unreal's path tracer (<!--n:ue_on_db-->24.7<!--/n--> vs <!--n:ue_off_db-->23.5<!--/n--> dB PSNR; [comparison](docs/figures/unreal_megalights.jpg), [10 s orbit](docs/figures/unreal_flythrough.mp4)). `scripts/unreal_layout.py`, `scripts/unreal_render.py`
 
 
 **More on the [overview page](https://visualknight.github.io/scan2usd/):** Shadow Hand grasp benchmark (1,440 trials), how accurate a scan must be (93 picks vs. collider, friction, mass and size error), articulated assets in both engines, a bin of 14 scans, the USD asset library, color calibration, and capture guidance (work in progress).

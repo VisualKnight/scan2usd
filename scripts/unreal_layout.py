@@ -27,28 +27,28 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "output" / "unreal"
 FIT = ROOT / "output" / "holder_fit"
 
-# name -> (x, y, yaw deg), meters on the tabletop. The holder pair is the subject; scans from the
-# benchmark sit around it.
+# name -> (x, y, yaw deg), meters on the tabletop. The lion is the hero, in focus at the center; the
+# phone-scanned holder pair stands at the back, out of focus, on the same plane as the printed cup.
 LAYOUT = {
-    "cod_holder": (0.0, 0.0, 0.0),
-    "speckled_mug": (0.175, 0.045, -35.0),
-    "schleich_lion_action_figure": (-0.135, -0.075, 20.0),
-    "buddha_head": (-0.25, 0.25, 120.0),
-    "ace_coffee_mug_kristen_16_oz_cup": (0.285, 0.31, 70.0),
+    "schleich_lion_action_figure": (-0.01, -0.02, 35.0),
+    "speckled_mug": (0.17, 0.20, -35.0),
+    "cod_holder": (0.05, 0.43, 0.0),
+    "buddha_head": (-0.20, 0.32, 120.0),
+    "ace_coffee_mug_kristen_16_oz_cup": (0.36, 0.44, 70.0),
 }
 TABLE = (1.6, 0.9, 0.035)  # width, depth, thickness (m); top at z = 0
 TABLE_CENTER = (0.0, 0.12)
 # Fairy-light strands: control points (m). One lies on the table, weaving in front of and behind the
 # objects; one hangs in two swags behind the table and becomes bokeh.
-TABLE_STRAND = [(-0.55, -0.22), (-0.36, -0.17), (-0.20, -0.17), (-0.04, -0.13), (0.10, -0.15), (0.25, -0.09),
-                (0.30, 0.06), (0.24, 0.16), (0.10, 0.12), (-0.04, 0.14), (-0.16, 0.10), (-0.24, 0.12),
-                (-0.40, 0.10), (-0.58, 0.18)]
-GARLAND_Y, GARLAND_X, GARLAND_TOP, GARLAND_SAG = 0.62, (-0.75, 0.75), 0.44, 0.20
+TABLE_STRAND = [(-0.55, -0.16), (-0.35, -0.10), (-0.20, -0.12), (-0.08, -0.09), (0.06, -0.11), (0.18, -0.06),
+                (0.24, 0.04), (0.14, 0.08), (0.02, 0.09), (-0.10, 0.07), (-0.22, 0.10), (-0.38, 0.08),
+                (-0.58, 0.14)]
+GARLAND_Y, GARLAND_X, GARLAND_TOP, GARLAND_SAG = 0.62, (-0.75, 0.75), 0.32, 0.14
 BULB_SPACING = 0.042
 WIRE_R, BULB_R = 0.0007, 0.0032
 WARM = (1.0, 0.62, 0.30)  # ~2200 K LED
-CAMERA = {"eye": (0.04, -0.60, 0.16), "target": (0.0, 0.05, 0.10), "focus": (0.0, 0.0, 0.11), "focal_mm": 45.0,
-          "fstop": 2.8}
+CAMERA = {"eye": (0.03, -0.40, 0.09), "target": (0.0, 0.10, 0.065), "focus": (-0.01, -0.02, 0.035),
+          "focal_mm": 40.0, "fstop": 3.5}
 # Look-dev in the scene layer: a stronger USD opinion than the referenced asset, the asset file is
 # untouched. The holder's painted figure is satin, not the generic plastic preset (roughness 0.42), and
 # with a scan's surface noise a glossier value reads as chrome.

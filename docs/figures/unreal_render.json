@@ -7,78 +7,78 @@
     "repeats": 3,
     "on": {
       "frames": 600,
-      "gpu_ms": 7.8,
-      "frame_ms": 8.34,
+      "gpu_ms": 8.84,
+      "frame_ms": 9.28,
       "passes_ms": {
-        "MegaLights": 4.323,
-        "LumenReflections": 0.792,
-        "Unaccounted": 0.553,
-        "TemporalSuperResolution": 0.406,
-        "RenderDeferredLighting": 0.358,
-        "Postprocessing": 0.124,
-        "DepthOfField": 0.11,
-        "LumenSceneUpdate": 0.107
+        "MegaLights": 3.03,
+        "LumenReflections": 2.853,
+        "Unaccounted": 0.575,
+        "TemporalSuperResolution": 0.408,
+        "RenderDeferredLighting": 0.188,
+        "DepthOfField": 0.141,
+        "Postprocessing": 0.121,
+        "LumenSceneUpdate": 0.11
       },
       "gpu_ms_runs": [
-        7.77,
-        7.8,
-        7.85
+        8.63,
+        8.84,
+        9.09
       ]
     },
     "off": {
       "frames": 600,
-      "gpu_ms": 11.58,
-      "frame_ms": 12.03,
+      "gpu_ms": 14.36,
+      "frame_ms": 14.67,
       "passes_ms": {
-        "Lights": 3.601,
-        "ShadowDepths": 1.216,
-        "Unaccounted": 0.789,
-        "TemporalSuperResolution": 0.404,
-        "RenderDeferredLighting": 0.292,
-        "LumenReflections": 0.17,
-        "Postprocessing": 0.134,
-        "LumenSceneUpdate": 0.093
+        "Lights": 5.347,
+        "LumenReflections": 4.005,
+        "ShadowDepths": 1.789,
+        "Unaccounted": 0.731,
+        "TemporalSuperResolution": 0.407,
+        "RenderDeferredLighting": 0.248,
+        "Postprocessing": 0.135,
+        "DepthOfField": 0.114
       },
       "gpu_ms_runs": [
-        11.54,
-        11.58,
-        11.76
+        13.22,
+        14.36,
+        14.97
       ]
     }
   },
   "vs_path_tracer": {
-    "megalights_psnr_db": 27.37,
-    "no_megalights_psnr_db": 20.48,
+    "megalights_psnr_db": 24.69,
+    "no_megalights_psnr_db": 23.48,
     "path_tracer_spp": 4096
   },
   "scene": {
     "camera": {
       "eye": [
-        0.04,
-        -0.6,
-        0.16
+        0.03,
+        -0.4,
+        0.09
       ],
       "target": [
         0.0,
-        0.05,
-        0.1
+        0.1,
+        0.065
       ],
       "focus": [
-        0.0,
-        0.0,
-        0.11
+        -0.01,
+        -0.02,
+        0.035
       ],
-      "focal_mm": 45.0,
-      "fstop": 2.8
+      "focal_mm": 40.0,
+      "fstop": 3.5
     },
     "bulbs": {
-      "table": 47,
-      "garland": 42
+      "table": 41,
+      "garland": 39
     },
     "assets": [
-      "cod_holder",
-      "speckled_mug",
       "schleich_lion_action_figure",
+      "speckled_mug",
+      "cod_holder",
       "buddha_head",
       "ace_coffee_mug_kristen_16_oz_cup",
       "controller"

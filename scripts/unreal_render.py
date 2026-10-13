@@ -1,6 +1,6 @@
 """Render the Scan2USD tabletop in Unreal Engine 5 with Lumen + MegaLights, and measure it.
 
-    python scripts/unreal_layout.py          # the scene as USD (assets, table, 89 fairy lights, key, camera)
+    python scripts/unreal_layout.py          # the scene as USD (assets, table, 80 fairy lights, key, camera)
     python scripts/unreal_render.py [--ue "C:/Program Files/Epic Games/UE_5.8"] [--project D:/UE/Scan2USD_UE]
                                     [--stages project,build,stills,timing,figure] [--video]
 
