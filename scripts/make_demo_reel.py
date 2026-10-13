@@ -57,7 +57,7 @@ SEGMENTS = [
     ("sim2real_compare.jpg", "Sim-to-real: trained only on renders",
      "On 67 real photos: object found in 100%; distractors cut false positives by 84%", 5),
     ("perception_pick.webp", "See it, locate it, pick it",
-     "Detector → fit the scanned mesh to RGB-D → Panda picks at the estimate: 10/10, 4.6 mm median error", 7),
+     "Detector → fit the scanned lion to RGB-D → Panda picks at the estimate: 10/10, 0.6 mm median error", 7),
     ("holder_fit_lead.jpg", "Own phone photos: does the scan behave like the real thing?",
      "A holder and a controller, each scanned alone, then photographed together as the answer key", 5),
     ("holder_fit.webp", "Scanned controller settles into the scanned holder", _holder_subtitle(), 6),

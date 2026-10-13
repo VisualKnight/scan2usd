@@ -62,7 +62,7 @@ The three well-textured benchmark objects reconstruct to 0.6–0.8 mm. Plain or 
 
 ![Sim-to-real](docs/figures/sim2real_compare.jpg)
 
-**Sim-to-real perception.** A detector trained only on 900 domain-randomized Isaac Sim renders of the scanned assets finds the object in **100%** of 67 real photos; unlabeled distractors in training cut false positives by 84%. It then drives a [see-locate-pick loop](docs/figures/perception_pick.webp): detector → fit the scanned mesh to RGB-D → 10/10 picks. `scripts/train_detector.py`
+**Sim-to-real perception.** A detector trained only on 900 domain-randomized Isaac Sim renders of the scanned assets finds the object in **100%** of 67 real photos; unlabeled distractors in training cut false positives by 84%. It then drives a [see-locate-pick loop](docs/figures/perception_pick.webp): detector → fit the scanned lion's mesh to RGB-D → 10/10 picks at 0.6 mm / 0.3° median pose error. `scripts/train_detector.py`
 
 ![Uncertainty](docs/figures/uncertainty.png)
 

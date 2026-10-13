@@ -1,15 +1,18 @@
-"""Perception-in-the-loop pick: detect the scanned mug, estimate its pose, then pick it.
+"""Perception-in-the-loop pick: detect the lion figure, estimate its pose, then pick it.
 
     python scripts/demo_perception_pick.py [--trials 5] [--out docs/figures]
 
 Closes the loop from scan to robot behavior, using only Scan2USD outputs:
 
-1. The scanned mug is dropped at a random position and yaw among other scanned objects.
+1. The lion (a scanned Google Scanned Objects asset) is dropped at a random position and yaw
+   among other scanned objects, including our own photo-scanned mug as a distractor.
 2. Two fixed scene cameras render RGB + depth (MuJoCo).
-3. The detector trained only on Isaac Sim synthetic data (scripts/train_detector.py) finds the mug.
+3. The detector trained only on Isaac Sim synthetic data (scripts/train_detector.py) finds the lion.
 4. Depth pixels inside the box are back-projected to 3D, and the scanned mesh is fitted to them
-   (yaw grid search + translation ICP, mug upright on the table): that's the pose estimate.
-5. The Franka Panda (scripts/demo_panda.py) rim-grasps at the *estimated* pose and places the mug.
+   (yaw grid search + translation ICP, standing upright on the table): that's the pose estimate.
+   The lion has a head and a tail, so a wrong yaw means grasping it across the wrong axis.
+5. The Franka Panda (scripts/demo_panda.py) pinches the torso from above at the *estimated* pose,
+   closing across the body, then carries and places it.
 
 Reports detection, pose error (mm, degrees) and pick success per trial.
 """
@@ -29,7 +32,7 @@ from PIL import Image, ImageDraw
 from scipy.spatial import cKDTree
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from demo_panda import HOME, MUG_POS, PANDA, PLACE_SHIFT, Arm, build_scene, execute, plan_pick, rim_grasp  # noqa: E402
+from demo_panda import HOME, MUG_POS, PANDA, PLACE_SHIFT, Arm, build_scene, execute, plan_pick  # noqa: E402
 from train_detector import build_model  # noqa: E402
 
 from scan2usd.mjcf import asset_body  # noqa: E402
@@ -94,10 +97,10 @@ def _icp_xy(tree, observed, t0, iters):
 
 
 def fit_pose(observed: np.ndarray, model_pts: np.ndarray, init_xy: np.ndarray | None = None):
-    """Upright mug: yaw grid search, translation-only ICP in xy. Returns (x, y, yaw, residual m).
+    """Upright object: yaw grid search, translation-only ICP in xy. Returns (x, y, yaw, residual m).
 
     Each yaw starts with the model's median aligned to the observed median, so the origin
-    offset from the cup axis (the handle shifts the bounding-box center) doesn't bias the search.
+    offset from the body's center doesn't bias the search.
     """
     o_med = np.median(observed, axis=0)
     best = None
@@ -118,34 +121,47 @@ def fit_pose(observed: np.ndarray, model_pts: np.ndarray, init_xy: np.ndarray | 
     return best
 
 
-def detect(det_model, cats, rgb, device, target="ceramic_mug", min_score=0.5):
+def torso_grasp(mesh, com, offset, yaw: float, depth: float = 0.015):
+    """Top-down pinch across the body at the center of mass (world TCP target, closing direction).
+
+    mesh/com are in the asset frame (long axis = x); yaw and offset place it in the world.
+    """
+    v = mesh.vertices
+    top = v[np.abs(v[:, 0] - com[0]) < 0.004, 2].max()
+    point = rot_z(yaw) @ np.array([com[0], com[1], 0.0]) + offset
+    point[2] = top - depth
+    return point, rot_z(yaw) @ np.array([0.0, 1.0, 0.0])
+
+
+def detect(det_model, cats, rgb, device, target="schleich_lion_action_figure", min_score=0.5):
     from torchvision.transforms import functional as F
     with torch.no_grad():
         out = det_model([F.to_tensor(rgb).to(device)])[0]
     boxes, scores, labels = (out[k].cpu().numpy() for k in ("boxes", "scores", "labels"))
     dets = [(cats[int(l)], float(s), b) for b, s, l in zip(boxes, scores, labels) if s >= min_score]
-    mug = [d for d in dets if d[0] == target]
-    return (max(mug, key=lambda d: d[1]) if mug else None), dets
+    hits = [d for d in dets if d[0] == target]
+    return (max(hits, key=lambda d: d[1]) if hits else None), dets
 
 
 def trial(seed, asset, others, det_model, cats, device, render_video=False):
     rng = np.random.default_rng(seed)
-    mug_xy = MUG_POS[:2] + rng.uniform([-0.06, -0.06], [0.06, 0.04])
-    mug_yaw = rng.uniform(-np.pi, np.pi)
-    mug_pos = np.array([mug_xy[0], mug_xy[1], 0.0])
-    extras, placed = [], [mug_xy]
+    obj_xy = MUG_POS[:2] + rng.uniform([-0.06, -0.06], [0.06, 0.04])
+    obj_yaw = rng.uniform(-np.pi, np.pi)
+    obj_pos = np.array([obj_xy[0], obj_xy[1], 0.0])
+    extras, placed = [], [obj_xy]
     for k, other in enumerate(others):
         for _ in range(200):
             xy = np.array([rng.uniform(0.3, 0.72), rng.uniform(-0.34, 0.0)])
-            # Clear of the mug and each other, and out of the carry corridor (+y of the mug).
-            in_corridor = abs(xy[0] - mug_xy[0]) < 0.14 and xy[1] > mug_xy[1]
+            # Clear of the target and each other, and out of the carry corridor (+y of the target).
+            in_corridor = abs(xy[0] - obj_xy[0]) < 0.14 and xy[1] > obj_xy[1]
             if not in_corridor and all(np.linalg.norm(xy - p) > 0.17 for p in placed):
                 break
         placed.append(xy)
         extras.append(asset_body(other, f"obj{k}", pos=(xy[0], xy[1], 0.0),
                                  quat=yaw_quat(rng.uniform(-np.pi, np.pi)), collision="hulls"))
     work = ROOT / "data" / "work" / "perception_pick"
-    model = build_scene(asset, "hulls", work, mug_pos=mug_pos, mug_quat=yaw_quat(mug_yaw), extras=extras)
+    # demo_panda names the picked body "mug"; here it's whatever asset is passed in.
+    model = build_scene(asset, "hulls", work, mug_pos=obj_pos, mug_quat=yaw_quat(obj_yaw), extras=extras)
     arm = Arm(model)
     data = mujoco.MjData(model)
     mujoco.mj_resetDataKeyframe(model, data, model.key("home").id)
@@ -155,9 +171,9 @@ def trial(seed, asset, others, det_model, cats, device, render_video=False):
         data.ctrl[:7] = HOME
         data.qfrc_applied[arm.dadr] = data.qfrc_bias[arm.dadr]
         mujoco.mj_step(model, data)
-    mug = model.body("mug").id
-    true_xy = data.xpos[mug][:2].copy()
-    r = data.xmat[mug].reshape(3, 3)
+    obj = model.body("mug").id
+    true_xy = data.xpos[obj][:2].copy()
+    r = data.xmat[obj].reshape(3, 3)
     true_yaw = float(np.arctan2(r[1, 0], r[0, 0]))
 
     # --- perception -------------------------------------------------------------------
@@ -175,7 +191,7 @@ def trial(seed, asset, others, det_model, cats, device, render_video=False):
         observed.append(p)
     result = {"seed": seed, "detected_views": sum(v[1] is not None for v in views)}
     if not observed or sum(len(o) for o in observed) < 50:
-        result.update(success=False, reason="mug not detected")
+        result.update(success=False, reason="target not detected")
         return result, views, None
     obs = np.concatenate(observed)
     # Keep the biggest cluster near the median (a box can include a neighbor's pixels).
@@ -192,14 +208,12 @@ def trial(seed, asset, others, det_model, cats, device, render_video=False):
 
     # --- act on the estimate -------------------------------------------------------------
     est_pos = np.array([ex, ey, 0.0])
-    est_mesh = mesh.copy()
-    est_mesh.vertices = est_mesh.vertices @ rot_z(eyaw).T
-    grasp, radial = rim_grasp(est_mesh, est_pos)
-    plan = plan_pick(model, arm, grasp, radial)
+    grasp, closing = torso_grasp(mesh, asset.center_of_mass, est_pos, eyaw)
+    plan = plan_pick(model, arm, grasp, closing)
     data.time = 0.0
     cam = mujoco.MjvCamera()
-    cam.lookat[:] = (0.48, 0.0, 0.16)
-    cam.distance, cam.elevation, cam.azimuth = 1.15, -22, 205
+    cam.lookat[:] = (0.5, 0.0, 0.12)
+    cam.distance, cam.elevation, cam.azimuth = 0.98, -24, 205
     small = mujoco.Renderer(model, 480, 640) if render_video else None
 
     def render(d):
@@ -208,8 +222,8 @@ def trial(seed, asset, others, det_model, cats, device, render_video=False):
 
     frames, lifted = execute(model, arm, data, plan, render if render_video else None)
     target = true_xy + PLACE_SHIFT[:2]
-    final = data.xpos[mug]
-    up_axis = data.xmat[mug].reshape(3, 3)[:, 2]
+    final = data.xpos[obj]
+    up_axis = data.xmat[obj].reshape(3, 3)[:, 2]
     lift = lifted - asset.center_of_mass[2]
     placed_err = float(np.linalg.norm(final[:2] - target))
     upright = float(np.degrees(np.arccos(np.clip(up_axis[2], -1, 1))))
@@ -235,7 +249,8 @@ def detection_panel(views, cats_seen=None, width=480):
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--asset", type=Path, default=ROOT / "output" / "demo" / "asset" / "ceramic_mug.usda")
+    gso = {Path(q).stem: q for q in glob.glob(str(ROOT / "output" / "gso_assets" / "*" / "*.usda"))}
+    p.add_argument("--asset", type=Path, default=Path(gso.get("schleich_lion_action_figure", "lion.usda")))
     p.add_argument("--detector", type=Path, default=ROOT / "output" / "detector_dr")
     p.add_argument("--data", type=Path, default=ROOT / "output" / "synth_dr")
     p.add_argument("--trials", type=int, default=10)
@@ -252,9 +267,9 @@ def main() -> None:
     det_model.to(device).eval()
 
     asset = read_usd(args.asset)
-    gso = {Path(q).stem: q for q in glob.glob(str(ROOT / "output" / "gso_assets" / "*" / "*.usda"))}
-    others = [read_usd(gso[n]) for n in ("schleich_lion_action_figure", "great_dinos_triceratops_toy",
-                                          "cole_hardware_bowl_scirocco_yellowblue") if n in gso]
+    distractors = [gso.get("great_dinos_triceratops_toy"), gso.get("cole_hardware_bowl_scirocco_yellowblue"),
+                   str(ROOT / "output" / "demo" / "asset" / "ceramic_mug.usda")]
+    others = [read_usd(q) for q in distractors if q and Path(q).exists()]
 
     results, first = [], None
     for seed in range(args.trials):
