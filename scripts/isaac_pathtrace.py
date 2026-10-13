@@ -28,6 +28,7 @@ OUT = os.path.join(ROOT, "output", "pathtrace")
 parser = argparse.ArgumentParser()
 parser.add_argument("--shots", default="beauty,hero,normals,lookdev")
 parser.add_argument("--hero-yaw", type=float, default=75.0, help="Buddha yaw in the hero shot (deg)")
+parser.add_argument("--real-yaw", type=float, default=0.0, help="holder yaw in the 'real' shot (deg)")
 parser.add_argument("--spp", type=int, default=64, help="path-traced samples per pixel per subframe")
 parser.add_argument("--subframes", type=int, default=8, help="accumulated subframes (total spp = spp x subframes)")
 parser.add_argument("--hdri", default="/NVIDIA/Assets/Skies/Indoor/wooden_lounge_4k.hdr")
@@ -243,6 +244,40 @@ if "hero" in shots:
     settle()
     render("/World/hero_cam", (1024, 1024), "hero_pt" + args.tag)
     results["hero"] = {"fstop": 8.0, "spp": args.spp * args.subframes}
+
+if "real" in shots:
+    # Own phone captures: the controller resting in the holder, in its measured pose (study_holder_fit.py),
+    # beside scans from the benchmark.
+    fit = os.path.join(ROOT, "output", "holder_fit")
+    with open(os.path.join(fit, "state.json")) as f:
+        rel = json.load(f)["truth"]["controller_in_holder"]
+    stage = new_stage()
+    table(stage)
+    dome(stage, args.hdri, intensity=900.0, rotate_z=40)
+    rect_light(stage, "/World/key", (-0.5, -0.6, 0.7), (0, 0, 0.05), 25000, size=(0.6, 0.4), color=(1.0, 0.95, 0.88))
+    holder = place(stage, "/World/holder", os.path.join(fit, "assets", "cod_holder", "cod_holder.usda"), 0.0, 0.0,
+                   yaw=args.real_yaw)
+    ctrl = UsdGeom.Xform.Define(stage, "/World/holder/ctrl_pose")
+    m = Gf.Matrix4d()
+    m.SetRotateOnly(Gf.Matrix3d(*np.array(rel["R"]).T.flatten().tolist()))
+    m.SetTranslateOnly(Gf.Vec3d(*rel["t"]))
+    ctrl.AddTransformOp().Set(m)
+    inner = UsdGeom.Xform.Define(stage, "/World/holder/ctrl_pose/ctrl")
+    inner.GetPrim().GetReferences().AddReference(os.path.join(fit, "assets", "controller", "controller.usda"))
+    for p in Usd.PrimRange(inner.GetPrim()):
+        if p.HasAPI(UsdPhysics.RigidBodyAPI):
+            UsdPhysics.RigidBodyAPI(p).CreateRigidBodyEnabledAttr(False)
+    place(stage, "/World/mug", PBR["speckled_mug"], 0.17, 0.06, yaw=-35)
+    place(stage, "/World/lion", GSO("schleich_lion_action_figure"), -0.17, 0.02, yaw=30)
+    eye, target = (0.05, -0.55, 0.22), (0.0, 0.0, 0.1)
+    camera(stage, "/World/real_cam", eye, target, focal=50, aspect=1.0, fstop=8.0,
+           focus=float(np.linalg.norm(np.subtract(eye, (0.0, 0.0, 0.1)))))
+    settle()
+    render("/World/real_cam", (1024, 1024), "real_pt" + args.tag)
+    camera(stage, "/World/real_cam2", (0.0, -0.36, 0.16), (0.0, 0.0, 0.11), focal=50, aspect=1.0, fstop=8.0,
+           focus=0.38)
+    render("/World/real_cam2", (1024, 1024), "real_close_pt" + args.tag)
+    results["real"] = {"fstop": 8.0, "spp": args.spp * args.subframes, "holder_yaw": args.real_yaw}
 
 if "normals" in shots:
     for name, usd in (("normals_off", os.path.join(ROOT, "output", "buddha", "buddha_head.usda")),

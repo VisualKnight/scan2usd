@@ -248,8 +248,16 @@ def fit_disc_base(mesh: trimesh.Trimesh, points: np.ndarray, normals: np.ndarray
 
         _, j = cKDTree(mesh.vertices).query(merged.vertices)
         col = np.asarray(mesh.visual.vertex_colors)[j].copy()
-        on_disc = merged.vertices[:, 2] < z_top * 0.99
-        col[on_disc] = np.median(np.asarray(mesh.visual.vertex_colors)[mesh.vertices[:, 2] < z_top][:, :4], 0)
+        # One color for the whole disc: the scan's own base top, away from the feet and the rim (the rim
+        # mixes in table and paper colors; per-vertex transfer onto long side faces gives streaks).
+        mv = mesh.vertices
+        r_m = np.linalg.norm(mv[:, :2] - center, axis=1)
+        on_top = (np.abs(mv[:, 2] - z_top) < 0.02 * radius) & (r_m > 0.6 * radius) & (r_m < 0.9 * radius)
+        src = np.asarray(mesh.visual.vertex_colors)[on_top if on_top.sum() > 50 else mv[:, 2] < z_top]
+        base_col = np.median(src[:, :4], 0).astype(np.uint8)
+        r_n = np.linalg.norm(merged.vertices[:, :2] - center, axis=1)
+        on_disc = (merged.vertices[:, 2] < z_top * 0.995) | (r_n > 0.9 * radius)
+        col[on_disc] = base_col
         merged.visual = trimesh.visual.ColorVisuals(merged, vertex_colors=col)
     fit = {"z_top": z_top, "center": center.tolist(), "radius": radius, "rim_points": int(len(rim)),
            "rim_rms": float(np.sqrt(np.mean(rim_err ** 2)))}
