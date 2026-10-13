@@ -9,7 +9,7 @@
 - **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets ranks the Buddha first in **67/67** real photos of the Buddha dataset; in simulation, the same detector drives a perception-to-grasp loop (10/10 picks). From my own phone photos: a scanned controller dropped into a scanned holder comes to rest a median <!--n:sim_add-->9.1<!--/n--> mm from where the real one sits.
 - **Assets that know what they don't know:** grasps and measurement uncertainty stored in the USD file (codeless schemas), an experimental next-photo planner, and a **Gaussian-splat look riding on the physics hulls** that beats the textured mesh on 18/18 held-out photos.
 
-> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[88 s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
+> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[94 s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
 
 ## What it does
 
@@ -77,6 +77,10 @@ The three well-textured benchmark objects reconstruct to 0.6–0.8 mm. Plain or 
 
 **Path-traced look-dev.** PBR look presets, baked 2K albedo + normal maps from the 4.3M-triangle scan, HDRI lighting, physical 50 mm f/5.6 depth of field (Isaac Sim 6 RTX). Rendered from a real photo's solved camera, 63% of the silhouette lies within 3 px of the photo's edges. `scripts/isaac_pathtrace.py`
 
+![Unreal Engine 5.8, Lumen + MegaLights](docs/figures/unreal_render.jpg)
+
+**The same USD files in Unreal Engine 5.8.** One USD stage holds the scans, a table and 89 shadow-casting fairy lights; Unreal's USD importer brings it in as is. Lumen (hardware ray tracing) and MegaLights at 1080p: <!--n:ue_on-->7.8<!--/n--> ms GPU per frame vs <!--n:ue_off-->11.6<!--/n--> ms with MegaLights off, and closer to Unreal's path tracer (<!--n:ue_on_db-->27.4<!--/n--> vs <!--n:ue_off_db-->20.5<!--/n--> dB PSNR; [comparison](docs/figures/unreal_megalights.jpg), [10 s orbit](docs/figures/unreal_flythrough.mp4)). `scripts/unreal_layout.py`, `scripts/unreal_render.py`
+
 
 **More on the [overview page](https://visualknight.github.io/scan2usd/):** Shadow Hand grasp benchmark (1,440 trials), how accurate a scan must be (93 picks vs. collider, friction, mass and size error), articulated assets in both engines, a bin of 14 scans, the USD asset library, color calibration, and capture guidance (work in progress).
 ## Quickstart
@@ -87,7 +91,7 @@ Python 3.10–3.12, with [uv](https://docs.astral.sh/uv/):
 uv venv --python 3.11
 uv pip install -e ".[dev]"
 .venv\Scripts\scan2usd demo            # synthetic mug -> output\demo\ (see preview.png)
-.venv\Scripts\python -m pytest         # 105 tests
+.venv\Scripts\python -m pytest         # 106 tests
 ```
 
 Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (CUDA build): unzip it to `tools\colmap\` or set `SCAN2USD_COLMAP`.
@@ -155,6 +159,7 @@ Isaac Sim scripts (`isaac_*.py`) run with Isaac Sim 6's Python (`set OMNI_KIT_AC
 | `study_robustness.py` | Pick success vs. collision variant, friction, mass, scan size error and grasp error (93 MuJoCo trials in parallel, ~10 s) |
 | `demo_hand_grasp.py` | Shadow Hand grasp sampling on the rigid benchmark assets (8 assets, 1,440 trials) (needs `git -C data\external\menagerie sparse-checkout add shadow_hand`) |
 | `isaac_pathtrace.py`, `make_render_figures.py` | Isaac Sim 6 RTX path tracing: beauty shot, normal-map comparison, look-dev render from a photo's camera |
+| `unreal_layout.py`, `unreal_render.py` | The tabletop as one USD stage, then Unreal Engine 5.8 (USD importer, Lumen, MegaLights, Movie Render Queue): hero still, MegaLights on/off vs path tracer, GPU timings, `--video` orbit; needs UE 5.6+ |
 | `lookdev_camera.py`, `compare_lookdev.py` | Photo camera → USD camera in the asset frame; render-vs-photo silhouette and color metrics |
 | `study_carving.py` | Visibility-carving experiment and cross-sections of the sealed benchmark objects |
 | `isaac_library.py`, `make_catalog.py` | USD library in Isaac Sim (all collision variants in PhysX) and the web catalog `docs/library/` |

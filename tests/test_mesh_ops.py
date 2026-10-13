@@ -93,3 +93,22 @@ def test_fit_disc_base_replaces_pitted_base():
     assert abs(fit["z_top"] - 0.018) < 0.001 and abs(fit["radius"] - 0.05) < 0.001
     assert np.allclose(fit["center"], (0.01, -0.02), atol=0.001)
     assert new.is_watertight and abs(new.volume - good.volume) / good.volume < 0.03
+
+
+def test_corner_normals_keep_hard_edges_only():
+    from scan2usd.bake import unwrap
+    from scan2usd.mesh_ops import corner_normals
+
+    cyl = trimesh.creation.cylinder(radius=0.05, height=0.02, sections=32)
+    cn = corner_normals(unwrap(cyl))  # UV seams split vertices; they must not become hard edges
+    low = unwrap(cyl)
+    fn = np.asarray(low.face_normals)
+    wall = np.abs(fn[:, 2]) < 0.1
+    # Wall corners: horizontal (radial), not tilted toward the caps.
+    assert np.abs(cn[wall][:, :, 2]).max() < 1e-6
+    # Neighbouring wall faces share smooth normals: corner normals differ from the face normal.
+    assert ((cn[wall] * fn[wall][:, None, :]).sum(-1) < 0.9999).any()
+    sphere = trimesh.creation.icosphere(subdivisions=3)
+    cs = corner_normals(sphere)
+    vn = np.asarray(sphere.vertex_normals)[sphere.faces]
+    assert np.degrees(np.arccos(np.clip((cs * vn).sum(-1), -1, 1))).max() < 1.0

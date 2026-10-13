@@ -212,6 +212,38 @@ def decimate(mesh: trimesh.Trimesh, target_faces: int) -> tuple[trimesh.Trimesh,
     return low, notes
 
 
+def corner_normals(mesh: trimesh.Trimesh, hard_angle_deg: float = 80.0) -> np.ndarray:
+    """Per-corner shading normals (faces, 3, 3) that stay smooth except across hard edges.
+
+    Each corner averages (area-weighted) the normals of the faces around its vertex position that lie
+    within `hard_angle_deg` of its own face, like smoothing groups in a DCC tool. Positions are welded
+    first, so UV seams don't become hard edges. A decimated cylinder keeps a sharp rim instead of
+    blending a 45-degree normal down its wall; a scan's ordinary bumps (well under 80 degrees) stay smooth.
+    """
+    from scipy import sparse
+
+    faces = np.asarray(mesh.faces)
+    _, weld = np.unique(np.round(np.asarray(mesh.vertices) / 1e-9).astype(np.int64), axis=0, return_inverse=True)
+    weld = weld.ravel()
+    fv = weld[faces]  # (F, 3) welded vertex per corner
+    nf, nv = len(faces), int(weld.max()) + 1
+    fn = np.asarray(mesh.face_normals)
+    area = np.asarray(mesh.area_faces)
+    corner_v = fv.ravel()
+    corner_f = np.repeat(np.arange(nf), 3)
+    inc = sparse.csr_matrix((np.ones(3 * nf), (corner_v, corner_f)), shape=(nv, nf))  # vertex -> faces
+    pick = sparse.csr_matrix((np.ones(3 * nf), (np.arange(3 * nf), corner_v)), shape=(3 * nf, nv))
+    pairs = (pick @ inc).tocoo()  # corner -> every face around its vertex
+    c, f2 = pairs.row, pairs.col
+    keep = (fn[corner_f[c]] * fn[f2]).sum(1) >= np.cos(np.radians(hard_angle_deg))
+    c, f2 = c[keep], f2[keep]
+    out = np.zeros((3 * nf, 3))
+    np.add.at(out, c, fn[f2] * area[f2, None])
+    norm = np.linalg.norm(out, axis=1, keepdims=True)
+    out = np.where(norm > 1e-20, out / np.maximum(norm, 1e-20), fn[corner_f])
+    return out.reshape(nf, 3, 3)
+
+
 def fit_disc_base(mesh: trimesh.Trimesh, points: np.ndarray, normals: np.ndarray, max_height_frac: float = 0.2,
                   segments: int = 128) -> tuple[trimesh.Trimesh, dict]:
     """Replace a scanned round base (figure stands, trophies, lamps) with a fitted cylinder.

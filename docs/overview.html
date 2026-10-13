@@ -130,10 +130,10 @@
   <div class="s-cap"><b>1 · Capture</b><p>Phone photos, a color chart, and a guide to the next shots</p></div>
   <div class="s-bld"><b>2 · Build</b><p>Mesh, calibrated color and scale, mass, convex colliders, USD</p></div>
   <div class="s-ver"><b>3 · Verify</b><p>33 checks on the file, two physics engines, ground truth</p></div>
-  <div class="s-use"><b>4 · Use</b><p>Robot picks, synthetic training data, path-traced renders</p></div>
+  <div class="s-use"><b>4 · Use</b><p>Robot picks, synthetic training data, renders in Isaac Sim and Unreal</p></div>
 </div>
 <img class="board" src="figures/hero.jpg" alt="Real photos to a simulation-ready OpenUSD asset" style="margin-bottom:16px">
-<details class="demo"><summary>Watch the 88-second demo <span>· photos → USD → MuJoCo, Isaac Sim, perception, own phone scans, splats</span></summary>
+<details class="demo"><summary>Watch the 94-second demo <span>· photos → USD → MuJoCo, Isaac Sim, perception, own phone scans, Unreal, splats</span></summary>
   <video controls preload="none" poster="figures/demo_poster.jpg" style="width:100%;border-radius:8px;margin-top:8px"><source src="scan2usd_demo.mp4" type="video/mp4"></video></details>
 <div class="numbers">
   <div class="kpi"><b>0.78 mm</b><span>mean surface error, 78 photos → USD (speckled mug vs. ground truth)</span></div>
@@ -269,12 +269,16 @@
     <p class="cap">A ColorChecker in the scene is also a ruler: its patches are 16 mm apart on the Mini.</p></div>
 </div>
 
-<div class="chap s-use" id="rendering"><div class="no">08</div><div><div class="eb">Use</div><h2>Path-traced rendering</h2></div></div>
+<div class="chap s-use" id="rendering"><div class="no">08</div><div><div class="eb">Use</div><h2>Rendering: Isaac Sim and Unreal Engine</h2></div></div>
+<div class="card" style="margin-bottom:12px"><h3>Same USD files in Unreal Engine 5.8: Lumen + MegaLights</h3><img src="figures/unreal_render.jpg" alt="Scanned assets in Unreal Engine 5.8">
+  <p class="cap">The scene is one USD stage (<code>unreal_layout.py</code>): the scan assets by reference, a wood table, a key light and two strings of fairy lights, <b>89 shadow-casting point lights</b>. Unreal's USD importer brings it in unchanged, apart from one look override in the scene layer (the holder's paint is satin, not the generic plastic preset). Lumen with hardware ray tracing gives the bounce light; MegaLights gives every bulb its own soft shadow. 1440p, Movie Render Queue; the whole build and render is scripted (<code>unreal_render.py</code>). <a href="figures/unreal_flythrough.mp4"><b>10-second orbit</b></a>.</p></div>
+<div class="card" style="margin-bottom:12px"><h3>What MegaLights buys: <!--n:ue_on-->7.8<!--/n--> vs <!--n:ue_off-->11.6<!--/n--> ms, closer to the path tracer</h3><img src="figures/unreal_megalights.jpg" alt="MegaLights on, off, and path-traced reference">
+  <p class="cap">One camera, three renderers. Times are the median GPU frame at 1080p on an RTX 4090 (Unreal's CSV profiler, 600 frames per run, median of 3 runs that agree within 2%). Without MegaLights, each shadowed light is drawn separately: shadow maps plus per-light shading. With it, the lights are sampled stochastically, ray-traced and denoised: faster, and it matches Unreal's own path tracer better (PSNR <!--n:ue_on_db-->27.4<!--/n--> vs <!--n:ue_off_db-->20.5<!--/n--> dB against 4,096 samples per pixel). Real-time still isn't the reference: contact shadows and bulb bloom differ.</p></div>
 <div class="card" style="margin-bottom:12px"><h3>Scanned assets in Isaac Sim 6 RTX</h3><img src="figures/render_beauty.jpg" alt="Path-traced scanned assets">
   <p class="cap">Offline path tracing, 1,024 samples per pixel, AI denoiser, 6 bounces. HDRI dome + area key light, NVIDIA MDL oak table, physically correct 50 mm f/5.6 depth of field. Assets carry PBR look presets from their material (the speckled mug's glaze is a clearcoat over a rough body) and baked 2K albedo + normal maps. <a href="figures/render_modes.jpg">Real-time vs offline path tracing</a>.</p></div>
 <div class="grid g2">
   <div class="card"><h3>High-to-low normal map bake</h3><img src="figures/render_normals.jpg" alt="Normal map comparison">
-    <p class="cap">4.3M-triangle scan → 50k triangles. Left: vertex colors only. Right: the scan's detail baked into a tangent-space normal map, under grazing light. A cage-style test ignores source points facing away (the far side of thin walls).</p></div>
+    <p class="cap">4.3M-triangle scan → 50k triangles. Left: vertex colors only. Right: the scan's detail baked into a tangent-space normal map, under grazing light. A cage-style test ignores source points facing away (the far side of thin walls), and hard edges stay hard: averaged normals across a fitted base's 90° rim once streaked its wall.</p></div>
   <div class="card"><h3>Look-dev against a real photo</h3><img src="figures/lookdev.jpg" alt="Photo vs render">
     <p class="cap">Render from the photo's solved camera. 63% of the silhouette lies within 3 px of a photo edge (median 2 px), which checks geometry, scale and camera at once. After white balance, color is median ΔE2000 6.4; the rest is the unknown room lighting.</p></div>
 </div>
@@ -368,7 +372,7 @@
 </ol>
 
 <div class="chap s-note" id="timeline"><div class="no">13</div><div><div class="eb">Notes</div><h2>Timeline</h2></div></div>
-<p class="small muted">Pipeline core (clean, color, collide, weigh, export, validate) → photos to USD with COLMAP, scored against ground truth → articulation → Isaac Sim + MuJoCo demos, sim-to-real detector → path-traced look-dev, asset library → grasps, uncertainty and Gaussian splats inside the USD asset → own phone captures: scanned controller settles into a scanned holder, checked against a scan of the real pair. <b>Next:</b> real phone captures with a ColorChecker (no-ruler scale on real photos); texture-aware capture guidance.</p>
+<p class="small muted">Pipeline core (clean, color, collide, weigh, export, validate) → photos to USD with COLMAP, scored against ground truth → articulation → Isaac Sim + MuJoCo demos, sim-to-real detector → path-traced look-dev, asset library → grasps, uncertainty and Gaussian splats inside the USD asset → own phone captures: scanned controller settles into a scanned holder, checked against a scan of the real pair → the same USD files in Unreal Engine 5.8 with Lumen and MegaLights. <b>Next:</b> real phone captures with a ColorChecker (no-ruler scale on real photos); texture-aware capture guidance.</p>
 
 <div class="chap s-cap" id="capture"><div class="no">14</div><div><div class="eb">Capture</div><h2>Capture your own</h2></div></div>
 <div class="grid g2">

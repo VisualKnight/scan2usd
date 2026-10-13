@@ -1,11 +1,11 @@
-"""Write the real-capture study's numbers into README.md and docs/overview.html from the result files.
+"""Write result numbers into README.md and docs/overview.html from the result files.
 
     python scripts/sync_holder_numbers.py
 
-Every number about the holder / controller study in the docs sits inside a marker such as
-<!--n:sim_add-->9.9<!--/n--> (HTML comments are invisible on GitHub and in the page). This script
-rewrites them from output/holder_fit/state.json and docs/figures/isaac_holder_fit.json, so the
-published text always matches the published figures.
+Every synced number in the docs sits inside a marker such as <!--n:sim_add-->9.9<!--/n--> (HTML
+comments are invisible on GitHub and in the page). This script rewrites them from
+output/holder_fit/state.json, docs/figures/isaac_holder_fit.json and docs/figures/unreal_render.json,
+so the published text always matches the published figures.
 """
 
 from __future__ import annotations
@@ -35,7 +35,18 @@ def values() -> dict[str, str]:
         "scale_agree": f"{abs(tr['holder']['free_scale'] - 1) * 100:.1f}",
         "holder_hulls": str(asset["cod_holder"]["hulls"]), "ctrl_hulls": str(asset["controller"]["hulls"]),
         "base_r": f"{st['base']['radius_mm']:.1f}", "base_rms": f"{st['base']['rim_rms_mm']:.2f}",
+        **unreal_values(),
     }
+
+
+def unreal_values() -> dict[str, str]:
+    p = ROOT / "docs" / "figures" / "unreal_render.json"
+    if not p.exists():
+        return {}
+    ue = json.loads(p.read_text())
+    return {"ue_on": f"{ue['timing']['on']['gpu_ms']:.1f}", "ue_off": f"{ue['timing']['off']['gpu_ms']:.1f}",
+            "ue_on_db": f"{ue['vs_path_tracer']['megalights_psnr_db']:.1f}",
+            "ue_off_db": f"{ue['vs_path_tracer']['no_megalights_psnr_db']:.1f}"}
 
 
 def main() -> None:

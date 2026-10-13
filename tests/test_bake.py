@@ -61,9 +61,31 @@ def _bumpy_plane(n=200, size=0.1, amp=0.004, waves=3):
     return dense, normal
 
 
+def _decode_world_normals(img, low, size):
+    """Texel positions and the world-space normals a renderer gets from the baked map."""
+    from scan2usd.bake import _rasterize, vertex_tangents
+    from scan2usd.mesh_ops import corner_normals
+
+    face_id, bary = _rasterize(np.asarray(low.visual.uv), np.asarray(low.faces), size)
+    inside = face_id >= 0
+    faces = np.asarray(low.faces)[face_id[inside]]
+    w = bary[inside][:, :, None]
+    pos = (low.vertices[faces] * w).sum(1)
+    T, hand = vertex_tangents(low, np.asarray(low.visual.uv))
+    n = (corner_normals(low)[face_id[inside]] * w).sum(1)
+    n /= np.linalg.norm(n, axis=1, keepdims=True)
+    t = (T[faces] * w).sum(1)
+    t -= n * (t * n).sum(1, keepdims=True)
+    t /= np.linalg.norm(t, axis=1, keepdims=True)
+    b = np.cross(n, t) * np.sign((hand[faces] * bary[inside]).sum(1))[:, None]
+    ts = np.asarray(img, np.float64)[inside] / 255.0 * 2 - 1
+    world = ts[:, :1] * t + ts[:, 1:2] * b + ts[:, 2:3] * n
+    return pos, world / np.linalg.norm(world, axis=1, keepdims=True)
+
+
 def test_normal_map_round_trip():
     """Baked tangent-space normals, decoded with the same tangent frame, match the true surface."""
-    from scan2usd.bake import _rasterize, bake_normal_map, vertex_tangents
+    from scan2usd.bake import bake_normal_map
 
     dense, true_normal = _bumpy_plane()
     flat = trimesh.Trimesh([[-0.05, -0.05, 0], [0.05, -0.05, 0], [0.05, 0.05, 0], [-0.05, 0.05, 0]],
@@ -72,21 +94,7 @@ def test_normal_map_round_trip():
     size = 256
     img, stats = bake_normal_map(dense, low, size=size)
     assert stats["mean_deviation_deg"] > 5  # the bumps are captured
-    face_id, bary = _rasterize(np.asarray(low.visual.uv), np.asarray(low.faces), size)
-    inside = face_id >= 0
-    faces = np.asarray(low.faces)[face_id[inside]]
-    w = bary[inside][:, :, None]
-    pos = (low.vertices[faces] * w).sum(1)
-    T, hand = vertex_tangents(low, np.asarray(low.visual.uv))
-    n = np.asarray(low.vertex_normals)[faces].mean(1)
-    n /= np.linalg.norm(n, axis=1, keepdims=True)
-    t = (T[faces] * w).sum(1)
-    t -= n * (t * n).sum(1, keepdims=True)
-    t /= np.linalg.norm(t, axis=1, keepdims=True)
-    b = np.cross(n, t) * np.sign((hand[faces] * bary[inside]).sum(1))[:, None]
-    ts = np.asarray(img, np.float64)[inside] / 255.0 * 2 - 1
-    world = ts[:, :1] * t + ts[:, 1:2] * b + ts[:, 2:3] * n
-    world /= np.linalg.norm(world, axis=1, keepdims=True)
+    pos, world = _decode_world_normals(img, low, size)
     err = np.degrees(np.arccos(np.clip((world * true_normal(pos[:, 0], pos[:, 1])).sum(1), -1, 1)))
     assert np.median(err) < 3.0
 
@@ -100,3 +108,20 @@ def test_normal_map_is_flat_for_matching_surfaces():
     assert stats["mean_deviation_deg"] < 3.0
     rgb = np.asarray(img)
     assert np.median(rgb[..., 2]) > 245  # mostly (0, 0, 1) in tangent space
+
+
+def test_normal_map_keeps_hard_edges_flat():
+    """A low-poly cylinder baked against itself: what a renderer decodes on the long side faces must be
+    the true radial normal, not the rim's averaged vertex normals smeared down the wall."""
+    from scan2usd.bake import bake_normal_map
+
+    cyl = trimesh.creation.cylinder(radius=0.05, height=0.02, sections=64)
+    low = unwrap(cyl)
+    size = 256
+    img, _ = bake_normal_map(cyl, low, size=size, samples=400_000)
+    pos, world = _decode_world_normals(img, low, size)
+    r = np.linalg.norm(pos[:, :2], axis=1)
+    side = (r > 0.0495) & (np.abs(pos[:, 2]) < 0.008)  # the wall, away from the rims
+    radial = np.c_[pos[side, :2] / r[side, None], np.zeros(side.sum())]
+    err = np.degrees(np.arccos(np.clip((world[side] * radial).sum(1), -1, 1)))
+    assert np.percentile(err, 95) < 5.0

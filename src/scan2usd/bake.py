@@ -142,21 +142,45 @@ def vertex_tangents(mesh: trimesh.Trimesh, uv: np.ndarray) -> tuple[np.ndarray, 
     return T, hand
 
 
+def _source_normals(source: trimesh.Trimesh, samples: int, hard_angle_deg: float = 30.0,
+                    seed: int = 0) -> tuple[np.ndarray, np.ndarray]:
+    """Points on the source surface and their shading normals.
+
+    Normals are interpolated from the vertex normals, except on faces whose corner normals disagree
+    with the face by more than `hard_angle_deg`: hard edges (a fitted cylinder's rim), where the
+    averaged vertex normals tilt toward the neighbouring face. Those faces use their face normal, the
+    way smoothing groups keep a bake's hard edges hard.
+    """
+    pts, fid = trimesh.sample.sample_surface(source, samples, seed=seed)
+    faces = np.asarray(source.faces)
+    vn = np.asarray(source.vertex_normals)[faces]
+    fn = np.asarray(source.face_normals)
+    hard = ((vn * fn[:, None, :]).sum(-1) < np.cos(np.radians(hard_angle_deg))).any(1)
+    bary = trimesh.triangles.points_to_barycentric(source.vertices[faces[fid]], pts)
+    n = (vn[fid] * bary[:, :, None]).sum(1)
+    n = np.where(hard[fid][:, None], fn[fid], n)
+    return pts, n / np.maximum(np.linalg.norm(n, axis=1, keepdims=True), 1e-12)
+
+
 def bake_normal_map(source: trimesh.Trimesh, low: trimesh.Trimesh, size: int = 1024, padding: int = 4,
-                    k: int = 12) -> tuple[Image.Image, dict]:
+                    k: int = 12, samples: int = 2_000_000) -> tuple[Image.Image, dict]:
     """Tangent-space normal map: the dense `source`'s surface normals on the unwrapped `low` mesh.
 
     The game-art "high-to-low" bake: per texel, the low-poly surface point and its smooth normal and
-    UV tangent frame; the high-poly normal there (k nearest dense vertices, distance-weighted),
-    expressed in that frame and encoded as RGB = 0.5 * n + 0.5 (OpenGL convention, +Y up in UV space).
+    UV tangent frame; the high-poly normal there (k nearest points sampled on the dense surface,
+    distance-weighted; hard edges stay hard, see `_source_normals`), expressed in that frame and
+    encoded as RGB = 0.5 * n + 0.5 (OpenGL convention, +Y up in UV space).
     """
+    from .mesh_ops import corner_normals
+
     uvs = np.asarray(low.visual.uv)
     face_id, bary = _rasterize(uvs, np.asarray(low.faces), size)
     covered = face_id >= 0
     faces = np.asarray(low.faces)[face_id[covered]]
     w3 = bary[covered][:, :, None]
     pos = (low.vertices[faces] * w3).sum(1)
-    n_low = (np.asarray(low.vertex_normals)[faces] * w3).sum(1)
+    # The shading normal a renderer interpolates: the same per-corner normals usd_io writes.
+    n_low = (corner_normals(low)[face_id[covered]] * w3).sum(1)
     T, hand = vertex_tangents(low, uvs)
     t_low = (T[faces] * w3).sum(1)
     h = np.sign((hand[faces] * bary[covered]).sum(1))
@@ -165,8 +189,9 @@ def bake_normal_map(source: trimesh.Trimesh, low: trimesh.Trimesh, size: int = 1
     t_low /= np.maximum(np.linalg.norm(t_low, axis=1, keepdims=True), 1e-12)
     b_low = np.cross(n_low, t_low) * h[:, None]
 
-    dist, nearest = cKDTree(np.asarray(source.vertices)).query(pos, k=k)
-    cand = np.asarray(source.vertex_normals)[nearest]  # (texels, k, 3)
+    src_pts, src_n = _source_normals(source, samples)
+    dist, nearest = cKDTree(src_pts).query(pos, k=k)
+    cand = src_n[nearest]  # (texels, k, 3)
     # Like a baking cage: ignore source points facing away from the low-poly surface (the other side
     # of a thin wall or a cup's bottom); texels with no valid source keep the flat normal.
     agree = (cand * n_low[:, None, :]).sum(-1) > 0.3
