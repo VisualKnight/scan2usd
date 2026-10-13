@@ -6,7 +6,7 @@
 
 - **Accurate:** 0.6–0.8 mm mean surface error on textured objects, scored against ground-truth meshes; metric size within ±1.4% from a ColorChecker alone, no ruler.
 - **Physics-ready:** convex decomposition, mass and inertia, articulated joints. A Franka Panda picks a scanned mug that it can't pick when the mug has a single convex hull.
-- **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets finds the object in **100%** of 67 real photos, and drives a perception-to-grasp loop (10/10 picks).
+- **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets finds the object in **100%** of 67 real photos, and drives a perception-to-grasp loop (10/10 picks). From my own phone photos, a scanned controller settles into a scanned holder within 7.7 mm of where the real one sits.
 - **Assets that know what they don't know:** grasps and measurement uncertainty stored in the USD file (codeless schemas), guidance on which photos to take next, and a **Gaussian-splat look riding on the physics hulls** that beats the textured mesh on 18/18 held-out photos.
 
 > Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[90 s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
@@ -49,6 +49,7 @@ Textured objects reconstruct to 0.6–0.8 mm. Plain or hidden surfaces (the prin
 
 | | |
 |---|---|
+| ![Holder fit](docs/figures/holder_fit.jpg) | **Real-world check: scan, simulate, compare** ([animation](docs/figures/holder_fit.webp), [per-drop errors](docs/figures/holder_fit_results.png)). Own iPhone photos of a controller holder (81) and a controller (78 + 38, two passes merged by similarity ICP at 0.5 mm RMSE), then of the two together. In MuJoCo, the scanned controller dropped into the scanned holder settles **12/12** times, median **7.7 mm / 9°** from where the real one sits in the combined scan. With a single convex hull for the holder it slides off every time. Scale came from two tape measurements; the combined scan agrees within 0.8%. `scripts/study_holder_fit.py` |
 | ![Panda](docs/figures/panda_demo.jpg) | **Why collision geometry matters** ([animation](docs/figures/panda_demo.webp)). A Franka Panda (MuJoCo Menagerie) rim-grasps the scanned mug with one finger inside the cup and places it 25 cm away. With a single convex hull, that finger lands on a phantom "lid" and the pick fails. `scripts/demo_panda.py` |
 | ![Isaac pick](docs/figures/isaac_franka_pick.jpg) | **Same plan, second physics engine** ([animation](docs/figures/isaac_franka_pick.webp)). The plan, built from the grasp stored in the USD asset, replayed on Isaac Sim 6's Franka with PhysX: lifted 14.1 cm, placed within 5.5 mm. The `convex_hull` variant fails the same way as in MuJoCo. `scripts/isaac_franka_pick.py` |
 | ![Sim-to-real](docs/figures/sim2real_compare.jpg) | **Sim-to-real perception.** A detector trained only on 900 domain-randomized Isaac Sim renders of the scanned assets finds the object in **100%** of 67 real photos; unlabeled distractors in training cut false positives by 84%. It then drives a [see-locate-pick loop](docs/figures/perception_pick.webp): detector → fit the scanned mesh to RGB-D → 10/10 picks. `scripts/train_detector.py` |
@@ -65,7 +66,7 @@ Python 3.10–3.12, with [uv](https://docs.astral.sh/uv/):
 uv venv --python 3.11
 uv pip install -e ".[dev]"
 .venv\Scripts\scan2usd demo            # synthetic mug -> output\demo\ (see preview.png)
-.venv\Scripts\python -m pytest         # 96 tests
+.venv\Scripts\python -m pytest         # 101 tests
 ```
 
 Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (CUDA build): unzip it to `tools\colmap\` or set `SCAN2USD_COLMAP`.
@@ -143,6 +144,7 @@ Isaac Sim scripts (`isaac_*.py`) run with Isaac Sim 6's Python (`set OMNI_KIT_AC
 | `export_panda_plan.py`, `isaac_franka_pick.py` | Plan the Panda pick once (MuJoCo IK, from the asset's best stored grasp), replay it on Isaac Sim's Franka with PhysX (sim-to-sim); `--splat` draws the mug with its Gaussian splat |
 | `annotate_grasps.py` | Test grasps (Shadow Hand, Panda) on every library asset in MuJoCo and store them in the USD files |
 | `study_uncertainty.py`, `study_robust_grasps.py` | Do the stored intervals contain the truth? Does randomizing within them predict real grasp success? |
+| `study_holder_fit.py` | Own phone captures: pen-box removal, two controller passes merged (`register.py`), assets at measured size and mass, both registered into the combined scan, MuJoCo drop-in vs the real pose |
 | `study_capture_guide.py` | Weak capture + 8 guided / random / higher-ring photos rendered in Blender (`blender_render_capture.py --poses`), each reconstructed and scored |
 | `isaac_splat.py`, `compare_splat.py` | Hybrid assets in Isaac Sim RTX: mesh vs splat from held-out photo cameras (scored against the photos), showcase, physics drop |
 | `train_detector.py`, `make_coco_figure.py` | Train Faster R-CNN on the synthetic COCO set (needs `torch`/`torchvision`), score on held-out synthetic frames and on real photos |

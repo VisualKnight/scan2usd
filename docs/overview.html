@@ -59,6 +59,7 @@
   <div class="card kpi"><b><span class="good">pick</span> vs <span class="bad">fail</span></b><span>Franka picks the scanned mug with convex decomposition, fails with one hull, in MuJoCo and Isaac Sim</span></div>
   <div class="card kpi"><b>88% → 100%</b><span>real photos where a detector trained only on our synthetic Isaac Sim data finds the object</span></div>
   <div class="card kpi"><b>5 / 6</b><span>true masses inside the uncertainty interval stored in the USD file (a single value: 2 / 6 within 10%)</span></div>
+  <div class="card kpi"><b>12 / 12</b><span>drops where a scanned controller settles into a scanned holder, median 7.7 mm from where the real one sits (phone photos)</span></div>
   <div class="card kpi"><b>18 / 18</b><span>unseen photos where the asset's Gaussian splat looks closer to reality than its textured mesh</span></div>
 </div>
 
@@ -129,6 +130,18 @@
   <div class="card"><h3>Look-dev against a real photo</h3><img src="figures/lookdev.jpg" alt="Photo vs render">
     <p class="cap">Render from the photo's solved camera. 63% of the silhouette lies within 3 px of a photo edge (median 2 px), which checks geometry, scale and camera at once. After white balance, color is median ΔE2000 6.4; the rest is the unknown room lighting.</p></div>
 </div>
+
+<h2>Real-world check: scan, simulate, compare</h2>
+<p class="muted" style="max-width:900px">Own iPhone 13 Pro photos of a controller holder and a game controller, each scanned on its own, then photographed together. The combined scan is the answer key: does the simulated controller settle where the real one sits?</p>
+<div class="card" style="margin-bottom:12px"><img src="figures/holder_fit.webp" alt="Scanned controller dropped into the scanned holder">
+  <p class="cap">MuJoCo, both objects from phone photos (holder 81 photos, controller 78 + 38 in two passes). The controller is released 3 cm above its real pose; green is where it really rests, from the combined scan. Left: the holder's 48 convex pieces form the cupped hands, and the controller settles into them. Right: with one convex hull, the hands are a smooth bulge and the controller slides off.</p></div>
+<div class="card" style="margin-bottom:12px"><img src="figures/holder_fit_results.png" alt="Settle error per drop">
+    <p class="cap">12 drops with ±8 mm / ±8° jitter. Decomposition: held 12/12, median 7.7 mm / 9° from the real pose (released 31 mm away). One hull: 0/12 held.</p></div>
+<div class="card small"><h3>How the answer key is made</h3><ul>
+    <li><b>Scale:</b> from two tape measurements (holder 21 cm tall; controller 5.5 cm thick). The combined scan, fitted with the holder at free scale, agrees within 0.8%.</li>
+    <li><b>Two passes, one controller:</b> face-up and standing scans aligned by a similarity ICP over a rotation search (0.5 mm RMSE), pen box and paper removed, colors matched on the overlap, Poisson-meshed.</li>
+    <li><b>Ground truth:</b> both assets registered into the combined scan (holder 3.0 mm RMSE, controller 1.0 mm). The dark, glossy figure limits this to a few mm, so the 7.7 mm settle error is an upper bound.</li>
+    <li><code>scripts/study_holder_fit.py</code> · <code>register.py</code></li></ul></div>
 
 <h2>Robotics demos</h2>
 <div class="card" style="margin-bottom:12px"><h3>Franka Panda pick-and-place (MuJoCo Menagerie robot)</h3><img src="figures/panda_demo.webp" alt="Panda pick and place">
@@ -267,7 +280,7 @@
 </ul>
 
 <h2>Timeline</h2>
-<p class="small muted">Pipeline core (clean, color, collide, weigh, export, validate) → photos to USD with COLMAP, scored against ground truth → articulation → Isaac Sim + MuJoCo demos, sim-to-real detector → path-traced look-dev, asset library → grasps, uncertainty and Gaussian splats inside the USD asset. <b>Next:</b> own phone captures with a ColorChecker; texture-aware capture guidance.</p>
+<p class="small muted">Pipeline core (clean, color, collide, weigh, export, validate) → photos to USD with COLMAP, scored against ground truth → articulation → Isaac Sim + MuJoCo demos, sim-to-real detector → path-traced look-dev, asset library → grasps, uncertainty and Gaussian splats inside the USD asset → own phone captures: scanned controller settles into a scanned holder, checked against a scan of the real pair. <b>Next:</b> ColorChecker captures; texture-aware capture guidance.</p>
 
 <h2>Capture your own</h2>
 <div class="grid g2">
