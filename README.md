@@ -6,7 +6,7 @@
 
 - **Accurate:** 0.6–0.8 mm mean surface error on textured objects, scored against ground-truth meshes; metric size within ±1.4% from a ColorChecker alone, no ruler.
 - **Physics-ready:** convex decomposition, mass and inertia, articulated joints. A Franka Panda picks a scanned mug that it can't pick when the mug has a single convex hull.
-- **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets finds the object in **100%** of 67 real photos, and drives a perception-to-grasp loop (10/10 picks). From my own phone photos, a scanned controller settles into a scanned holder within 7.7 mm of where the real one sits.
+- **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets finds the object in **100%** of 67 real photos, and drives a perception-to-grasp loop (10/10 picks). From my own phone photos, a scanned controller settles into a scanned holder within 9.2 mm of where the real one sits.
 - **Assets that know what they don't know:** grasps and measurement uncertainty stored in the USD file (codeless schemas), guidance on which photos to take next, and a **Gaussian-splat look riding on the physics hulls** that beats the textured mesh on 18/18 held-out photos.
 
 > Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[90 s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
@@ -47,9 +47,9 @@
 
 Textured objects reconstruct to 0.6–0.8 mm. Plain or hidden surfaces (the printed mug's white interior, the bowl's underside) never get matched and are sealed, so their volume is off; the asset records this as uncertainty (below), and a measured `--mass` keeps physics right. Metric scale from the ColorChecker alone, no ruler: 0.35–1.43% error.
 
-![Holder fit](docs/figures/holder_fit.jpg)
+![Real pair, each scan, simulated drop](docs/figures/holder_fit_lead.jpg)
 
-**Real-world check: scan, simulate, compare** ([animation](docs/figures/holder_fit.webp), [per-drop errors](docs/figures/holder_fit_results.png)). Own iPhone photos of a controller holder (81) and a controller (78 + 38, two passes merged by similarity ICP at 0.5 mm RMSE), then of the two together. In MuJoCo, the scanned controller dropped into the scanned holder settles **12/12** times, median **7.7 mm / 9°** from where the real one sits in the combined scan. With a single convex hull for the holder it slides off every time. Scale came from two tape measurements; the combined scan agrees within 0.8%. `scripts/study_holder_fit.py`
+**Real-world check: scan, simulate, compare** ([drop animation](docs/figures/holder_fit.webp), [per-drop errors](docs/figures/holder_fit_results.png)). Own iPhone photos of a controller holder (81) and a controller (78 + 38, two passes merged by similarity ICP at 0.5 mm RMSE), then of the two together. In MuJoCo, the scanned controller dropped into the scanned holder settles **12/12** times, median **9.2 mm / 12°** from where the real one sits in the combined scan. With a single convex hull for the holder it slides off every time. Scale came from two tape measurements; the combined scan agrees within 1.2%. The holder's glossy base, pitted in the scan, is replaced by a cylinder fitted to its measured top (0.25 mm rim error). `scripts/study_holder_fit.py`
 
 ![Panda](docs/figures/panda_demo.jpg)
 
@@ -85,7 +85,7 @@ Python 3.10–3.12, with [uv](https://docs.astral.sh/uv/):
 uv venv --python 3.11
 uv pip install -e ".[dev]"
 .venv\Scripts\scan2usd demo            # synthetic mug -> output\demo\ (see preview.png)
-.venv\Scripts\python -m pytest         # 101 tests
+.venv\Scripts\python -m pytest         # 102 tests
 ```
 
 Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (CUDA build): unzip it to `tools\colmap\` or set `SCAN2USD_COLMAP`.

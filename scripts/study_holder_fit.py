@@ -1,6 +1,6 @@
 """Real capture study: a scanned controller holder, a scanned controller, and the two together.
 
-    python scripts/study_holder_fit.py [--stage prep,scale,merge,assets,truth,sim,video,figure]
+    python scripts/study_holder_fit.py [--stage prep,scale,merge,base,assets,truth,sim,video,figure,lead]
 
 Data: four iPhone 13 Pro captures (data/raw/, git-ignored), each reconstructed with
 `scan2usd reconstruct` into data/work/<name>/:
@@ -19,6 +19,8 @@ Stages (outputs in output/holder_fit/):
   merge   the standing pass is registered onto the face-up pass (similarity ICP over a rotation
           search, after removing the pen box); their union, minus the face-up pass's paper-skirt band,
           is meshed (Poisson) into one controller.
+  base    the holder's glossy black base is barely seen from the side, so Poisson pits it; it is
+          replaced by a cylinder fitted to its densely measured flat top (mesh_ops.fit_disc_base).
   assets  scan2usd builds: holder (plastic, 528 g) and controller (plastic, 243 g), convex decomposition.
   truth   both assets registered into the combined scan: the real resting pose of the controller
           relative to the holder.
@@ -26,6 +28,7 @@ Stages (outputs in output/holder_fit/):
           settles vs where it really rests, for the decomposed and single-hull holder.
   video   side-by-side drop animation with a ghost of the real pose (docs/figures/holder_fit.{webp,jpg}).
   figure  per-trial error strip (docs/figures/holder_fit_results.png).
+  lead    the docs' lead strip: one source photo (cropped tight) -> each scan -> the drop.
 
 """
 
@@ -129,6 +132,23 @@ def stage_merge(state):
     state["merge"]["points"] = int(len(pts))
 
 
+def stage_base(state):
+    """The holder's round base: replace the pitted scan with a fitted cylinder (mesh_ops.fit_disc_base)."""
+    import trimesh
+
+    from scan2usd.mesh_ops import fit_disc_base
+
+    mesh = trimesh.load(WORK / "cod_holder" / "object_mesh.ply", force="mesh")
+    pts, nrm, _ = load("cod_holder")
+    fixed, fit = fit_disc_base(mesh, pts, nrm)
+    fixed.export(OUT / "cod_holder_base_fixed.ply")
+    s = state["scale"]["cod_holder"]
+    state["base"] = {"top_mm": fit["z_top"] * s * 1000, "radius_mm": fit["radius"] * s * 1000,
+                     "rim_rms_mm": fit["rim_rms"] * s * 1000, "watertight": bool(fixed.is_watertight)}
+    print(f"holder base: disc r {fit['radius'] * s * 1000:.1f} mm, top {fit['z_top'] * s * 1000:.1f} mm "
+          f"(rim fit RMS {fit['rim_rms'] * s * 1000:.2f} mm), watertight {fixed.is_watertight}")
+
+
 def stage_assets(state):
     """Physics assets from the scans, scaled to the measured sizes and masses."""
     import shutil
@@ -136,7 +156,7 @@ def stage_assets(state):
     from scan2usd.pipeline import BuildOptions, build_asset
 
     jobs = {
-        "cod_holder": (WORK / "cod_holder" / "object_mesh.ply", MEAS["cod_holder"]["height_m"], "z",
+        "cod_holder": (OUT / "cod_holder_base_fixed.ply", MEAS["cod_holder"]["height_m"], "z",
                        MEAS["cod_holder"]["mass_kg"]),
         # The merged controller is already metric (face-up scale): no rescale.
         "controller": (OUT / "controller_closed.ply", None, "z", MEAS["controller"]["mass_kg"]),
@@ -147,7 +167,7 @@ def stage_assets(state):
         shutil.rmtree(out, ignore_errors=True)
         opts = BuildOptions(name=name, material="plastic", mass=mass, up_axis="z", units="m", scale_to=scale_to,
                             scale_axis=axis, usda=True, run_sim=True, preview=True, gltf=True,
-                            bake_texture=2048, max_hulls=48)
+                            bake_texture=2048, max_hulls=64, hull_threshold=0.03)
         res = build_asset(mesh, out, opts)
         mp = res.summary["mass_properties"]
         state["assets"][name] = {"usd": str(res.usd_path.relative_to(ROOT)).replace("\\", "/"),
@@ -205,17 +225,21 @@ def stage_truth(state):
     from scipy.spatial.transform import Rotation
 
     scene = load("holder_with_controller")[0] * state["scale"]["holder_with_controller"]
-    scene_d = voxel_down(scene, 0.0015, 60000)
-    hp, _ = asset_points("cod_holder")
+    hp, _ = asset_points("cod_holder", 60000)
     cp, _ = asset_points("controller")
     tau = 0.002
     # Holder: both stand on the table (z = 0, Z-up), so search yaw only; scale is metric on both sides.
-    h_fit = global_register(voxel_down(hp, 0.002, 12000), scene_d, scale=1.0,
-                            rotations=candidate_rotations(180, yaw_only=True), tau=tau, trim=0.6, with_scale=False,
+    # Only the figure above its base is used: the base is a fitted disc in the asset but a pitted,
+    # paper-fringed scan in the combined capture, and a disc has no yaw to offer anyway.
+    above = 0.025
+    h_src = voxel_down(hp[hp[:, 2] > above], 0.002, 12000)
+    h_dst = voxel_down(scene[scene[:, 2] > above], 0.0015, 60000)
+    h_fit = global_register(h_src, h_dst, scale=1.0, rotations=candidate_rotations(72, yaw_only=True), tau=tau,
+                            trim=0.6, with_scale=False, keep=8,
                             anchor_src=np.array([*hp[:, :2].mean(0), 0.0]),
                             anchor_dst=np.array([*scene[:, :2].mean(0), 0.0]))
     # Scene scale check: free scale refinement from the holder fit.
-    h_free = similarity_icp(voxel_down(hp, 0.002, 12000), scene_d, h_fit.transform, iters=60, trim=0.6, tau=tau)
+    h_free = similarity_icp(h_src, h_dst, h_fit.transform, iters=60, trim=0.6, tau=tau)
     # Controller: the scene points the holder doesn't explain, then a full rotation search.
     d, _ = cKDTree(h_fit.transform.apply(hp)).query(scene)
     rest = scene[d > 0.004]
@@ -316,7 +340,7 @@ def stage_video(state):
     normal = R_true @ np.array([0, 0, 1.0])
     az = float(np.degrees(np.arctan2(-normal[1], -normal[0]))) + 35
     clips = []
-    for variant, coll in (("convex decomposition (48 hulls)", "hulls"), ("one convex hull", "single")):
+    for variant, coll in (("convex decomposition (64 hulls)", "hulls"), ("one convex hull", "single")):
         hold = asset_body(h_asset, "holder", collision=coll, free=False, rgba=(0.32, 0.32, 0.36, 1), visual_faces=60000)
         ctrl = asset_body(c_asset, "ctrl", pos=t_true + np.array([0, 0, 0.03]), quat=qt, collision="hulls",
                           rgba=(0.92, 0.92, 0.9, 1), visual_faces=60000)
@@ -381,7 +405,7 @@ def stage_figure(state):
     d.text((16, 40), "12 drops from 3 cm above the real pose (±8 mm, ±8° jitter). Error: mean distance of the controller's "
            "surface points from its pose in the combined scan (ADD).", fill=(100, 116, 139), font=_font(14))
     x0, y0, bw, add_max = 300, 80, 820, 40
-    for row, (name, lab, colr) in enumerate((("decomposed", "holder: convex decomposition (48 hulls)", (37, 99, 235)),
+    for row, (name, lab, colr) in enumerate((("decomposed", "holder: convex decomposition (64 hulls)", (37, 99, 235)),
                                              ("one hull", "holder: one convex hull", (234, 88, 12)))):
         y = y0 + row * 90
         d.text((16, y + 10), lab, fill=(51, 65, 85), font=_font(15))
@@ -407,16 +431,62 @@ def stage_figure(state):
     img.save(FIG / "holder_fit_results.png")
 
 
+def stage_lead(state, photo: str = "IMG_0024.jpg"):
+    """Lead strip for the docs: the real pair (one source photo, cropped) -> each scan alone -> the drop."""
+    import trimesh
+    from PIL import Image, ImageDraw
+
+    from scan2usd.preview import _font, render
+
+    S = 420
+    im = Image.open(ROOT / "data" / "raw" / "holder_with_controller" / photo).convert("RGB")
+    side, cx, top = 2750, im.width // 2, 360  # tight on the pair; drops most of the floor and flyers
+    photo_img = im.crop((cx - side // 2, top, cx + side // 2, top + side)).resize((S, S), Image.LANCZOS)
+
+    def scan(path, az, el):
+        full = trimesh.load(path, force="mesh")
+        m = full.simplify_quadric_decimation(face_count=250_000) if len(full.faces) > 250_000 else full.copy()
+        _, idx = cKDTree(full.vertices).query(m.vertices)
+        m.visual = trimesh.visual.ColorVisuals(m, vertex_colors=np.asarray(full.visual.vertex_colors)[idx])
+        return render([m], size=S, azimuth=az, elevation=el)
+
+    holder = scan(OUT / "cod_holder_base_fixed.ply", -90, 12)
+    ctrl = scan(OUT / "controller_merged.ply", -90, 55)
+    sim = Image.open(FIG / "holder_fit.jpg").convert("RGB").crop((95, 31, 545, 431)).resize((S, int(S * 400 / 450)))
+    simp = Image.new("RGB", (S, S), "white")
+    simp.paste(sim, (0, 0))
+    ImageDraw.Draw(simp).text((10, S - 36), "green: where it really rests (photo 1)", fill=(21, 128, 61), font=_font(17))
+    add = state["sim"]["decomposed"]["add_mm_median"]
+    panels = [(photo_img, "1 - The real pair", "iPhone photo (58 taken)"),
+              (holder, "2 - Holder, scanned alone", "81 photos to 3D"),
+              (ctrl, "3 - Controller, scanned alone", "78 + 38 photos, two passes"),
+              (simp, "4 - Simulated drop (MuJoCo)", f"settles {add:.1f} mm from the real pose")]
+    gap, top_h = 50, 70
+    out = Image.new("RGB", (4 * S + 3 * gap + 40, S + top_h + 20), "white")
+    d = ImageDraw.Draw(out)
+    for k, (img, t, sub) in enumerate(panels):
+        x = 20 + k * (S + gap)
+        d.text((x, 8), t, fill=(30, 41, 59), font=_font(24))
+        d.text((x, 40), sub, fill=(100, 116, 139), font=_font(17))
+        out.paste(img, (x, top_h))
+        d.rectangle([x, top_h, x + S - 1, top_h + S - 1], outline=(226, 232, 240))
+        if k < 3:
+            ax, ay = x + S + 10, top_h + S // 2
+            d.polygon([(ax, ay - 12), (ax + 28, ay), (ax, ay + 12)], fill=(37, 99, 235))
+    out.save(FIG / "holder_fit_lead.jpg", quality=88)  # re-encoded: no EXIF / GPS
+    print("wrote holder_fit_lead.jpg")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage", default="prep,scale,merge,assets,truth,sim,video,figure")
+    ap.add_argument("--stage", default="prep,scale,merge,base,assets,truth,sim,video,figure,lead")
     args = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     state_path = OUT / "state.json"
     state = json.loads(state_path.read_text()) if state_path.exists() else {}
     for st in args.stage.split(","):
-        {"prep": stage_prep, "scale": stage_scale, "merge": stage_merge, "assets": stage_assets, "truth": stage_truth,
-         "sim": stage_sim, "video": stage_video, "figure": stage_figure}[st](state)
+        {"prep": stage_prep, "scale": stage_scale, "merge": stage_merge, "base": stage_base, "assets": stage_assets, "truth": stage_truth,
+         "sim": stage_sim, "video": stage_video, "figure": stage_figure, "lead": stage_lead}[st](state)
         state_path.write_text(json.dumps(state, indent=2))
 
 

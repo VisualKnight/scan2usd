@@ -72,3 +72,24 @@ def test_load_obj_finds_texture_in_other_folder(tmp_path):
         "f 1/1 3/3 2/2\nf 1/1 2/2 4/4\nf 1/1 4/4 3/3\nf 2/2 3/3 4/4\n")
     mesh = load_mesh(tmp_path / "meshes" / "model.obj")
     assert has_texture(mesh)
+
+
+def test_fit_disc_base_replaces_pitted_base():
+    import trimesh
+    from scan2usd.mesh_ops import fit_disc_base
+
+    base = trimesh.creation.cylinder(radius=0.05, height=0.018, sections=64)
+    base.apply_translation((0.01, -0.02, 0.009))
+    body = trimesh.creation.box((0.03, 0.03, 0.15))
+    body.apply_translation((0.01, -0.02, 0.018 + 0.075 - 0.002))
+    good = trimesh.boolean.union([base, body], engine="manifold")
+    pts, fi = trimesh.sample.sample_surface(good, 30000, seed=0)
+    nrm = good.face_normals[fi]
+    # A pitted scan: dents in the base's side.
+    bad = good.copy()
+    side = (np.abs(bad.vertices[:, 2] - 0.009) < 0.008) & (np.linalg.norm(bad.vertices[:, :2] - (0.01, -0.02), axis=1) > 0.04)
+    bad.vertices[side, :2] -= 0.3 * (bad.vertices[side, :2] - (0.01, -0.02))
+    new, fit = fit_disc_base(bad, pts, nrm)
+    assert abs(fit["z_top"] - 0.018) < 0.001 and abs(fit["radius"] - 0.05) < 0.001
+    assert np.allclose(fit["center"], (0.01, -0.02), atol=0.001)
+    assert new.is_watertight and abs(new.volume - good.volume) / good.volume < 0.03

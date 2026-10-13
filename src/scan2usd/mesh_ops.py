@@ -210,3 +210,47 @@ def decimate(mesh: trimesh.Trimesh, target_faces: int) -> tuple[trimesh.Trimesh,
         notes.append("decimation opened the surface; consider a higher --target-faces")
     notes.append(f"decimated {len(mesh.faces)} -> {len(low.faces)} faces")
     return low, notes
+
+
+def fit_disc_base(mesh: trimesh.Trimesh, points: np.ndarray, normals: np.ndarray, max_height_frac: float = 0.2,
+                  segments: int = 128) -> tuple[trimesh.Trimesh, dict]:
+    """Replace a scanned round base (figure stands, trophies, lamps) with a fitted cylinder.
+
+    The sides of a dark or glossy base are rarely matched by photogrammetry, so Poisson fills them
+    with pits and bumps; its flat top, seen from above, is usually measured densely. The top plane is
+    the dominant height of upward-facing points in the lowest `max_height_frac` of the object; the
+    circle is a least-squares fit to that top's outer rim. The mesh below the top is replaced by the
+    cylinder (boolean union). `points`/`normals`: the measured cloud, same frame as `mesh` (Z-up,
+    table at z = 0). Returns the new mesh and the fit.
+    """
+    h = float(points[:, 2].max())
+    up = (normals[:, 2] > 0.9) & (points[:, 2] < max_height_frac * h)
+    if up.sum() < 200:
+        raise ValueError("no flat base top found")
+    hist, edges = np.histogram(points[up, 2], bins=100, range=(0, max_height_frac * h))
+    k = int(hist.argmax())
+    z_top = float(points[up, 2][(points[up, 2] >= edges[k]) & (points[up, 2] < edges[k + 1])].mean())
+    top = points[up & (np.abs(points[:, 2] - z_top) < 2 * (edges[1] - edges[0]))][:, :2]
+    from scipy.spatial import ConvexHull
+
+    rim = top[ConvexHull(top).vertices]
+    # Algebraic circle fit: x^2 + y^2 + a x + b y + c = 0.
+    a_, b_, c_ = np.linalg.lstsq(np.c_[rim, np.ones(len(rim))], -(rim ** 2).sum(1), rcond=None)[0]
+    center = np.array([-a_ / 2, -b_ / 2])
+    radius = float(np.sqrt(center @ center - c_))
+    rim_err = np.abs(np.linalg.norm(rim - center, axis=1) - radius)
+    disc = trimesh.creation.cylinder(radius=radius, height=z_top, sections=segments)
+    disc.apply_translation([center[0], center[1], z_top / 2])
+    upper = mesh.slice_plane([0, 0, z_top * 0.98], [0, 0, 1], cap=True)
+    merged = trimesh.boolean.union([upper, disc], engine="manifold")
+    if mesh.visual.kind == "vertex":
+        from scipy.spatial import cKDTree
+
+        _, j = cKDTree(mesh.vertices).query(merged.vertices)
+        col = np.asarray(mesh.visual.vertex_colors)[j].copy()
+        on_disc = merged.vertices[:, 2] < z_top * 0.99
+        col[on_disc] = np.median(np.asarray(mesh.visual.vertex_colors)[mesh.vertices[:, 2] < z_top][:, :4], 0)
+        merged.visual = trimesh.visual.ColorVisuals(merged, vertex_colors=col)
+    fit = {"z_top": z_top, "center": center.tolist(), "radius": radius, "rim_points": int(len(rim)),
+           "rim_rms": float(np.sqrt(np.mean(rim_err ** 2)))}
+    return merged, fit
