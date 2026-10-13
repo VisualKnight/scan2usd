@@ -1,6 +1,6 @@
 """Real capture study: a scanned controller holder, a scanned controller, and the two together.
 
-    python scripts/study_holder_fit.py [--stage prep,scale,merge,base,assets,truth,sim,video,figure,lead]
+    python scripts/study_holder_fit.py [--stage prep,scale,merge,base,gap,assets,truth,sim,video,figure,lead]
 
 Data: four iPhone 13 Pro captures (data/raw/, git-ignored), each reconstructed with
 `scan2usd reconstruct` into data/work/<name>/:
@@ -21,6 +21,8 @@ Stages (outputs in output/holder_fit/):
           is meshed (Poisson) into one controller.
   base    the holder's glossy black base is barely seen from the side, so Poisson pits it; it is
           replaced by a cylinder fitted to its densely measured flat top (mesh_ops.fit_disc_base).
+  gap     Poisson bridged the gap between the legs; the photos see through it, so it is carved out
+          (carve.background_votes / subtract_volume; docs/figures/holder_gap.jpg).
   assets  scan2usd builds: holder (plastic, 528 g) and controller (plastic, 243 g), convex decomposition.
   truth   both assets registered into the combined scan: the real resting pose of the controller
           relative to the holder.
@@ -149,6 +151,107 @@ def stage_base(state):
           f"(rim fit RMS {fit['rim_rms'] * s * 1000:.2f} mm), watertight {fixed.is_watertight}")
 
 
+def stage_gap(state):
+    """The gap between the legs: Poisson bridged it; carve out what the photos see straight through.
+
+    Seen from the front, the legs are dark against bright paper, so every photo votes for the 3D
+    points through which it sees background (carve.background_votes). Within a window around the
+    gap the votes give its outline in the front plane (x-z), which is cut through the legs' depth as
+    a slot; behind the legs only the few views looking through the slot can see, so a lower vote
+    count is accepted there. Below ~35 mm the photos see the gap only against the black base (no
+    contrast): the slot's outline at the lowest resolved level is extended down to the base.
+    """
+    import trimesh
+    from scipy import ndimage
+
+    from scan2usd.carve import background_votes, subtract_volume
+    from scan2usd.chart import read_colmap_model
+    from scan2usd.reconstruct import isolate_object
+
+    s = state["scale"]["cod_holder"]
+    dense = WORK / "cod_holder" / "dense" / "0"
+    ply = read_ply_points(dense / "fused.ply")
+    xyz = np.c_[ply["x"], ply["y"], ply["z"]].astype(np.float64)
+    spacing = _median_spacing(xyz)
+    # Recover the scan's object frame (deterministic) and check it reproduces object_points.ply.
+    aligned, keep, rot, origin, _ = isolate_object(xyz, spacing, plane_threshold=2.0 * spacing)
+    assert np.allclose(aligned[keep][:1000], load("cod_holder")[0][:1000], atol=1e-5), "object frame mismatch"
+    cams, imgs = read_colmap_model(dense / "sparse")
+
+    mm = 0.5
+    z0 = state["base"]["top_mm"] + 1.0
+    X, Y, Z = np.arange(-50, 40, mm), np.arange(-45, 60, mm), np.arange(z0, 100, mm)
+    grid = np.stack(np.meshgrid(X, Y, Z, indexing="ij"), -1).reshape(-1, 3) / 1000 / s  # scan units
+    votes, _ = background_votes(grid @ rot + origin, cams, imgs, dense / "images")
+    votes = votes.reshape(len(X), len(Y), len(Z))
+
+    K, window = 6, (X > -26) & (X < 12)
+    legs = (Y > -12) & (Y < 20)  # the legs' front-to-back extent
+    outline = ((votes[:, legs, :] >= K).mean(1) >= 0.5) & window[:, None]
+    outline = ndimage.binary_closing(ndimage.binary_opening(outline, iterations=2), iterations=2)
+    lab, _ = ndimage.label(outline)
+    outline = lab == 1 + int(np.argmax(np.bincount(lab.ravel())[1:]))
+    width = outline.sum(0) * mm
+    lowest = int(np.argmax(width >= 8.0))
+    top = int(np.nonzero(width)[0].max())
+    outline[:, :lowest] = outline[:, lowest:lowest + 12].any(1, keepdims=True)
+    outline = ndimage.gaussian_filter(outline.astype(np.float32), 1.0) > 0.5
+    slot = np.zeros(votes.shape, bool)
+    slot[:, (Y > -35) & (Y < 22), :] = outline[:, None, :]
+    behind = (votes >= 2) & (Y >= 18)[None, :, None] & window[:, None, None] & (Z < 80)[None, None, :]
+    # The outline test is conservative (half the legs' depth must agree); also take free voxels
+    # that touch the slot directly, which trims what Poisson added to the legs' inner faces.
+    beside = (votes >= 4) & window[:, None, None] & (Z < 80)[None, None, :]
+    extra = ndimage.binary_opening(behind | beside, iterations=1)
+    lab, _ = ndimage.label(slot | extra)
+    slot = np.isin(lab, np.unique(lab[slot]))
+
+    mesh = trimesh.load(OUT / "cod_holder_base_fixed.ply", force="mesh")
+    carved = subtract_volume(mesh, slot, np.array([X[0], Y[0], Z[0]]) / 1000 / s, mm / 1000 / s)
+    carved.export(OUT / "cod_holder_gap.ply")
+    state["gap"] = {"removed_cm3": float((mesh.volume - carved.volume) * (s * 100) ** 3),
+                    "crotch_mm": float(Z[top]), "lowest_resolved_mm": float(Z[lowest]),
+                    "max_width_mm": float(width.max()), "watertight": bool(carved.is_watertight)}
+    print(f"leg gap: carved {state['gap']['removed_cm3']:.1f} cm3, up to {Z[top]:.0f} mm "
+          f"(resolved from {Z[lowest]:.0f} mm), widest {width.max():.0f} mm, watertight {carved.is_watertight}")
+    _gap_figure(mesh, carved, s, rot, origin, cams, imgs, dense / "images")
+
+
+def _gap_figure(before, after, s, rot, origin, cams, imgs, image_dir, name="IMG_0001.jpg"):
+    """The front photo, with the volume the carve removed tinted: the photos see background there."""
+    from PIL import Image, ImageDraw
+
+    from scan2usd.preview import _font
+
+    cam_id, R, t = imgs[name]
+    _, w, h, p = cams[cam_id]
+
+    def silhouette(mesh):
+        v = mesh.vertices
+        low = mesh.faces[v[mesh.faces].mean(1)[:, 2] * s < 0.11]
+        pc = (v @ rot + origin) @ R.T + t
+        uv = np.c_[p[0] * pc[:, 0] / pc[:, 2] + p[2], p[1] * pc[:, 1] / pc[:, 2] + p[3]]
+        im = Image.new("L", (w, h), 0)
+        d = ImageDraw.Draw(im)
+        for f in low:
+            d.polygon([tuple(uv[f[0]]), tuple(uv[f[1]]), tuple(uv[f[2]])], fill=255)
+        return np.asarray(im) > 0
+
+    sb, sa = silhouette(before), silhouette(after)
+    photo = np.asarray(Image.open(image_dir / name).convert("RGB")).astype(float)
+    cut = sb & ~sa
+    photo[cut] = 0.45 * photo[cut] + 0.55 * np.array([34, 197, 94])
+    ys, xs = np.nonzero(sb)
+    y0 = max(int(np.nonzero(cut)[0].min()) - 120, 0)  # from just above the carved region down
+    crop = Image.fromarray(photo.astype(np.uint8)).crop((xs.min() - 20, y0, xs.max() + 20, ys.max() + 20))
+    crop = crop.resize((560, round(crop.height * 560 / crop.width)), Image.LANCZOS)
+    out = Image.new("RGB", (crop.width, crop.height + 40), "white")
+    out.paste(crop, (0, 40))
+    ImageDraw.Draw(out).text((10, 10), "Green: removed from the scan (the photos see through it)",
+                             fill=(21, 128, 61), font=_font(18))
+    out.save(FIG / "holder_gap.jpg", quality=88)
+
+
 def stage_assets(state):
     """Physics assets from the scans, scaled to the measured sizes and masses."""
     import shutil
@@ -156,7 +259,7 @@ def stage_assets(state):
     from scan2usd.pipeline import BuildOptions, build_asset
 
     jobs = {
-        "cod_holder": (OUT / "cod_holder_base_fixed.ply", MEAS["cod_holder"]["height_m"], "z",
+        "cod_holder": (OUT / "cod_holder_gap.ply", MEAS["cod_holder"]["height_m"], "z",
                        MEAS["cod_holder"]["mass_kg"]),
         # The merged controller is already metric (face-up scale): no rescale.
         "controller": (OUT / "controller_closed.ply", None, "z", MEAS["controller"]["mass_kg"]),
@@ -450,7 +553,7 @@ def stage_lead(state, photo: str = "IMG_0024.jpg"):
         m.visual = trimesh.visual.ColorVisuals(m, vertex_colors=np.asarray(full.visual.vertex_colors)[idx])
         return render([m], size=S, azimuth=az, elevation=el)
 
-    holder = scan(OUT / "cod_holder_base_fixed.ply", -90, 12)
+    holder = scan(OUT / "cod_holder_gap.ply", -90, 12)
     ctrl = scan(OUT / "controller_merged.ply", -90, 55)
     sim = Image.open(FIG / "holder_fit.jpg").convert("RGB").crop((95, 31, 545, 431)).resize((S, int(S * 400 / 450)))
     simp = Image.new("RGB", (S, S), "white")
@@ -479,13 +582,14 @@ def stage_lead(state, photo: str = "IMG_0024.jpg"):
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage", default="prep,scale,merge,base,assets,truth,sim,video,figure,lead")
+    ap.add_argument("--stage", default="prep,scale,merge,base,gap,assets,truth,sim,video,figure,lead")
     args = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     state_path = OUT / "state.json"
     state = json.loads(state_path.read_text()) if state_path.exists() else {}
     for st in args.stage.split(","):
-        {"prep": stage_prep, "scale": stage_scale, "merge": stage_merge, "base": stage_base, "assets": stage_assets, "truth": stage_truth,
+        {"prep": stage_prep, "scale": stage_scale, "merge": stage_merge, "base": stage_base, "gap": stage_gap,
+         "assets": stage_assets, "truth": stage_truth,
          "sim": stage_sim, "video": stage_video, "figure": stage_figure, "lead": stage_lead}[st](state)
         state_path.write_text(json.dumps(state, indent=2))
 

@@ -6,7 +6,7 @@
     "decomposed": {
       "colliders": 345,
       "bodies": 12,
-      "ms_per_step": 1.826,
+      "ms_per_step": 2.043,
       "finite": true,
       "all_on_table": true,
       "resting_z": {
@@ -27,7 +27,7 @@
     "convex_hull": {
       "colliders": 12,
       "bodies": 12,
-      "ms_per_step": 1.786,
+      "ms_per_step": 1.979,
       "finite": true,
       "all_on_table": true,
       "resting_z": {
@@ -48,7 +48,7 @@
     "bounding_box": {
       "colliders": 12,
       "bodies": 12,
-      "ms_per_step": 1.536,
+      "ms_per_step": 1.602,
       "finite": true,
       "all_on_table": true,
       "resting_z": {

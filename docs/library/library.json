@@ -247,8 +247,8 @@
     "path": "/Library/cod_holder",
     "mass_kg": 0.528,
     "size_m": [
-      0.10147,
-      0.10824,
+      0.10145,
+      0.10802,
       0.21
     ],
     "colliders": {

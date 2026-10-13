@@ -6,7 +6,7 @@
 
 - **Accurate:** 0.6–0.8 mm mean surface error on the well-textured benchmark objects, scored against ground-truth meshes; metric size within 1.43% (worst of six objects) from a ColorChecker alone, no ruler.
 - **Physics-ready:** convex decomposition, mass and inertia, articulated joints. A Franka Panda picks a scanned mug that it can't pick when the mug has a single convex hull.
-- **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets ranks the Buddha first in **67/67** real photos of the Buddha dataset; in simulation, the same detector drives a perception-to-grasp loop (10/10 picks). From my own phone photos: a scanned controller dropped into a scanned holder comes to rest a median <!--n:sim_add-->9.9<!--/n--> mm from where the real one sits.
+- **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets ranks the Buddha first in **67/67** real photos of the Buddha dataset; in simulation, the same detector drives a perception-to-grasp loop (10/10 picks). From my own phone photos: a scanned controller dropped into a scanned holder comes to rest a median <!--n:sim_add-->9.1<!--/n--> mm from where the real one sits.
 - **Assets that know what they don't know:** grasps and measurement uncertainty stored in the USD file (codeless schemas), an experimental next-photo planner, and a **Gaussian-splat look riding on the physics hulls** that beats the textured mesh on 18/18 held-out photos.
 
 > Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[88 s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
@@ -32,6 +32,7 @@
 | Validate | 33 checks on the written file, including MuJoCo drop tests | `validate.py`, `simulate.py` |
 | Evaluate | Accuracy / completeness / F-score / volume against ground truth after alignment | `evaluate.py` |
 | Register | Align two scans, or a scan with a scene that contains it, up to scale: trimmed similarity ICP over a rotation search (merging capture passes, finding where an object really rests) | `register.py` |
+| Carve | Silhouette carving: count, per 3D point, the photos that see background through it, and cut that volume out of the mesh (openings Poisson bridged, like the gap between a figure's legs) | `carve.py` |
 
 ## Results
 
@@ -50,7 +51,7 @@ The three well-textured benchmark objects reconstruct to 0.6–0.8 mm. Plain or 
 
 ![Real pair, each scan, simulated drop](docs/figures/holder_fit_lead.jpg)
 
-**Real-world check: scan, simulate, compare** ([drop animation](docs/figures/holder_fit.webp), [per-drop errors](docs/figures/holder_fit_results.png)). I photographed a controller holder (81 photos) and a controller (two passes of 78 and 38, merged by similarity ICP at <!--n:merge_rmse-->0.5<!--/n--> mm RMSE), then the two together, which gives the reference pose. In MuJoCo, the scanned controller dropped into the scanned holder settles <!--n:sim_held-->12/12<!--/n--> times, median **<!--n:sim_add-->9.9<!--/n--> mm / <!--n:sim_rot-->14<!--/n-->°** from where the real one sits in the combined scan. With a single convex hull for the holder it slides off (<!--n:hull_held-->0/12<!--/n--> held). The same drops in [Isaac Sim 6 PhysX](docs/figures/isaac_holder_fit.webp): <!--n:isaac_held-->11/12<!--/n--> held, median <!--n:isaac_add-->11.0<!--/n--> mm. [Path traced](docs/figures/holder_fit_render.jpg) beside the other scans. Scale came from two tape measurements; the combined scan agrees within <!--n:scale_agree-->1.1<!--/n-->%. The holder's glossy base, pitted in the scan, is replaced by a cylinder fitted to its measured top (<!--n:base_rms-->0.25<!--/n--> mm rim error). `scripts/study_holder_fit.py`
+**Real-world check: scan, simulate, compare** ([drop animation](docs/figures/holder_fit.webp), [per-drop errors](docs/figures/holder_fit_results.png)). I photographed a controller holder (81 photos) and a controller (two passes of 78 and 38, merged by similarity ICP at <!--n:merge_rmse-->0.5<!--/n--> mm RMSE), then the two together, which gives the reference pose. In MuJoCo, the scanned controller dropped into the scanned holder settles <!--n:sim_held-->12/12<!--/n--> times, median **<!--n:sim_add-->9.1<!--/n--> mm / <!--n:sim_rot-->11<!--/n-->°** from where the real one sits in the combined scan. With a single convex hull for the holder it slides off (<!--n:hull_held-->0/12<!--/n--> held). The same drops in [Isaac Sim 6 PhysX](docs/figures/isaac_holder_fit.webp): <!--n:isaac_held-->11/12<!--/n--> held, median <!--n:isaac_add-->9.0<!--/n--> mm. [Path traced](docs/figures/holder_fit_render.jpg) beside the other scans. Scale came from two tape measurements; the combined scan agrees within <!--n:scale_agree-->1.2<!--/n-->%. The holder's glossy base, pitted in the scan, is replaced by a cylinder fitted to its measured top (<!--n:base_rms-->0.25<!--/n--> mm rim error), and the gap between its legs, which Poisson had filled in, is [carved back out where the photos see through it](docs/figures/holder_gap.jpg). `scripts/study_holder_fit.py`
 
 ![Panda](docs/figures/panda_demo.jpg)
 
@@ -86,7 +87,7 @@ Python 3.10–3.12, with [uv](https://docs.astral.sh/uv/):
 uv venv --python 3.11
 uv pip install -e ".[dev]"
 .venv\Scripts\scan2usd demo            # synthetic mug -> output\demo\ (see preview.png)
-.venv\Scripts\python -m pytest         # 102 tests
+.venv\Scripts\python -m pytest         # 105 tests
 ```
 
 Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (CUDA build): unzip it to `tools\colmap\` or set `SCAN2USD_COLMAP`.
