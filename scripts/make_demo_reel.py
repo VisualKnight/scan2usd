@@ -24,6 +24,19 @@ W, H, FPS = 1280, 720, 30
 BAR = 92
 INK, MUTED, ACCENT = (30, 41, 59), (100, 116, 139), (37, 99, 235)
 
+def _holder_subtitle() -> str:
+    import json
+
+    try:
+        st = json.loads((ROOT / "output" / "holder_fit" / "state.json").read_text())["sim"]
+        isaac = json.loads((FIG / "isaac_holder_fit.json").read_text())["results"]["decomposed"]
+    except (OSError, KeyError):
+        return "Scanned controller dropped into the scanned holder, compared with the real pose"
+    d, h = st["decomposed"], st["one hull"]
+    return (f"MuJoCo: {d['held_in_holder']}/{d['of']} held, median {d['add_mm_median']:.1f} mm from the real pose "
+            f"(Isaac Sim PhysX: {isaac['held_in_holder']}/{isaac['of']}); one convex hull: {h['held_in_holder']}/{h['of']}")
+
+
 # (file, title, subtitle, seconds for stills / max seconds for animations)
 SEGMENTS = [
     ("hero.jpg", "Phone photos in, physics-ready OpenUSD out",
@@ -31,7 +44,7 @@ SEGMENTS = [
     ("buddha_real.jpg", "Real photos → simulation asset",
      "COLMAP reconstruction, table removed automatically, watertight, convex decomposition", 4),
     ("texture_bake.jpg", "Scored against ground truth",
-     "0.6–0.8 mm mean surface error on textured objects; size within ±1.4% from a ColorChecker", 4),
+     "0.6–0.8 mm mean surface error on textured objects; size within ±1.4% from a ColorChecker", 3),
     ("render_beauty.jpg", "Path traced in Isaac Sim 6 RTX",
      "PBR look presets, baked 2K albedo + normal maps, HDRI lighting, physical depth of field", 5),
     ("panda_demo.webp", "Why collision geometry matters",
@@ -39,21 +52,23 @@ SEGMENTS = [
     ("isaac_franka_pick.webp", "Same plan, second physics engine",
      "Isaac Sim 6 PhysX, plan from the grasp stored in the USD: placed within 5.5 mm; one hull fails again", 7),
     ("hand_grasp.webp", "Dexterous grasping",
-     "Shadow Hand (24 joints): 1,440 sampled grasps over the asset library, lift + shake test", 6),
-    ("isaac_articulation.webp", "Articulated assets",
-     "USD revolute joint from one scan; PhysX drive: 90° → 90.1°, stops at the 105° limit", 4),
+     "Shadow Hand (24 joints): 1,440 sampled grasps over the asset library, lift + shake test", 5),
+    
     ("sim2real_compare.jpg", "Sim-to-real: trained only on renders",
      "On 67 real photos: object found in 100%; distractors cut false positives by 84%", 5),
     ("perception_pick.webp", "See it, locate it, pick it",
-     "Detector → fit the scanned mesh to RGB-D → Panda picks at the estimate: 10/10, 4.6 mm median error", 8),
+     "Detector → fit the scanned mesh to RGB-D → Panda picks at the estimate: 10/10, 4.6 mm median error", 7),
+    ("holder_fit_lead.jpg", "Own phone photos: does the scan behave like the real thing?",
+     "A holder and a controller, each scanned alone, then photographed together as the answer key", 5),
+    ("holder_fit.webp", "Scanned controller settles into the scanned holder", _holder_subtitle(), 6),
+    ("holder_fit_render.jpg", "Path traced beside the other scans",
+     "Phone-scanned holder and controller in the measured resting pose, Isaac Sim 6 RTX", 4),
     ("uncertainty.png", "Assets that know what they don't know",
-     "Seen / guessed / sealed surface and mass intervals stored in USD: truth inside for 5 of 6 objects", 5),
+     "Seen / guessed / sealed surface and mass intervals stored in USD: truth inside for 5 of 6 objects", 4),
     ("splat_buddha.jpg", "Gaussian splat for looks, convex hulls for physics",
-     "Rendered from photos it never saw: beats the textured mesh on 18/18 (Buddha PSNR 19.7 → 27.0 dB)", 5),
-    ("splat_drop.mp4", "Splats ride on PhysX",
-     "UsdVol Gaussian splats under rigid bodies; an inset mesh proxy casts their shadows (RTX)", 4),
+     "Rendered from photos it never saw: beats the textured mesh on 18/18 (Buddha PSNR 19.7 → 27.0 dB)", 4),
     ("isaac_franka_pick_splat.webp", "Franka picks a splat mug",
-     "Same plan and physics, the mug drawn by its Gaussian splat", 6),
+     "Same plan and physics, the mug drawn by its Gaussian splat", 5),
 ]
 
 def canvas(title: str, subtitle: str) -> Image.Image:

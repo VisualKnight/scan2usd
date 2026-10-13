@@ -1,7 +1,7 @@
 """Path-traced renders of Scan2USD assets in Isaac Sim 6 (RTX).
 
     set OMNI_KIT_ACCEPT_EULA=YES
-    <isaac-sim>\\python.exe scripts\\isaac_pathtrace.py [--shots beauty,normals,lookdev] [--spp 64 --subframes 8]
+    <isaac-sim>\\python.exe scripts\\isaac_pathtrace.py [--shots beauty,hero,normals,lookdev,real] [--spp 64 --subframes 8]
 
 Shots (written to output/pathtrace/):
   beauty   scanned assets on a table, HDRI dome light + key light, camera depth of field;
@@ -11,8 +11,11 @@ Shots (written to output/pathtrace/):
   normals  the Buddha under grazing light: 50k-triangle asset without vs. with the baked normal map.
   lookdev  the Buddha from a real photo's solved camera (scripts/lookdev_camera.py), with an object
            mask, for photo-vs-render comparison (scripts/compare_lookdev.py).
+  real     (opt-in) the phone-scanned holder with the controller in its measured resting pose
+           (scripts/study_holder_fit.py) beside two benchmark scans; wide and close-up.
 
-Assets: output/pbr/* (scan2usd build --bake-texture 2048 with look presets) and the GSO assets.
+Assets: output/pbr/* (scan2usd build --bake-texture 2048 with look presets), the GSO assets, and
+output/holder_fit/assets/* (own phone captures).
 HDRIs: NVIDIA's Isaac asset server (/NVIDIA/Assets/Skies).
 """
 

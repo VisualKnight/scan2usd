@@ -6,10 +6,10 @@
 
 - **Accurate:** 0.6–0.8 mm mean surface error on textured objects, scored against ground-truth meshes; metric size within ±1.4% from a ColorChecker alone, no ruler.
 - **Physics-ready:** convex decomposition, mass and inertia, articulated joints. A Franka Panda picks a scanned mug that it can't pick when the mug has a single convex hull.
-- **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets finds the object in **100%** of 67 real photos, and drives a perception-to-grasp loop (10/10 picks). From my own phone photos, a scanned controller settles into a scanned holder within 9.7 mm of where the real one sits.
+- **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets finds the object in **100%** of 67 real photos, and drives a perception-to-grasp loop (10/10 picks). From my own phone photos, a scanned controller settles into a scanned holder within <!--n:sim_add-->9.9<!--/n--> mm of where the real one sits.
 - **Assets that know what they don't know:** grasps and measurement uncertainty stored in the USD file (codeless schemas), guidance on which photos to take next, and a **Gaussian-splat look riding on the physics hulls** that beats the textured mesh on 18/18 held-out photos.
 
-> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[90 s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
+> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[88 s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
 
 ## What it does
 
@@ -49,7 +49,7 @@ Textured objects reconstruct to 0.6–0.8 mm. Plain or hidden surfaces (the prin
 
 ![Real pair, each scan, simulated drop](docs/figures/holder_fit_lead.jpg)
 
-**Real-world check: scan, simulate, compare** ([drop animation](docs/figures/holder_fit.webp), [per-drop errors](docs/figures/holder_fit_results.png)). Own iPhone photos of a controller holder (81) and a controller (78 + 38, two passes merged by similarity ICP at 0.5 mm RMSE), then of the two together. In MuJoCo, the scanned controller dropped into the scanned holder settles **12/12** times, median **9.7 mm / 13?°** from where the real one sits in the combined scan. With a single convex hull for the holder it slides off every time. The same drops in [Isaac Sim 6 PhysX](docs/figures/isaac_holder_fit.webp): 11/12 held, median 11.2 mm. [Path traced](docs/figures/holder_fit_render.jpg) beside the other scans. Scale came from two tape measurements; the combined scan agrees within 1.0%. The holder's glossy base, pitted in the scan, is replaced by a cylinder fitted to its measured top (0.25 mm rim error). `scripts/study_holder_fit.py`
+**Real-world check: scan, simulate, compare** ([drop animation](docs/figures/holder_fit.webp), [per-drop errors](docs/figures/holder_fit_results.png)). Own iPhone photos of a controller holder (81) and a controller (78 + 38 in two passes, merged by similarity ICP at <!--n:merge_rmse-->0.5<!--/n--> mm RMSE), then of the two together. In MuJoCo, the scanned controller dropped into the scanned holder settles <!--n:sim_held-->12/12<!--/n--> times, median **<!--n:sim_add-->9.9<!--/n--> mm / <!--n:sim_rot-->14<!--/n-->°** from where the real one sits in the combined scan. With a single convex hull for the holder it slides off (<!--n:hull_held-->0/12<!--/n--> held). The same drops in [Isaac Sim 6 PhysX](docs/figures/isaac_holder_fit.webp): <!--n:isaac_held-->11/12<!--/n--> held, median <!--n:isaac_add-->11.0<!--/n--> mm. [Path traced](docs/figures/holder_fit_render.jpg) beside the other scans. Scale came from two tape measurements; the combined scan agrees within <!--n:scale_agree-->1.1<!--/n-->%. The holder's glossy base, pitted in the scan, is replaced by a cylinder fitted to its measured top (<!--n:base_rms-->0.25<!--/n--> mm rim error). `scripts/study_holder_fit.py`
 
 ![Panda](docs/figures/panda_demo.jpg)
 
@@ -165,6 +165,7 @@ Isaac Sim scripts (`isaac_*.py`) run with Isaac Sim 6's Python (`set OMNI_KIT_AC
 | `study_uncertainty.py`, `study_robust_grasps.py` | Do the stored intervals contain the truth? Does randomizing within them predict real grasp success? |
 | `isaac_holder_fit.py` | The holder drop-in test in Isaac Sim 6 PhysX (same assets, same releases) |
 | `study_holder_fit.py` | Own phone captures: pen-box removal, two controller passes merged (`register.py`), assets at measured size and mass, both registered into the combined scan, MuJoCo drop-in vs the real pose |
+| `sync_holder_numbers.py` | Writes the holder study's numbers into README.md and the overview from the result files (values sit between `<!--n:key-->` markers) |
 | `study_capture_guide.py` | Weak capture + 8 guided / random / higher-ring photos rendered in Blender (`blender_render_capture.py --poses`), each reconstructed and scored |
 | `isaac_splat.py`, `compare_splat.py` | Hybrid assets in Isaac Sim RTX: mesh vs splat from held-out photo cameras (scored against the photos), showcase, physics drop |
 | `train_detector.py`, `make_coco_figure.py` | Train Faster R-CNN on the synthetic COCO set (needs `torch`/`torchvision`), score on held-out synthetic frames and on real photos |

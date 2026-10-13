@@ -5,7 +5,7 @@
 
 The hybrid asset (scan2usd splat) references the physics asset and adds a
 UsdVol.ParticleField3DGaussianSplat under its rigid body, with an `appearance` variant set
-(mesh | splat | both). Shots, written to output/splat/isaac/:
+(mesh | splat | splat_proxy). Shots, written to output/splat/isaac/:
   heldout   each held-out photo's solved camera (scripts/lookdev_camera.py): the asset rendered
             with appearance=mesh and appearance=splat, plus the object mask, for
             scripts/compare_splat.py (Buddha: real photos; mug: synthetic photos, studio lighting

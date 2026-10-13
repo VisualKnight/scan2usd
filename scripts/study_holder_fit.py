@@ -217,7 +217,7 @@ def asset_points(name, n=40000):
     from scan2usd.usd_io import read_usd
 
     a = read_usd(ROOT / f"output/holder_fit/assets/{name}/{name}.usda")
-    return np.asarray(a.render_mesh.sample(n, return_index=False)), a
+    return np.asarray(a.render_mesh.sample(n, return_index=False, seed=0)), a  # seeded: reproducible numbers
 
 
 def stage_truth(state):

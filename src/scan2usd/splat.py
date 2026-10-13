@@ -172,8 +172,12 @@ def masked_dataset(model_dir, image_dir, usd_path, m: np.ndarray, out_dir, exclu
         if name in exclude:
             continue
         model, w, h, p = cameras[cam_id]
-        fx, fy, cx, cy = (p[0], p[0], p[1], p[2]) if model in ("SIMPLE_PINHOLE", "SIMPLE_RADIAL", "SIMPLE_RADIAL_FISHEYE") \
-            else p[:4]
+        single = ("SIMPLE_PINHOLE", "SIMPLE_RADIAL", "SIMPLE_RADIAL_FISHEYE", "RADIAL", "RADIAL_FISHEYE")
+        fx, fy, cx, cy = (p[0], p[0], p[1], p[2]) if model in single else p[:4]
+        n_intr = 3 if model in single else 4
+        if len(p) > n_intr and np.abs(p[n_intr:]).max() > 1e-3:
+            raise ValueError(f"{model} camera with lens distortion {p[n_intr:]}: use the undistorted model "
+                             "(<workspace>/dense/0/sparse) and its images")
         k = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1.0]])
         alpha = silhouette(verts @ np.asarray(r).T + np.asarray(t), faces, k, int(w), int(h))
         rgb = Image.open(image_dir / name).convert("RGB")

@@ -51,7 +51,7 @@
 <h1>Scan2USD</h1>
 <p class="muted">Phone photos in, physics-ready <b>OpenUSD</b> assets out, verified in NVIDIA Isaac Sim and MuJoCo. · <a href="gallery/index.html"><b>Interactive 3D gallery</b></a> · <a href="library/index.html"><b>USD asset library</b></a> · <a href="https://github.com/VisualKnight/scan2usd"><b>Source on GitHub</b></a></p>
 <img class="board" src="figures/hero.jpg" alt="Real photos to a simulation-ready OpenUSD asset" style="margin-bottom:12px">
-<details style="margin-bottom:12px"><summary>▶ Watch the 90-second demo <span>· photos → USD → MuJoCo, Isaac Sim, perception, splats</span></summary>
+<details style="margin-bottom:12px"><summary>▶ Watch the 88-second demo <span>· photos → USD → MuJoCo, Isaac Sim, perception, own phone scans, splats</span></summary>
   <video controls preload="none" poster="figures/demo_poster.jpg" style="width:100%;border-radius:8px;margin-top:8px"><source src="scan2usd_demo.mp4" type="video/mp4"></video></details>
 <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(330px, 1fr))">
   <div class="card kpi"><b>0.78 mm</b><span>mean surface error, 78 photos → USD (speckled mug vs. ground truth)</span></div>
@@ -59,7 +59,7 @@
   <div class="card kpi"><b><span class="good">pick</span> vs <span class="bad">fail</span></b><span>Franka picks the scanned mug with convex decomposition, fails with one hull, in MuJoCo and Isaac Sim</span></div>
   <div class="card kpi"><b>88% → 100%</b><span>real photos where a detector trained only on our synthetic Isaac Sim data finds the object</span></div>
   <div class="card kpi"><b>5 / 6</b><span>true masses inside the uncertainty interval stored in the USD file (a single value: 2 / 6 within 10%)</span></div>
-  <div class="card kpi"><b>12 / 12</b><span>drops where a scanned controller settles into a scanned holder, median 9.7 mm from where the real one sits (phone photos)</span></div>
+  <div class="card kpi"><b><!--n:sim_held-->12/12<!--/n--></b><span>drops where a scanned controller settles into a scanned holder, median <!--n:sim_add-->9.9<!--/n--> mm from where the real one sits (phone photos)</span></div>
   <div class="card kpi"><b>18 / 18</b><span>unseen photos where the asset's Gaussian splat looks closer to reality than its textured mesh</span></div>
 </div>
 
@@ -136,17 +136,17 @@
 <div class="card" style="margin-bottom:12px"><img src="figures/holder_fit_lead.jpg" alt="The real pair, each object scanned alone, and the simulated drop">
   <p class="cap">One of the 58 photos of the real pair (left), the two objects each scanned on their own, and the simulation that puts them back together.</p></div>
 <div class="card" style="margin-bottom:12px"><img src="figures/holder_fit.webp" alt="Scanned controller dropped into the scanned holder">
-  <p class="cap">MuJoCo, both objects from phone photos (holder 81 photos, controller 78 + 38 in two passes). The controller is released 3 cm above its real pose; green is where it really rests, from the combined scan. Left: the holder's 64 convex pieces form the cupped hands, and the controller settles into them. Right: with one convex hull, the hands are a smooth bulge and the controller slides off.</p></div>
+  <p class="cap">MuJoCo, both objects from phone photos (holder 81 photos, controller 78 + 38 in two passes). The controller is released 3 cm above its real pose; green is where it really rests, from the combined scan. Left: the holder's <!--n:holder_hulls-->64<!--/n--> convex pieces form the cupped hands, and the controller settles into them. Right: with one convex hull, the hands are a smooth bulge and the controller slides off.</p></div>
 <div class="card" style="margin-bottom:12px"><img src="figures/holder_fit_results.png" alt="Settle error per drop">
-    <p class="cap">12 drops with ±8 mm / ±8° jitter. Decomposition: held 12/12, median 9.7 mm / 13?° from the real pose (released 31 mm away). One hull: 0/12 held.</p></div>
+    <p class="cap">12 drops with ±8 mm / ±8° jitter. Decomposition: held <!--n:sim_held-->12/12<!--/n-->, median <!--n:sim_add-->9.9<!--/n--> mm / <!--n:sim_rot-->14<!--/n-->° from the real pose (released <!--n:release-->31<!--/n--> mm away). One hull: <!--n:hull_held-->0/12<!--/n--> held.</p></div>
 <div class="card" style="margin-bottom:12px"><h3>Same drop in Isaac Sim 6 (PhysX)</h3><img src="figures/isaac_holder_fit.webp" alt="Isaac Sim drop">
-  <p class="cap">The same USD assets and the same 12 jittered releases in PhysX: 11/12 held, median 11.2 mm / 14? from the real pose (MuJoCo: 12/12, 9.7 mm). The one drop that falls is the one MuJoCo also scored worst, so both engines find that start marginal. With one convex hull: 0/12 in both. <code>scripts/isaac_holder_fit.py</code></p></div>
+  <p class="cap">The same USD assets and the same 12 jittered releases in PhysX: <!--n:isaac_held-->11/12<!--/n--> held, median <!--n:isaac_add-->11.0<!--/n--> mm / <!--n:isaac_rot-->14<!--/n-->° from the real pose (MuJoCo: <!--n:sim_held-->12/12<!--/n-->, <!--n:sim_add-->9.9<!--/n--> mm). Both engines agree that one hull can't hold it (<!--n:isaac_hull_held-->0/12<!--/n--> in PhysX). <code>scripts/isaac_holder_fit.py</code></p></div>
 <div class="card" style="margin-bottom:12px"><h3>Path traced with the other scans (Isaac Sim 6 RTX)</h3><img src="figures/holder_fit_render.jpg" alt="Path-traced holder and controller">
   <p class="cap">The two phone-scanned assets, the controller in its measured resting pose, beside the speckled mug and lion from the benchmark. Same lights and camera settings as the other renders; textures are the scans' own photo colors (2K baked). <code>isaac_pathtrace.py --shots real</code></p></div>
 <div class="card small"><h3>How the answer key is made</h3><ul>
-    <li><b>Scale:</b> from two tape measurements (holder 21 cm tall; controller 5.5 cm thick). The combined scan, fitted with the holder at free scale, agrees within 1.0%.</li>
-    <li><b>Two passes, one controller:</b> face-up and standing scans aligned by a similarity ICP over a rotation search (0.5 mm RMSE), pen box and paper removed, colors matched on the overlap, Poisson-meshed.</li>
-    <li><b>Ground truth:</b> both assets registered into the combined scan (holder 2.6 mm RMSE, controller 1.0 mm). The dark, glossy figure limits this to a few mm, so the 9.7 mm settle error is an upper bound.</li>
+    <li><b>Scale:</b> from two tape measurements (holder 21 cm tall; controller 5.5 cm thick). The combined scan, fitted with the holder at free scale, agrees within <!--n:scale_agree-->1.1<!--/n-->%.</li>
+    <li><b>Two passes, one controller:</b> face-up and standing scans aligned by a similarity ICP over a rotation search (<!--n:merge_rmse-->0.5<!--/n--> mm RMSE), pen box and paper removed, colors matched on the overlap, Poisson-meshed.</li>
+    <li><b>Ground truth:</b> both assets registered into the combined scan (holder <!--n:truth_holder-->2.6<!--/n--> mm RMSE, controller <!--n:truth_ctrl-->1.0<!--/n--> mm). The dark, glossy figure limits this to a few mm, so the <!--n:sim_add-->9.9<!--/n--> mm settle error is an upper bound.</li>
     <li><code>scripts/study_holder_fit.py</code> · <code>register.py</code></li></ul></div>
 
 <h2>Robotics demos</h2>
