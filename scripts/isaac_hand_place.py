@@ -103,6 +103,11 @@ def from7(p) -> np.ndarray:
     return hand_motion.pose(Rotation.from_quat(p[3:7]).as_matrix(), p[:3])
 
 
+GHOST_OPACITY = 0.3
+# The green ghost of the real resting pose is off in the Isaac renders: 6 mm / 5 deg from the placed
+# scan it pokes through one side and reads as broken geometry. The result is given as a number; the
+# MuJoCo video keeps the ghost, with a caption that explains it.
+SHOW_GHOST = False
 # (color, roughness, metallic): glossy light grey shells, a slightly darker forearm, metal knuckles.
 LOOKS = {"shell": ((0.78, 0.78, 0.79), 0.28, 0.0), "forearm": ((0.62, 0.62, 0.64), 0.3, 0.0),
          "metal": ((0.55, 0.56, 0.58), 0.3, 0.8), "tray": ((0.70, 0.69, 0.67), 0.32, 0.0)}
@@ -194,10 +199,13 @@ def scene(trial, collision, ghost=False):
             if p.HasAPI(UsdPhysics.CollisionAPI):
                 UsdPhysics.CollisionAPI(p).CreateCollisionEnabledAttr(False)
         rm = UsdGeom.Mesh(stage.GetPrimAtPath("/World/ghost/render"))
-        rm.CreateDisplayColorAttr([Gf.Vec3f(0.1, 0.8, 0.35)])
-        rm.CreateDisplayOpacityAttr([0.35])
         UsdGeom.PrimvarsAPI(rm.GetPrim()).CreatePrimvar("doNotCastShadows", Sdf.ValueTypeNames.Bool).Set(True)
-        UsdShade.MaterialBindingAPI.Apply(rm.GetPrim()).UnbindAllBindings()
+        # RTX ignores displayOpacity: the ghost needs a material with real opacity (path tracing honors
+        # it; RTX real-time also needs /rtx/raytracing/fractionalCutoutOpacity), else it draws opaque.
+        gm = preview(stage, "/World/Looks/ghost", (0.1, 0.8, 0.35), 0.5, 0.0)
+        UsdShade.Shader(stage.GetPrimAtPath("/World/Looks/ghost/PreviewSurface")).CreateInput(
+            "opacity", Sdf.ValueTypeNames.Float).Set(GHOST_OPACITY)
+        UsdShade.MaterialBindingAPI.Apply(rm.GetPrim()).Bind(gm, UsdShade.Tokens.strongerThanDescendants)
         UsdGeom.Imageable(g.GetPrim()).MakeInvisible()
 
     # The hand: referenced as imported, placed so its forearm sits at the first waypoint.
@@ -378,7 +386,7 @@ class Plan:
 
 def run(trial, collision, correct, record=None, trace=False, settle=1.5):
     wps = [{**w, "T": np.array(w["T"])} for w in trial["waypoints"]]
-    forearm, n_drive = scene(trial, collision, ghost=record is not None)
+    forearm, n_drive = scene(trial, collision, ghost=record is not None and SHOW_GHOST)
     sim = Sim(forearm, HAND_Q[str(wps[0]["g"])])
     plan = Plan(sim, trial, wps, correct, trace=trace)
     sub = omni.physx.get_physx_interface().subscribe_physics_on_step_events(plan.step, True, 0)
@@ -444,7 +452,7 @@ def video(trial, path_mp4):
             state["rp"] = rp
         eye, look = hand_motion.orbit_eye(hand_motion.camera_at(state["shots"], t))
         state["cam"].Set(Gf.Matrix4d().SetLookAt(Gf.Vec3d(*eye), Gf.Vec3d(*look), Gf.Vec3d(0, 0, 1)).GetInverse())
-        if t >= state["ev"]["release"] and not state.get("ghost_on"):
+        if state["ghost"] and t >= state["ev"]["release"] and not state.get("ghost_on"):
             UsdGeom.Imageable(state["ghost"]).MakeVisible()
             state["ghost_on"] = True
         if len(frames) < t * 30:  # 30 fps out of the 60 Hz updates
@@ -510,10 +518,7 @@ def stills(trial, out_dir, size=1024, spp=64, total_spp=2048):
             base = np.array(trial["controller_start" if ref == "start" else "target"])[:3, 3]
             eye, look = hand_motion.orbit_eye([*(base + off), dist, az, el])
             state["op"].Set(Gf.Matrix4d().SetLookAt(Gf.Vec3d(*eye), Gf.Vec3d(*look), Gf.Vec3d(0, 0, 1)).GetInverse())
-            if name == "result":  # a fainter ghost than in the video: the scanned controller stays readable
-                UsdGeom.Mesh(stage_ghost := state["ghost"].GetStage().GetPrimAtPath("/World/ghost/render")
-                             ).GetDisplayOpacityAttr().Set([0.2])
-                del stage_ghost
+            if name == "result" and state["ghost"]:
                 UsdGeom.Imageable(state["ghost"]).MakeVisible()
             tl.pause()
             settings.set("/rtx/rendermode", "PathTracing")

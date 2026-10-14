@@ -5,8 +5,8 @@
 
 Same layout as the real-world-check strip (study_holder_fit.py, holder_fit_lead.jpg): panel 1 is the
 same iPhone photo of the real pair; panels 2-4 are Isaac Sim 6 path-traced frames of the re-aimed run
-(seed 0), paused at the grasp, the insertion and after the release. PhysX simulates the run; the
-green ghost in panel 4 is where the real controller rests, measured in a scan of the real pair.
+(seed 0), paused at the grasp, the insertion and after the release. PhysX simulates the run; panel
+4's subtitle is the distance to where the real controller rests, measured in a scan of the real pair.
 """
 
 from __future__ import annotations
@@ -36,14 +36,10 @@ def main() -> None:
         return Image.open(STILLS / f"{name}.png").convert("RGB").resize((S, S), Image.LANCZOS)
 
     result = still("result")
-    d = ImageDraw.Draw(result)
-    txt = "green: where it really rests (photo 1)"
-    d.rectangle([0, S - 40, 20 + d.textlength(txt, font=_font(17)), S], fill="white")
-    d.text((10, S - 34), txt, fill=(21, 128, 61), font=_font(17))
     panels = [(real_pair_photo(S), "1 - The real pair", "iPhone photo"),
               (still("grasp"), "2 - Shadow Hand picks the scan", "Isaac Sim 6, PhysX, path traced"),
               (still("place"), "3 - Turns it upright, slides it in", "re-aimed from the in-hand pose"),
-              (result, "4 - Placed", f"{res['add_mm']:.1f} mm / {res['rot_deg']:.0f}\u00b0 from the real pose")]
+              (result, "4 - Placed", f"{res['add_mm']:.1f} mm / {res['rot_deg']:.0f}\u00b0 from the real pose (photo 1)")]
     gap, top_h = 50, 70
     out = Image.new("RGB", (4 * S + 3 * gap + 40, S + top_h + 20), "white")
     d = ImageDraw.Draw(out)

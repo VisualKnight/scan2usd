@@ -113,8 +113,6 @@ SEGMENTS = [
      "Seen / guessed / sealed surface and mass intervals stored in USD: truth inside for 5 of 6 objects", 4),
     ("splat_buddha.jpg", "Gaussian splat for looks, convex hulls for physics",
      "Rendered from photos it never saw: beats the textured mesh on 18/18 (Buddha PSNR 19.7 → 27.0 dB)", 4),
-    ("isaac_franka_pick_splat.webp", "Franka picks a splat mug",
-     "Same plan and physics, the mug drawn by its Gaussian splat", 5),
 ]
 
 def canvas(title: str, subtitle: str) -> Image.Image:

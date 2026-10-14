@@ -11,7 +11,7 @@
 - **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets ranks the Buddha first in **67/67** real photos of the Buddha dataset; in simulation, the same detector drives a perception-to-grasp loop (10/10 picks). From my own phone photos: a scanned controller dropped into a scanned holder comes to rest a median <!--n:sim_add-->9.1<!--/n--> mm from where the real one sits.
 - **Assets that know what they don't know:** grasps and measurement uncertainty stored in the USD file (codeless schemas), an experimental next-photo planner, and a **Gaussian-splat look riding on the physics hulls** that beats the textured mesh on 18/18 held-out photos.
 
-> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[<!--n:reel_s-->154<!--/n--> s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4?v=82545c31)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
+> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[<!--n:reel_s-->148<!--/n--> s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4?v=6a98c412)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
 
 ## What it does
 
@@ -187,6 +187,7 @@ Isaac Sim scripts (`isaac_*.py`) run with Isaac Sim 6's Python (`set OMNI_KIT_AC
 | `make_gallery.py` | Interactive web gallery (glTF + model-viewer) with a collision toggle → `docs/gallery/` |
 | `make_hero.py` | The README hero strip: real photo → asset → colliders → Isaac Sim frame |
 | `make_hand_hero.py` | The second hero strip: the real pair → Shadow Hand grasp, insertion, result (Isaac Sim path-traced stills from `isaac_hand_place.py --stills`) |
+| `make_sim2real_compare.py` | The sim-to-real figure: the same upright real photos through the detector trained without and with distractors |
 | `make_demo_reel.py` | The demo video, assembled from the figures (`pip install "imageio[ffmpeg]"`) |
 
 </details>

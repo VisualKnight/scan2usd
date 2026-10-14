@@ -54,6 +54,13 @@ def asset_body(asset: AssetData | str, name: str, pos=(0, 0, 0), quat=(1, 0, 0, 
 
     visual = asset.render_mesh
     if len(visual.faces) > visual_faces:
+        # Weld first: textured scans duplicate vertices along UV seams, and decimating those
+        # separately tears every seam open (cracks you can see through). MuJoCo draws a flat color,
+        # so the UVs aren't needed.
+        import trimesh
+
+        visual = trimesh.Trimesh(visual.vertices, visual.faces, process=False)
+        visual.merge_vertices(merge_tex=True, merge_norm=True, digits_vertex=6)
         visual = visual.simplify_quadric_decimation(face_count=visual_faces)
     files[f"{name}_visual.stl"] = visual.export(file_type="stl")
     assets = [f'<mesh name="{name}_visual" file="{name}_visual.stl"/>']
