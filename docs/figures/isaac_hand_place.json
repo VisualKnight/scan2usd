@@ -12,14 +12,14 @@
       "held": 12,
       "placed": 12,
       "add_mm_median": 6.2951760182984575,
-      "rot_deg_median": 5.304683544552103
+      "rot_deg_median": 5.30199904714676
     },
     "convex_hull_reaimed": {
       "trials": 12,
       "held": 0,
       "placed": 0,
-      "add_mm_median": 156.38303130196704,
-      "rot_deg_median": 86.27027258122381
+      "add_mm_median": 152.93335469818035,
+      "rot_deg_median": 86.44960370383865
     }
   },
   "trials": {
@@ -119,8 +119,8 @@
       },
       {
         "seed": 1,
-        "add_mm": 6.273148401097336,
-        "rot_deg": 5.285823322184208,
+        "add_mm": 6.266158112396318,
+        "rot_deg": 5.242550115213908,
         "held": true,
         "placed": true
       },
@@ -168,8 +168,8 @@
       },
       {
         "seed": 8,
-        "add_mm": 6.208934355310106,
-        "rot_deg": 5.105457881291053,
+        "add_mm": 6.217969580654504,
+        "rot_deg": 5.153803919508815,
         "held": true,
         "placed": true
       },
@@ -189,8 +189,8 @@
       },
       {
         "seed": 11,
-        "add_mm": 6.275884674921026,
-        "rot_deg": 5.243854432493057,
+        "add_mm": 6.265929837578793,
+        "rot_deg": 5.1787564414726415,
         "held": true,
         "placed": true
       }
@@ -198,85 +198,85 @@
     "convex_hull_reaimed": [
       {
         "seed": 0,
-        "add_mm": 151.74424990737054,
-        "rot_deg": 87.78714990577451,
+        "add_mm": 158.68207072478708,
+        "rot_deg": 87.13461551398616,
         "held": false,
         "placed": false
       },
       {
         "seed": 1,
-        "add_mm": 157.16925856924777,
-        "rot_deg": 86.12624074638569,
+        "add_mm": 153.04471345399537,
+        "rot_deg": 86.20348228044553,
         "held": false,
         "placed": false
       },
       {
         "seed": 2,
-        "add_mm": 153.4370377895987,
-        "rot_deg": 86.45198654553758,
+        "add_mm": 157.7776073517041,
+        "rot_deg": 87.12884006307209,
         "held": false,
         "placed": false
       },
       {
         "seed": 3,
-        "add_mm": 159.40428601392244,
-        "rot_deg": 86.139073087486,
+        "add_mm": 155.1524686617702,
+        "rot_deg": 87.28796838192177,
         "held": false,
         "placed": false
       },
       {
         "seed": 4,
-        "add_mm": 153.887718875623,
-        "rot_deg": 86.12524367678834,
+        "add_mm": 157.70285629669857,
+        "rot_deg": 86.13922389046748,
         "held": false,
         "placed": false
       },
       {
         "seed": 5,
-        "add_mm": 153.70355728332282,
-        "rot_deg": 88.2449631220305,
+        "add_mm": 145.7986261813979,
+        "rot_deg": 86.69572512723175,
         "held": false,
         "placed": false
       },
       {
         "seed": 6,
-        "add_mm": 156.58423697260432,
-        "rot_deg": 86.11993786062294,
+        "add_mm": 151.71093633318173,
+        "rot_deg": 86.17230442791187,
         "held": false,
         "placed": false
       },
       {
         "seed": 7,
-        "add_mm": 158.2436769701356,
-        "rot_deg": 87.38121202386122,
+        "add_mm": 152.82199594236533,
+        "rot_deg": 86.11823047262826,
         "held": false,
         "placed": false
       },
       {
         "seed": 8,
-        "add_mm": 152.9744993473946,
-        "rot_deg": 86.36645261551341,
+        "add_mm": 152.44219057765383,
+        "rot_deg": 86.11907269853636,
         "held": false,
         "placed": false
       },
       {
         "seed": 9,
-        "add_mm": 160.9646706648805,
-        "rot_deg": 86.1740925469342,
+        "add_mm": 157.8496744412802,
+        "rot_deg": 87.11194603901002,
         "held": false,
         "placed": false
       },
       {
         "seed": 10,
-        "add_mm": 156.18182563132976,
-        "rot_deg": 86.12820383335904,
+        "add_mm": 151.49858605469558,
+        "rot_deg": 86.13727942630915,
         "held": false,
         "placed": false
       },
       {
         "seed": 11,
-        "add_mm": 156.79386742379722,
-        "rot_deg": 86.99331810720653,
+        "add_mm": 141.9961699512884,
+        "rot_deg": 87.63274366167053,
         "held": false,
         "placed": false
       }

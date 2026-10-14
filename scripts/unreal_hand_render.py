@@ -49,7 +49,7 @@ HAND_LOOKS = {"black": ((0.025, 0.025, 0.028), 0.5, 0.0), "metallic": ((0.80, 0.
 TABLE_STRAND = [(0.62, -0.28), (0.48, -0.18), (0.40, -0.02), (0.42, 0.16), (0.30, 0.31), (0.12, 0.40),
                 (-0.07, 0.42), (-0.21, 0.33), (-0.29, 0.16), (-0.24, -0.01), (-0.10, -0.09), (0.05, -0.13),
                 (0.18, -0.24)]
-CAMERA_LOOK = {"focal_mm": 24.4, "fstop": 4.0}  # 45 deg vertical on a 36 x 20.25 mm back, as MuJoCo
+CAMERA_LOOK = {"focal_mm": round(hand_motion.focal_mm(20.25), 2), "fstop": 4.0}  # the shared lens, 36 x 20.25 mm back
 HAND_SETTINGS = dict(SETTINGS, exposure_ev=-4.1, key_lumens=600.0, hdri_intensity=1.1)
 
 
@@ -71,7 +71,7 @@ def record():
 
     frames = H.execute(su, wps, render=rec, fps=FPS, settle=3.5)
     res = H.score(ctrl, m, su.data, su.T_target)
-    return su, frames, res
+    return su, frames, res, [t0 for t0, _ in shots[1:]]
 
 
 def solid_material(stage, path: str, color, roughness: float, metallic: float = 0.0):
@@ -142,7 +142,7 @@ def ue_pose(T) -> list[float]:
 
 
 def stage_layout() -> dict:
-    su, frames, res = record()
+    su, frames, res, cuts = record()
     m, d = su.model, su.data
     print(f"recorded {len(frames)} frames ({len(frames) / FPS:.1f} s); placed {res['add_mm']:.1f} mm / "
           f"{res['rot_deg']:.0f} deg from the real pose", flush=True)
@@ -217,7 +217,7 @@ def stage_layout() -> dict:
         for b, T in poses.items():
             tracks["controller" if b == "ctrl" else b].append(ue_pose(T))
     tracks = {k: v for k, v in tracks.items() if stage.GetPrimAtPath(f"/World/hand/{k}") or k == "controller"}
-    anim = {"fps": FPS, "frames": len(frames), "tracks": tracks,
+    anim = {"fps": FPS, "frames": len(frames), "tracks": tracks, "cuts": [int(round(t * FPS)) for t in cuts],
             "camera": {"eye": [f[2].tolist() for f in frames], "target": [f[3].tolist() for f in frames]}}
     (OUT / "hand_anim.json").write_text(json.dumps(anim))
     ev = hand_motion.event_times(H.path(su))
@@ -261,7 +261,9 @@ def main() -> None:
         ue.build()
     meta = json.loads((OUT / "hand_layout.json").read_text())
     ev = meta["events_s"]
-    job = {"pass": "lumen", "resolution": [1920, 1080], "temporal_samples": 8, "warm_up": 64,
+    # Spatial, not temporal, samples: the tracks hold one pose per frame, and temporal samples spread
+    # over the shutter would mix two frames' poses into a double image.
+    job = {"pass": "lumen", "resolution": [1920, 1080], "temporal_samples": 1, "spatial_samples": 8, "warm_up": 64,
            "cvars": {"r.MegaLights.Allowed": 1}}
     if "preview" in stages:
         times = [ev["pick"] + 0.6, ev["turn"] - 0.4, ev["preplace"] + 0.3, ev["seat"], ev["away"] + 2.0]

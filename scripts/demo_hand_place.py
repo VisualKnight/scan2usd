@@ -220,18 +220,18 @@ def build(ctrl, holder, T_hold, T_ctrl0, T_stand, stand_half, collision, work: P
     scene = f"""<mujoco model="hand_place">
   <include file="right_hand.xml"/>
   <option timestep="0.002" integrator="implicitfast" cone="elliptic" impratio="10" noslip_iterations="8"/>
-  <visual><global offwidth="1920" offheight="1080"/><quality shadowsize="8192" offsamples="8"/>
+  <visual><global offwidth="1920" offheight="1080" fovy="{hand_motion.FOVY_DEG}"/><map zfar="200"/><quality shadowsize="8192" offsamples="8"/>
     <headlight ambient="0.32 0.32 0.33" diffuse="0.30 0.30 0.30" specular="0.05 0.05 0.05"/></visual>
   <asset>{hold.assets_xml}{c.assets_xml}
     <texture type="skybox" builtin="gradient" rgb1="0.97 0.97 0.98" rgb2="0.78 0.80 0.84" width="512" height="512"/>
     <texture name="grid" type="2d" builtin="checker" rgb1=".88 .88 .87" rgb2=".84 .84 .83" width="512" height="512"/>
-    <material name="grid" texture="grid" texrepeat="12 12"/>
+    <material name="grid" texture="grid" texrepeat="144 144"/>
   </asset>
   <worldbody>
     <light pos="0.7 -0.5 1.3" dir="-0.45 0.35 -1" diffuse="0.62 0.61 0.60" castshadow="true"/>
     <light pos="-0.6 0.4 0.9" dir="0.5 -0.3 -0.8" diffuse="0.30 0.32 0.36" castshadow="false"/>
     <light pos="-0.2 1.0 0.7" dir="0.1 -0.9 -0.4" diffuse="0.25 0.25 0.25" specular="0.3 0.3 0.3" castshadow="false"/>
-    <geom name="floor" type="plane" size="1 1 0.05" material="grid" solref="0.005 1"/>
+    <geom name="floor" type="plane" size="12 12 0.05" material="grid" solref="0.005 1"/>
     <body name="stand" pos="{sp[0, 3]:.5f} {sp[1, 3]:.5f} {STAND_H / 2:.5f}" quat="{" ".join(f"{q:.6f}" for q in quat_wxyz(sp[:3, :3]))}">
       <geom type="box" size="{stand_half[0]} {stand_half[1]} {STAND_H / 2}" rgba="0.62 0.60 0.57 1" friction="0.8 0.005 0.0001"/>
     </body>
@@ -575,7 +575,7 @@ def compare_still(ctrl, holder, R_rel, t_rel, poses, path_out: Path, size=(640, 
         rend = mujoco.Renderer(su.model, Hh, W)
         cam = mujoco.MjvCamera()
         cam.lookat[:] = su.T_target[:3, 3] + [0, 0, 0.015]
-        cam.distance, cam.azimuth, cam.elevation = 0.36, 128, -10
+        cam.distance, cam.azimuth, cam.elevation = 0.36 * hand_motion.LENS_PUSH, 128, -10
         rend.update_scene(su.data, camera=cam)
         im = Image.fromarray(rend.render().copy())
         rend.close()

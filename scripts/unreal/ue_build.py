@@ -195,9 +195,13 @@ seq.set_playback_start(0)
 seq.set_playback_end(frames)
 binding = seq.add_possessable(cam)
 cut = seq.add_track(unreal.MovieSceneCameraCutTrack)
-sec = cut.add_section()
-sec.set_range(0, frames)
-sec.set_camera_binding_id(seq.get_binding_id(binding))
+# One section per shot: a section boundary is a camera cut, so temporal history resets there.
+bounds = [0] + [c for c in (json.load(open(CFG["animation"])).get("cuts", []) if CFG.get("animation") else [])
+                if 0 < c < frames] + [frames]
+for a0, a1 in zip(bounds[:-1], bounds[1:]):
+    sec = cut.add_section()
+    sec.set_range(a0, a1)
+    sec.set_camera_binding_id(seq.get_binding_id(binding))
 
 anim = json.load(open(CFG["animation"])) if CFG.get("animation") else None
 if anim:

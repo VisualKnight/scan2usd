@@ -4,22 +4,22 @@
       "trials": 12,
       "held": 12,
       "placed": 12,
-      "add_mm_median": 13.08240912034979,
-      "rot_deg_median": 22.25021559529071
+      "add_mm_median": 13.082289509739983,
+      "rot_deg_median": 22.25010905730135
     },
     "hulls_reaimed": {
       "trials": 12,
       "held": 12,
       "placed": 12,
-      "add_mm_median": 6.36926963802944,
-      "rot_deg_median": 6.222442808735947
+      "add_mm_median": 6.369139980780798,
+      "rot_deg_median": 6.2223088499280035
     },
     "single_reaimed": {
       "trials": 12,
       "held": 0,
       "placed": 0,
-      "add_mm_median": 154.3346026972771,
-      "rot_deg_median": 89.04962571634249
+      "add_mm_median": 155.48571297532476,
+      "rot_deg_median": 89.18961154320573
     }
   },
   "trials": {
@@ -29,8 +29,8 @@
         "collision": "hulls",
         "reaimed": false,
         "holder_yaw_deg": 0.0,
-        "add_mm": 13.07257822247719,
-        "rot_deg": 22.216878839278372,
+        "add_mm": 13.0724547867565,
+        "rot_deg": 22.21677061458869,
         "held": true,
         "placed": true
       },
@@ -39,8 +39,8 @@
         "collision": "hulls",
         "reaimed": false,
         "holder_yaw_deg": -7.116807745607325,
-        "add_mm": 13.152193914410951,
-        "rot_deg": 22.307650863764927,
+        "add_mm": 13.15207270649387,
+        "rot_deg": 22.307545783626143,
         "held": true,
         "placed": true
       },
@@ -49,8 +49,8 @@
         "collision": "hulls",
         "reaimed": false,
         "holder_yaw_deg": 6.284514811885607,
-        "add_mm": 13.084731114358298,
-        "rot_deg": 22.23588145022838,
+        "add_mm": 13.084608484467298,
+        "rot_deg": 22.235773778805278,
         "held": true,
         "placed": true
       },
@@ -59,8 +59,8 @@
         "collision": "hulls",
         "reaimed": false,
         "holder_yaw_deg": 6.025489304127937,
-        "add_mm": 13.077112432799838,
-        "rot_deg": 22.271983056501952,
+        "add_mm": 13.076987699690731,
+        "rot_deg": 22.27187209442936,
         "held": true,
         "placed": true
       },
@@ -69,8 +69,8 @@
         "collision": "hulls",
         "reaimed": false,
         "holder_yaw_deg": 9.524874114154084,
-        "add_mm": 13.080087126341281,
-        "rot_deg": 22.232767394456427,
+        "add_mm": 13.079970535012668,
+        "rot_deg": 22.232666405401105,
         "held": true,
         "placed": true
       },
@@ -79,8 +79,8 @@
         "collision": "hulls",
         "reaimed": false,
         "holder_yaw_deg": 0.30651122084283955,
-        "add_mm": 13.059915144244979,
-        "rot_deg": 22.215320716536354,
+        "add_mm": 13.059794338677033,
+        "rot_deg": 22.21521355647973,
         "held": true,
         "placed": true
       },
@@ -89,8 +89,8 @@
         "collision": "hulls",
         "reaimed": false,
         "holder_yaw_deg": -2.618655204092435,
-        "add_mm": 12.861859418307974,
-        "rot_deg": 21.997336521856635,
+        "add_mm": 12.861727620945997,
+        "rot_deg": 21.997222182746444,
         "held": true,
         "placed": true
       },
@@ -99,8 +99,8 @@
         "collision": "hulls",
         "reaimed": false,
         "holder_yaw_deg": 5.513713804903871,
-        "add_mm": 13.148104893797855,
-        "rot_deg": 22.354078601791105,
+        "add_mm": 13.147976728017902,
+        "rot_deg": 22.353969364212713,
         "held": true,
         "placed": true
       },
@@ -109,8 +109,8 @@
         "collision": "hulls",
         "reaimed": false,
         "holder_yaw_deg": -3.625783230289665,
-        "add_mm": 12.985603397581817,
-        "rot_deg": 22.102095849118733,
+        "add_mm": 12.985478158839246,
+        "rot_deg": 22.101988503783723,
         "held": true,
         "placed": true
       },
@@ -119,8 +119,8 @@
         "collision": "hulls",
         "reaimed": false,
         "holder_yaw_deg": 2.062963001031237,
-        "add_mm": 13.085773890993824,
-        "rot_deg": 22.314819440012414,
+        "add_mm": 13.08567180670387,
+        "rot_deg": 22.31473404664443,
         "held": true,
         "placed": true
       },
@@ -129,8 +129,8 @@
         "collision": "hulls",
         "reaimed": false,
         "holder_yaw_deg": 6.568897705490613,
-        "add_mm": 13.218033827443733,
-        "rot_deg": 22.384398553703274,
+        "add_mm": 13.217925272225736,
+        "rot_deg": 22.384301220164627,
         "held": true,
         "placed": true
       },
@@ -139,8 +139,8 @@
         "collision": "hulls",
         "reaimed": false,
         "holder_yaw_deg": 2.029967152467149,
-        "add_mm": 13.13090425583206,
-        "rot_deg": 22.264549740353043,
+        "add_mm": 13.130783302174043,
+        "rot_deg": 22.264444335797428,
         "held": true,
         "placed": true
       }
@@ -151,8 +151,8 @@
         "collision": "hulls",
         "reaimed": true,
         "holder_yaw_deg": 0.0,
-        "add_mm": 6.435379812036382,
-        "rot_deg": 6.247672456079884,
+        "add_mm": 6.435250147600784,
+        "rot_deg": 6.247516784092364,
         "held": true,
         "placed": true
       },
@@ -161,8 +161,8 @@
         "collision": "hulls",
         "reaimed": true,
         "holder_yaw_deg": -7.116807745607325,
-        "add_mm": 6.371206744440342,
-        "rot_deg": 6.11710616420896,
+        "add_mm": 6.371064421491177,
+        "rot_deg": 6.116933550965503,
         "held": true,
         "placed": true
       },
@@ -171,8 +171,8 @@
         "collision": "hulls",
         "reaimed": true,
         "holder_yaw_deg": 6.284514811885607,
-        "add_mm": 6.641701118338543,
-        "rot_deg": 6.721077435243466,
+        "add_mm": 6.64154484442963,
+        "rot_deg": 6.720646750850106,
         "held": true,
         "placed": true
       },
@@ -181,8 +181,8 @@
         "collision": "hulls",
         "reaimed": true,
         "holder_yaw_deg": 6.025489304127937,
-        "add_mm": 6.312217213262459,
-        "rot_deg": 6.364906184593214,
+        "add_mm": 6.312161105262125,
+        "rot_deg": 6.364882568799592,
         "held": true,
         "placed": true
       },
@@ -191,8 +191,8 @@
         "collision": "hulls",
         "reaimed": true,
         "holder_yaw_deg": 9.524874114154084,
-        "add_mm": 6.62750544979539,
-        "rot_deg": 6.310955904058557,
+        "add_mm": 6.627175570162858,
+        "rot_deg": 6.310654495990445,
         "held": true,
         "placed": true
       },
@@ -201,8 +201,8 @@
         "collision": "hulls",
         "reaimed": true,
         "holder_yaw_deg": 0.30651122084283955,
-        "add_mm": 6.37976227728732,
-        "rot_deg": 6.1972131613920105,
+        "add_mm": 6.3796604142198925,
+        "rot_deg": 6.197100915763642,
         "held": true,
         "placed": true
       },
@@ -211,8 +211,8 @@
         "collision": "hulls",
         "reaimed": true,
         "holder_yaw_deg": -2.618655204092435,
-        "add_mm": 6.360250619716368,
-        "rot_deg": 6.091231908167239,
+        "add_mm": 6.360103826238141,
+        "rot_deg": 6.091056367403744,
         "held": true,
         "placed": true
       },
@@ -221,8 +221,8 @@
         "collision": "hulls",
         "reaimed": true,
         "holder_yaw_deg": 5.513713804903871,
-        "add_mm": 6.246137172428302,
-        "rot_deg": 6.146949625527972,
+        "add_mm": 6.245999463325111,
+        "rot_deg": 6.146799844861486,
         "held": true,
         "placed": true
       },
@@ -231,8 +231,8 @@
         "collision": "hulls",
         "reaimed": true,
         "holder_yaw_deg": -3.625783230289665,
-        "add_mm": 6.367332531618537,
-        "rot_deg": 6.176301122728653,
+        "add_mm": 6.3672155400704185,
+        "rot_deg": 6.176164626192162,
         "held": true,
         "placed": true
       },
@@ -241,8 +241,8 @@
         "collision": "hulls",
         "reaimed": true,
         "holder_yaw_deg": 2.062963001031237,
-        "add_mm": 6.353585347457307,
-        "rot_deg": 6.419025924475079,
+        "add_mm": 6.353454355876839,
+        "rot_deg": 6.418957411801894,
         "held": true,
         "placed": true
       },
@@ -251,8 +251,8 @@
         "collision": "hulls",
         "reaimed": true,
         "holder_yaw_deg": 6.568897705490613,
-        "add_mm": 6.550167090406712,
-        "rot_deg": 6.29939892389403,
+        "add_mm": 6.550118866727584,
+        "rot_deg": 6.299370056334357,
         "held": true,
         "placed": true
       },
@@ -261,8 +261,8 @@
         "collision": "hulls",
         "reaimed": true,
         "holder_yaw_deg": 2.029967152467149,
-        "add_mm": 6.345219302760791,
-        "rot_deg": 6.1181169418774894,
+        "add_mm": 6.34512524887609,
+        "rot_deg": 6.118068463204444,
         "held": true,
         "placed": true
       }
@@ -273,8 +273,8 @@
         "collision": "single",
         "reaimed": true,
         "holder_yaw_deg": 0.0,
-        "add_mm": 155.6017055884768,
-        "rot_deg": 88.07772994078942,
+        "add_mm": 158.93134101646348,
+        "rot_deg": 88.9469305422951,
         "held": false,
         "placed": false
       },
@@ -283,8 +283,8 @@
         "collision": "single",
         "reaimed": true,
         "holder_yaw_deg": -7.116807745607325,
-        "add_mm": 153.06749980607742,
-        "rot_deg": 90.11305921891142,
+        "add_mm": 161.71665213574892,
+        "rot_deg": 87.57504990934392,
         "held": false,
         "placed": false
       },
@@ -293,8 +293,8 @@
         "collision": "single",
         "reaimed": true,
         "holder_yaw_deg": 6.284514811885607,
-        "add_mm": 157.89654605620166,
-        "rot_deg": 87.23232252064163,
+        "add_mm": 159.1062296999926,
+        "rot_deg": 91.92751272278119,
         "held": false,
         "placed": false
       },
@@ -303,8 +303,8 @@
         "collision": "single",
         "reaimed": true,
         "holder_yaw_deg": 6.025489304127937,
-        "add_mm": 152.12686690481019,
-        "rot_deg": 89.33461061036364,
+        "add_mm": 152.6097442513376,
+        "rot_deg": 88.86808235573749,
         "held": false,
         "placed": false
       },
@@ -313,8 +313,8 @@
         "collision": "single",
         "reaimed": true,
         "holder_yaw_deg": 9.524874114154084,
-        "add_mm": 150.24353209007631,
-        "rot_deg": 87.8934726648789,
+        "add_mm": 156.49621784007965,
+        "rot_deg": 88.17341657689,
         "held": false,
         "placed": false
       },
@@ -323,8 +323,8 @@
         "collision": "single",
         "reaimed": true,
         "holder_yaw_deg": 0.30651122084283955,
-        "add_mm": 156.00672038859665,
-        "rot_deg": 89.25913656588178,
+        "add_mm": 154.23382019670322,
+        "rot_deg": 88.49800987243916,
         "held": false,
         "placed": false
       },
@@ -333,8 +333,8 @@
         "collision": "single",
         "reaimed": true,
         "holder_yaw_deg": -2.618655204092435,
-        "add_mm": 152.2550260975033,
-        "rot_deg": 90.75064761302765,
+        "add_mm": 154.94080001287293,
+        "rot_deg": 87.66768922741895,
         "held": false,
         "placed": false
       },
@@ -343,8 +343,8 @@
         "collision": "single",
         "reaimed": true,
         "holder_yaw_deg": 5.513713804903871,
-        "add_mm": 162.0566054229296,
-        "rot_deg": 87.69385971861801,
+        "add_mm": 156.03062593777656,
+        "rot_deg": 89.43229254411634,
         "held": false,
         "placed": false
       },
@@ -353,8 +353,8 @@
         "collision": "single",
         "reaimed": true,
         "holder_yaw_deg": -3.625783230289665,
-        "add_mm": 156.06969468650618,
-        "rot_deg": 88.84011486680319,
+        "add_mm": 154.21887837005582,
+        "rot_deg": 90.39128155536581,
         "held": false,
         "placed": false
       },
@@ -363,8 +363,8 @@
         "collision": "single",
         "reaimed": true,
         "holder_yaw_deg": 2.062963001031237,
-        "add_mm": 157.8993482680452,
-        "rot_deg": 87.99306045332939,
+        "add_mm": 149.7944817406338,
+        "rot_deg": 93.98698000779802,
         "held": false,
         "placed": false
       },
@@ -373,8 +373,8 @@
         "collision": "single",
         "reaimed": true,
         "holder_yaw_deg": 6.568897705490613,
-        "add_mm": 153.0468228470242,
-        "rot_deg": 92.7671504847104,
+        "add_mm": 157.1420896954923,
+        "rot_deg": 89.85728588510564,
         "held": false,
         "placed": false
       },
@@ -383,8 +383,8 @@
         "collision": "single",
         "reaimed": true,
         "holder_yaw_deg": 2.029967152467149,
-        "add_mm": 149.91021653216603,
-        "rot_deg": 89.6496691734325,
+        "add_mm": 152.47490046928965,
+        "rot_deg": 91.6646182471928,
         "held": false,
         "placed": false
       }

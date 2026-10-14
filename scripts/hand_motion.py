@@ -87,7 +87,7 @@ def place_waypoints(C_goal, approach, H_rel, open_key, transport, grip_key="grip
         wp(at(np.zeros(3)), grip_key, 1.0, tag="seat"),
         wp(at(np.zeros(3)), open_key, 0.8, tag="release"),
         wp(at(-0.08 * a), open_key, 0.9, via=True, tag="back"),
-        wp(at(-0.20 * a + [0, 0, 0.18]), open_key, 1.4, tag="away"),
+        wp(at(-0.22 * a + [0, 0, 0.30]), open_key, 1.6, tag="away"),
     ]
 
 
@@ -119,6 +119,19 @@ def event_times(wps: list[dict]) -> dict[str, float]:
     return out
 
 
+# The camera's lens: 20 deg vertical field of view, a 57 mm lens on a full-frame 16:9 back. The shots
+# are designed as distances for a 45 deg view (MuJoCo's default, a 24 mm lens); they are pushed back by
+# LENS_PUSH to keep the framing. A wide lens enlarges whatever is nearest the camera, which here is
+# always the hand: at 24 mm the true-scale Shadow Hand looked oversized next to the holder.
+FOVY_DEG = 20.0
+LENS_PUSH = float(np.tan(np.radians(22.5)) / np.tan(np.radians(FOVY_DEG / 2)))
+
+
+def focal_mm(sensor_height_mm: float = 20.25) -> float:
+    """Focal length giving FOVY_DEG on a sensor of this height (36 x 20.25 mm: full-frame 16:9)."""
+    return sensor_height_mm / (2 * float(np.tan(np.radians(FOVY_DEG / 2))))
+
+
 def camera_track(keys):
     """Smooth camera from keys [(t, lookat xyz, distance, azimuth, elevation)]: a cubic Hermite through
     them (finite-difference tangents, zero at the ends), so the camera eases in and out of the shot."""
@@ -142,8 +155,8 @@ def shot_keys(c_start, c_goal, wps):
     """Two shots, cut at the pause in front of the holder. A, from the tray side: establish the cell,
     push in on the grasp, pull back and pan with the turn. B, from the holder's front-right and high
     enough to see over the tray, with the forearm leaving frame left: the insertion, the release, then
-    a slow push in and round to the front on the seated controller next to the green ghost (the real
-    resting pose). Returns [(start time, keys)]."""
+    a slow push in and round to the holder's front (the tray drops out of the frame) on the seated
+    controller next to the green ghost (the real resting pose). Returns [(start time, keys)]."""
     ev = event_times(wps)
     c0 = np.asarray(c_start, float) + [0, 0, 0.01]
     g = np.asarray(c_goal, float)
@@ -154,16 +167,17 @@ def shot_keys(c_start, c_goal, wps):
          (ev["settle"], c0 + [0, 0, 0.03], 0.60, 170, -25),
          (ev["turn"], mid, 0.82, 176, -19),
          (cut, mid + [0, 0.02, 0], 0.84, 178, -18)]
-    b = [(cut, g + [0.0, -0.02, 0.05], 0.80, 152, -28),
-         (ev["seat"], g + [0, 0, 0.03], 0.62, 148, -24),
-         (ev["away"], g + [0, 0, 0.02], 0.52, 134, -18),
-         (ev["away"] + 3.5, g + [0, 0, 0.015], 0.44, 124, -16)]
-    return [(0.0, a), (cut, b)]
+    b = [(cut, g + [0.0, -0.02, 0.05], 0.80, 152, -32),
+         (ev["seat"], g + [0, 0, 0.03], 0.62, 146, -28),
+         (ev["away"], g + [0, 0, 0.02], 0.46, 112, -18),
+         (ev["away"] + 3.5, g + [0, 0, 0.012], 0.33, 82, -12)]
+    push = lambda keys: [(t, la, d * LENS_PUSH, az, el) for t, la, d, az, el in keys]  # noqa: E731
+    return [(0.0, push(a)), (cut, push(b))]
 
 
 def orbit_eye(x) -> tuple[np.ndarray, np.ndarray]:
     """(eye, lookat) for a camera track sample (lookat xyz, distance, azimuth, elevation in degrees),
-    MuJoCo's free-camera convention (azimuth/elevation of the viewing direction). Vertical FOV 45 deg."""
+    MuJoCo's free-camera convention (azimuth/elevation of the viewing direction). Vertical FOV FOVY_DEG."""
     look = np.asarray(x[:3], float)
     az, el = np.radians(x[4]), np.radians(x[5])
     fwd = np.array([np.cos(el) * np.cos(az), np.cos(el) * np.sin(az), np.sin(el)])

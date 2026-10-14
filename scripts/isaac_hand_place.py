@@ -130,7 +130,7 @@ def scene(trial, collision, ghost=False):
     floor = UsdGeom.Cube.Define(stage, "/World/floor")
     floor.CreateSizeAttr(1.0)
     floor.AddTranslateOp().Set(Gf.Vec3d(0, 0, -0.05))
-    floor.AddScaleOp().Set(Gf.Vec3f(3.0, 3.0, 0.1))
+    floor.AddScaleOp().Set(Gf.Vec3f(24.0, 24.0, 0.1))
     UsdPhysics.CollisionAPI.Apply(floor.GetPrim())
     floor.CreateDisplayColorAttr([Gf.Vec3f(0.86, 0.86, 0.85)])
 
@@ -245,8 +245,8 @@ def scene(trial, collision, ghost=False):
     cam = UsdGeom.Camera.Define(stage, "/World/cam")
     cam.CreateHorizontalApertureAttr(36.0)
     cam.CreateVerticalApertureAttr(20.25)
-    cam.CreateFocalLengthAttr(20.25 / (2 * math.tan(math.radians(22.5))))  # 45 deg vertical, as MuJoCo
-    cam.CreateClippingRangeAttr(Gf.Vec2f(0.01, 20.0))
+    cam.CreateFocalLengthAttr(hand_motion.focal_mm(20.25))  # the shared lens (hand_motion.FOVY_DEG)
+    cam.CreateClippingRangeAttr(Gf.Vec2f(0.05, 60.0))
     cam.AddTransformOp()
     return forearm.GetPath().pathString, n_drive
 
