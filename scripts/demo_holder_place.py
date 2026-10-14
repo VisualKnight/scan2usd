@@ -336,9 +336,10 @@ def trial(seed, ctrl, holder_asset, R_rel, t_rel, collision, lateral, side, tilt
 
 def video(ctrl, holder, R_rel, t_rel, lateral, side, out: Path, fps: int = 30):
     """Side by side: decomposed holder vs one convex hull, the same plan. Each panel: the cell from
-    the front, with a close-up of the hands inset; the green ghost is the real resting pose."""
-    wide = ((0.52, 0.02, 0.15), 0.95, -15, 200)
-    close = ((0.50, 0.17, 0.13), 0.42, -12, 120)
+    the front-left, with a close-up of the holder from the front inset in the bottom-right corner
+    (over empty floor, so it never hides the arm); the green ghost is the real resting pose."""
+    wide = ((0.49, 0.22, 0.22), 1.12, -18, 235)
+    close = ((0.495, 0.174, 0.12), 0.40, -12, 30)  # facing the figure: the controller seats into its hands
     W, H, IW, IH = 560, 420, 220, 176
     panels = []
     for collision, title in (("hulls", "Holder: convex decomposition (64 pieces)"), ("single", "Holder: one convex hull")):
@@ -372,14 +373,17 @@ def video(ctrl, holder, R_rel, t_rel, lateral, side, out: Path, fps: int = 30):
             wide_img, close_img = (Image.fromarray(a) for a in frames[i])
             close_img = close_img.crop(((W - IW * H // IH) // 2, 0, (W + IW * H // IH) // 2, H)).resize((IW, IH))
             sheet.paste(wide_img, (x, 44))
-            sheet.paste(close_img, (x + W - IW - 8, 44 + 8))
-            d.rectangle([x + W - IW - 9, 44 + 7, x + W - 8, 44 + 8 + IH], outline=(30, 41, 59), width=1)
+            ix, iy = x + W - IW - 8, 44 + H - IH - 8
+            sheet.paste(close_img, (ix, iy))
+            d.rectangle([ix - 1, iy - 1, ix + IW, iy + IH], outline=(30, 41, 59), width=1)
             d.text((x + 8, 10), title, fill=(30, 41, 59), font=_font(19))
             if i > n * 0.82:
                 ok = res["held"] and res["placed"]
                 msg = (f"held: {res['add_mm']:.1f} mm / {res['rot_deg']:.0f}\u00b0 from the real pose" if ok
                        else "slides off the hands")
-                d.text((x + 10, H + 44 - 34), msg, fill=(21, 128, 61) if ok else (185, 28, 28), font=_font(20))
+                tw = d.textlength(msg, font=_font(20))
+                d.rectangle([x + 4, 44 + 4, x + 16 + tw, 44 + 36], fill=(255, 255, 255))
+                d.text((x + 10, 44 + 8), msg, fill=(21, 128, 61) if ok else (185, 28, 28), font=_font(20))
         out_frames.append(sheet)
     out.mkdir(parents=True, exist_ok=True)
     out_frames[0].save(out / "holder_place.webp", save_all=True, append_images=out_frames[3::3], duration=100, loop=0,
