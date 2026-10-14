@@ -49,6 +49,19 @@ def _place_subtitle() -> str:
             f"from the real pose; one convex hull: {h['held']}/{h['trials']}")
 
 
+def _hand_subtitle() -> str:
+    import json
+
+    try:
+        s = json.loads((FIG / "hand_place.json").read_text())["summary"]
+    except (OSError, KeyError):
+        return "Shadow Hand spans the controller, turns it upright and sets it into the holder"
+    o, r = s["hulls_open_loop"], s["hulls_reaimed"]
+    return (f"Span grasp at the center of mass: {o['held']}/{o['trials']} held open loop "
+            f"({o['add_mm_median']:.0f} mm / {o['rot_deg_median']:.0f}?), re-aimed from the in-hand pose "
+            f"{r['add_mm_median']:.1f} mm / {r['rot_deg_median']:.0f}?")
+
+
 # (file, title, subtitle, seconds for stills / max seconds for animations)
 SEGMENTS = [
     ("hero.jpg", "Phone photos in, physics-ready OpenUSD out",
@@ -74,6 +87,7 @@ SEGMENTS = [
      "A holder and a controller, each scanned alone, then photographed together as the answer key", 5),
     ("holder_fit.webp", "Scanned controller settles into the scanned holder", _holder_subtitle(), 6),
     ("holder_place.webp", "A robot puts it there", _place_subtitle(), 8),
+    ("hand_place.webp", "Five fingers: Shadow Hand places it", _hand_subtitle(), 9),
     ("holder_fit_render.jpg", "Path traced beside the other scans",
      "Phone-scanned holder and controller in the measured resting pose, Isaac Sim 6 RTX", 4),
     ("unreal_flythrough.mp4", "The same USD files in Unreal Engine 5.8",

@@ -4,7 +4,7 @@
 
 Every synced number in the docs sits inside a marker such as <!--n:sim_add-->9.9<!--/n--> (HTML
 comments are invisible on GitHub and in the page). This script rewrites them from
-output/holder_fit/state.json, docs/figures/isaac_holder_fit.json, holder_place.json and unreal_render.json,
+output/holder_fit/state.json and docs/figures/ (isaac_holder_fit, holder_place, hand_place, unreal_render .json),
 so the published text always matches the published figures.
 """
 
@@ -37,6 +37,7 @@ def values() -> dict[str, str]:
         "base_r": f"{st['base']['radius_mm']:.1f}", "base_rms": f"{st['base']['rim_rms_mm']:.2f}",
         **unreal_values(),
         **place_values(),
+        **hand_values(),
     }
 
 
@@ -48,6 +49,18 @@ def place_values() -> dict[str, str]:
     return {"place_held": f"{s['hulls']['held']}/{s['hulls']['trials']}",
             "place_add": f"{s['hulls']['add_mm_median']:.1f}", "place_rot": f"{s['hulls']['rot_deg_median']:.0f}",
             "place_hull_held": f"{s['single']['held']}/{s['single']['trials']}"}
+
+
+def hand_values() -> dict[str, str]:
+    p = ROOT / "docs" / "figures" / "hand_place.json"
+    if not p.exists():
+        return {}
+    s = json.loads(p.read_text())["summary"]
+    ok, op, hull = s["hulls_reaimed"], s["hulls_open_loop"], s["single_reaimed"]
+    return {"hand_held": f"{ok['held']}/{ok['trials']}", "hand_add": f"{ok['add_mm_median']:.1f}",
+            "hand_rot": f"{ok['rot_deg_median']:.0f}", "hand_open_held": f"{op['held']}/{op['trials']}",
+            "hand_open_add": f"{op['add_mm_median']:.1f}", "hand_open_rot": f"{op['rot_deg_median']:.0f}",
+            "hand_hull_held": f"{hull['held']}/{hull['trials']}"}
 
 
 def unreal_values() -> dict[str, str]:
