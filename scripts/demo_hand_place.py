@@ -470,7 +470,7 @@ CAPTIONS = [  # (from event, text)
     ("preplace", "Re-aim: measure the controller in the hand, re-plan the insertion"),
     ("insert", "Slide in, set down 5 mm above the pose measured in the real pair"),
     ("release", "Release and back away"),
-    ("away", "Green: where the real controller sits, measured in a scan of the pair"),
+    ("away", "Seated where the real controller rests in a scan of the real pair"),
 ]
 
 
@@ -483,7 +483,9 @@ def video(ctrl, holder, R_rel, t_rel, poses, out: Path, summary=None, fps: int =
     from scan2usd.preview import _font
 
     W, Hh = size
-    su = Setup(0, ctrl, holder, R_rel, t_rel, "hulls", poses, ghost=True, correct=True, work_tag="video")
+    # No ghost of the real pose: a few mm from the placed scan it pokes through it in patches and reads
+    # as broken geometry. The end card gives the distance instead.
+    su = Setup(0, ctrl, holder, R_rel, t_rel, "hulls", poses, correct=True, work_tag="video")
     wps = path(su)
     shots = [(t0, hand_motion.camera_track(k))
              for t0, k in hand_motion.shot_keys(su.T_start[:3, 3], su.T_target[:3, 3], wps)]
@@ -493,14 +495,11 @@ def video(ctrl, holder, R_rel, t_rel, poses, out: Path, summary=None, fps: int =
     cam = mujoco.MjvCamera()
     opt = mujoco.MjvOption()
 
-    ghost = [g for g in range(su.model.ngeom) if su.model.geom_bodyid[g] == su.model.body("ghost").id]
-    g_alpha = float(su.model.geom_rgba[ghost[0], 3])
 
     def render(d):
         track = [tr for t0, tr in shots if d.time >= t0][-1]
         x = track(d.time)
         cam.lookat[:], cam.distance, cam.azimuth, cam.elevation = x[:3], x[3], x[4], x[5]
-        su.model.geom_rgba[ghost, 3] = g_alpha * float(np.clip((d.time - ev["release"]) / 0.8, 0, 1))
         rend.update_scene(d, camera=cam, scene_option=opt)
         return d.time, rend.render().copy()
 
@@ -560,7 +559,7 @@ def video(ctrl, holder, R_rel, t_rel, poses, out: Path, summary=None, fps: int =
 
 
 def compare_still(ctrl, holder, R_rel, t_rel, poses, path_out: Path, size=(640, 480)):
-    """Where the controller ends up, open loop vs re-aimed (seed 0), next to the real pose (green)."""
+    """Where the controller ends up, open loop vs re-aimed (seed 0), with the distance to the real pose."""
     from PIL import Image, ImageDraw
 
     from scan2usd.preview import _font
@@ -568,7 +567,7 @@ def compare_still(ctrl, holder, R_rel, t_rel, poses, path_out: Path, size=(640, 
     W, Hh = size
     tiles = []
     for correct, title in ((False, "Open loop"), (True, "Re-aimed from the in-hand pose")):
-        su = Setup(0, ctrl, holder, R_rel, t_rel, "hulls", poses, ghost=True, correct=correct,
+        su = Setup(0, ctrl, holder, R_rel, t_rel, "hulls", poses, correct=correct,
                    work_tag=f"still_{int(correct)}")
         execute(su, path(su), settle=2.0)
         res = score(ctrl, su.model, su.data, su.T_target)
@@ -582,7 +581,7 @@ def compare_still(ctrl, holder, R_rel, t_rel, poses, path_out: Path, size=(640, 
         d = ImageDraw.Draw(im)
         d.rounded_rectangle([12, 12, 12 + d.textlength(title, font=_font(20)) + 24, 48], 8, fill="white")
         d.text((24, 17), title, fill=(30, 41, 59), font=_font(20))
-        msg = f"{res['add_mm']:.1f} mm / {res['rot_deg']:.0f}\u00b0 from the real pose (green)"
+        msg = f"{res['add_mm']:.1f} mm / {res['rot_deg']:.0f}\u00b0 from the real pose"
         d.rounded_rectangle([12, Hh - 48, 12 + d.textlength(msg, font=_font(18)) + 24, Hh - 12], 8, fill="white")
         d.text((24, Hh - 43), msg, fill=(21, 128, 61), font=_font(18))
         tiles.append(im)

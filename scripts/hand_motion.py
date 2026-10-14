@@ -156,7 +156,7 @@ def shot_keys(c_start, c_goal, wps):
     push in on the grasp, pull back and pan with the turn. B, from the holder's front-right and high
     enough to see over the tray, with the forearm leaving frame left: the insertion, the release, then
     a slow push in and round to the holder's front (the tray drops out of the frame) on the seated
-    controller next to the green ghost (the real resting pose). Returns [(start time, keys)]."""
+    controller. Returns [(start time, keys)]."""
     ev = event_times(wps)
     c0 = np.asarray(c_start, float) + [0, 0, 0.01]
     g = np.asarray(c_goal, float)
