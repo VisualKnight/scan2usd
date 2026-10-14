@@ -1,6 +1,7 @@
 """A robot places the scanned controller into the scanned holder (MuJoCo, Franka Panda).
 
     python scripts/demo_holder_place.py [--trials 12] [--out docs/figures] [--no-video]
+    python scripts/demo_holder_place.py --export-plans output/holder_place_plans.json   # for Isaac Sim
 
 The drop test (study_holder_fit.py) releases the controller 3 cm above its real resting pose. Here a
 robot does the whole job, and the answer key is the same: where the real controller rests in the
@@ -80,12 +81,14 @@ class Controller:
         self.face = np.array([0, 0, 1.0])
         self.lat, self.up = v @ self.right, v @ self.top
 
-    def grasp_frame(self, lateral: float, side: int, inset: float = 0.012, tilt_deg: float = 0.0):
+    def grasp_frame(self, lateral: float, side: int, inset: float = 0.012, tilt_deg: float = 0.0,
+                    tip_depth: float = 0.0):
         """Hand pose (4x4, controller frame) for a pinch across the top edge at `lateral` (m along right).
 
         Hand z (approach) points into the edge, hand y (finger closing axis) is the face normal.
         `tilt_deg` swings the approach about the face normal toward the controller's center (+) or the
         outer side (-); a corner grasp needs it to keep the palm off the figure behind the edge.
+        `tip_depth` pushes the hand further in (m) so more of the finger pads overlap the edge.
         Returns the pose and the edge thickness there (m).
         """
         band = np.abs(self.lat - lateral) < 0.004
@@ -95,6 +98,7 @@ class Controller:
         p = lateral * self.right + (edge - inset) * self.top + np.array([0, 0, 0.5 * (z0 + z1)])
         a = np.radians(tilt_deg) * np.sign(lateral)
         z = -(np.cos(a) * self.top + np.sin(a) * self.right)
+        p = p + tip_depth * z
         y = side * self.face
         x = np.cross(y, z)
         G = np.eye(4)
@@ -384,6 +388,29 @@ def video(ctrl, holder, R_rel, t_rel, lateral, side, out: Path, fps: int = 30):
     print(f"wrote {out / 'holder_place.webp'} ({len(out_frames[::3])} frames at 10 fps)")
 
 
+def export_plans(ctrl, holder, R_rel, t_rel, lateral, side, seeds, path: Path) -> None:
+    """Joint plans and scene poses for replay in another simulator (scripts/isaac_holder_place.py)."""
+    out = []
+    for seed in seeds:
+        su = Setup(seed, ctrl, holder, R_rel, t_rel, "hulls", lateral, side)
+        m = su.model
+        stand = m.body("stand").id
+        geom = next(g for g in range(m.ngeom) if m.geom_bodyid[g] == stand)
+        hold = body_pose(m, su.data, "holder")
+        out.append({
+            "seed": seed, "holder": hold.tolist(), "target": su.T_target.tolist(), "controller_start": su.T_start.tolist(),
+            "stand": pose(su.data.xmat[stand].reshape(3, 3), su.data.xpos[stand]).tolist(),
+            "stand_half_extents": m.geom_size[geom].tolist(),
+            "home": HOME.tolist(), "finger_start_m": 0.04,
+            "waypoints": [{"q": [float(v) for v in q], "finger_m": float(g) * 0.04 / 255.0, "seconds": float(d),
+                           "ik_error_mm": float(e) * 1000} for q, g, d, e in su.steps],
+        })
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"grasp": {"lateral_m": lateral, "side": side}, "release_gap_m": RELEASE_GAP,
+                                "grip_stiffness_n_per_m": GRIP_STIFFNESS, "trials": out}, indent=1))
+    print(f"wrote {path} ({len(out)} plans)")
+
+
 def load():
     st = json.loads((FIT / "state.json").read_text())
     rel = st["truth"]["controller_in_holder"]
@@ -400,10 +427,14 @@ def main() -> None:
     ap.add_argument("--side", type=int, default=1)
     ap.add_argument("--out", type=Path, default=ROOT / "docs" / "figures")
     ap.add_argument("--no-video", action="store_true")
+    ap.add_argument("--export-plans", type=Path, help="write joint plans + poses (JSON) for Isaac Sim and exit")
     args = ap.parse_args()
     if not PANDA.exists():
         raise SystemExit(f"{PANDA} not found; fetch mujoco_menagerie/franka_emika_panda first (see README)")
     ctrl, holder, R_rel, t_rel = load()
+    if args.export_plans:
+        export_plans(ctrl, holder, R_rel, t_rel, args.lateral, args.side, range(args.trials), args.export_plans)
+        return
     results = {}
     for collision in ("hulls", "single"):
         rows = []
