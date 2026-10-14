@@ -101,6 +101,22 @@ def from7(p) -> np.ndarray:
     return hand_motion.pose(Rotation.from_quat(p[3:7]).as_matrix(), p[:3])
 
 
+# (color, roughness, metallic): glossy light grey shells, a slightly darker forearm, metal knuckles.
+LOOKS = {"shell": ((0.78, 0.78, 0.79), 0.28, 0.0), "forearm": ((0.62, 0.62, 0.64), 0.3, 0.0),
+         "metal": ((0.55, 0.56, 0.58), 0.3, 0.8), "tray": ((0.70, 0.69, 0.67), 0.32, 0.0)}
+
+
+def preview(stage, path, color, roughness, metallic):
+    mat = UsdShade.Material.Define(stage, path)
+    sh = UsdShade.Shader.Define(stage, f"{path}/PreviewSurface")
+    sh.CreateIdAttr("UsdPreviewSurface")
+    sh.CreateInput("diffuseColor", Sdf.ValueTypeNames.Color3f).Set(Gf.Vec3f(*color))
+    sh.CreateInput("roughness", Sdf.ValueTypeNames.Float).Set(roughness)
+    sh.CreateInput("metallic", Sdf.ValueTypeNames.Float).Set(metallic)
+    mat.CreateSurfaceOutput().ConnectToSource(sh.ConnectableAPI(), "surface")
+    return mat
+
+
 def surface_points(path, n=3000):
     stage = Usd.Stage.Open(path)
     mesh = UsdGeom.Mesh(stage.GetPrimAtPath(f"/{stage.GetDefaultPrim().GetName()}/render"))
@@ -141,6 +157,8 @@ def scene(trial, collision, ghost=False):
     tray.AddScaleOp().Set(Gf.Vec3f(*trial["tray_half_extents"]))
     UsdPhysics.CollisionAPI.Apply(tray.GetPrim())
     tray.CreateDisplayColorAttr([Gf.Vec3f(0.62, 0.60, 0.57)])
+    looks = {k: preview(stage, f"/World/Looks/{k}", *v) for k, v in LOOKS.items()}
+    UsdShade.MaterialBindingAPI.Apply(tray.GetPrim()).Bind(looks["tray"])
 
     holder = UsdGeom.Xform.Define(stage, "/World/holder")
     holder.GetPrim().GetReferences().AddReference(HOLDER)
@@ -188,6 +206,13 @@ def scene(trial, collision, ghost=False):
     F_local = np44(cache.GetLocalToWorldTransform(forearm))
     T_start = np.array(trial["waypoints"][0]["T"])
     hand.AddTransformOp().Set(gf(T_start @ np.linalg.inv(F_local)))
+    # Look: glossy light grey like Isaac's Franka (the imported dark finish disappears against the
+    # scene). The visual meshes are instances, so bind on each instance prim, stronger than its own.
+    for p in Usd.PrimRange(hand.GetPrim()):
+        if p.IsInstance():
+            name = p.GetName()
+            look = looks["metal"] if "knuckle" in name else looks["forearm"] if "forearm" in name else looks["shell"]
+            UsdShade.MaterialBindingAPI.Apply(p).Bind(look, UsdShade.Tokens.strongerThanDescendants)
 
     # Kinematic body the forearm is welded to (MuJoCo: the mocap body and its weld).
     target = UsdGeom.Xform.Define(stage, "/World/target")

@@ -277,9 +277,8 @@ if "real" in shots:
            focus=float(np.linalg.norm(np.subtract(eye, (0.0, 0.0, 0.1)))))
     settle()
     render("/World/real_cam", (1024, 1024), "real_pt" + args.tag)
-    camera(stage, "/World/real_cam2", (0.0, -0.36, 0.16), (0.0, 0.0, 0.11), focal=50, aspect=1.0, fstop=8.0,
-           focus=0.38)
-    render("/World/real_cam2", (1024, 1024), "real_close_pt" + args.tag)
+    Image.open(os.path.join(OUT, f"real_pt{args.tag}.png")).convert("RGB").save(
+        os.path.join(ROOT, "docs", "figures", "holder_fit_render.jpg"), quality=90)
     results["real"] = {"fstop": 8.0, "spp": args.spp * args.subframes, "holder_yaw": args.real_yaw}
 
 if "normals" in shots:

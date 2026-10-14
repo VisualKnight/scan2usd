@@ -29,7 +29,7 @@ from pathlib import Path
 import mujoco
 import numpy as np
 from PIL import Image
-from pxr import Gf, Kind, Usd, UsdGeom, UsdLux, UsdShade, Vt
+from pxr import Gf, Kind, Sdf, Usd, UsdGeom, UsdLux, UsdShade, Vt
 from scipy.spatial.transform import Rotation
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -43,9 +43,12 @@ FIG = ROOT / "docs" / "figures"
 HERE = Path(__file__).resolve().parent / "unreal"
 FPS = 30
 S = np.diag([1.0, -1.0, 1.0])  # USD/MuJoCo (right-handed) <-> Unreal (left-handed): Y flips
-# Real Shadow Hand finish: satin black shells, brushed aluminium knuckles, dark anodized forearm.
-HAND_LOOKS = {"black": ((0.025, 0.025, 0.028), 0.5, 0.0), "metallic": ((0.80, 0.80, 0.82), 0.32, 1.0),
-              "gray": ((0.10, 0.105, 0.115), 0.38, 0.6)}
+# Glossy light grey, like Isaac Sim's Franka: off-white shells, a slightly darker forearm, metal knuckles
+# (a dark finish disappears against the dark room).
+# Albedos are set for how they read under this key light (0.4 already clips to white on screen).
+HAND_LOOKS = {"black": ((0.20, 0.20, 0.21), 0.25, 0.0), "metallic": ((0.62, 0.62, 0.64), 0.3, 1.0),
+              "gray": ((0.15, 0.15, 0.16), 0.28, 0.0)}
+TRAY_LOOK = ((0.14, 0.138, 0.135), 0.3)
 TABLE_STRAND = [(0.62, -0.28), (0.48, -0.18), (0.40, -0.02), (0.42, 0.16), (0.30, 0.31), (0.12, 0.40),
                 (-0.07, 0.42), (-0.21, 0.33), (-0.29, 0.16), (-0.24, -0.01), (-0.10, -0.09), (0.05, -0.13),
                 (0.18, -0.24)]
@@ -84,13 +87,47 @@ def solid_material(stage, path: str, color, roughness: float, metallic: float = 
     tex.mkdir(parents=True, exist_ok=True)
     c = np.asarray(color, float)
     srgb = np.where(c <= 0.0031308, 12.92 * c, 1.055 * c ** (1 / 2.4) - 0.055)
-    Image.new("RGB", (4, 4), tuple(int(round(255 * v)) for v in srgb)).save(tex / f"solid_{name}_diff.png")
-    Image.new("L", (4, 4), int(round(255 * roughness))).save(tex / f"solid_{name}_rough.png")
+    rgb = tuple(int(round(255 * v)) for v in srgb)
+    r8 = int(round(255 * roughness))
+    # The value is in the file name: Unreal's USD importer caches textures by path, so a changed
+    # look under the same name would keep the old texture.
+    key = f"{name}_{''.join(f'{v:02x}' for v in rgb)}_{r8:02x}"
+    Image.new("RGB", (4, 4), rgb).save(tex / f"solid_{key}_diff.png")
+    Image.new("L", (4, 4), r8).save(tex / f"solid_{key}_rough.png")
     Image.new("RGB", (4, 4), (128, 128, 255)).save(tex / "solid_flat_nor_gl.png")
     return L.preview_material(stage, path, (1, 1, 1), roughness, metallic=metallic, textures={
-        "diffuse": (f"./textures/solid_{name}_diff.png", "diffuseColor", "color"),
+        "diffuse": (f"./textures/solid_{key}_diff.png", "diffuseColor", "color"),
         "normal": ("./textures/solid_flat_nor_gl.png", "normal", "normal"),
-        "rough": (f"./textures/solid_{name}_rough.png", "roughness", "scalar")})
+        "rough": (f"./textures/solid_{key}_rough.png", "roughness", "scalar")})
+
+
+def planar_uvs(points: np.ndarray, faces: np.ndarray, scale: float = 0.05) -> np.ndarray:
+    """Face-varying UVs: each face projected on the plane of its dominant normal axis. The looks are
+    flat colors, but Unreal derives tangents from UVs, and without them (all UVs zero) the tangent
+    frame is degenerate and even a flat normal map shades the surface dark."""
+    tri = points[faces]
+    n = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
+    axis = np.argmax(np.abs(n), axis=1)
+    keep = np.array([[1, 2], [0, 2], [0, 1]])[axis]  # the two other coordinates
+    uv = np.take_along_axis(tri, keep[:, None, :].repeat(3, axis=1), axis=2)
+    return (uv / scale).reshape(-1, 2)
+
+
+def box_mesh(stage, path: str, T, half) -> UsdGeom.Mesh:
+    """A box (pose T, half extents) as a mesh with face-varying UVs and normals."""
+    hx, hy, hz = half
+    c = np.array([[sx * hx, sy * hy, sz * hz] for sz in (-1, 1) for sy in (-1, 1) for sx in (-1, 1)])
+    quads = [(4, 5, 7, 6), (0, 2, 3, 1), (0, 1, 5, 4), (2, 6, 7, 3), (0, 4, 6, 2), (1, 3, 7, 5)]
+    faces = np.array([[q[0], q[1], q[2]] for q in quads] + [[q[0], q[2], q[3]] for q in quads])
+    mesh = UsdGeom.Mesh.Define(stage, path)
+    mesh.CreatePointsAttr(Vt.Vec3fArray.FromNumpy(c.astype(np.float32)))
+    mesh.CreateFaceVertexCountsAttr([3] * len(faces))
+    mesh.CreateFaceVertexIndicesAttr(Vt.IntArray.FromNumpy(faces.reshape(-1).astype(np.int32)))
+    mesh.CreateSubdivisionSchemeAttr("none")
+    st = UsdGeom.PrimvarsAPI(mesh).CreatePrimvar("st", Sdf.ValueTypeNames.TexCoord2fArray, UsdGeom.Tokens.faceVarying)
+    st.Set(Vt.Vec2fArray.FromNumpy(planar_uvs(c, faces).astype(np.float32)))
+    mesh.AddTransformOp().Set(Gf.Matrix4d(*np.asarray(T, float).T.flatten().tolist()))
+    return mesh
 
 
 def hand_meshes(stage, m, frame0):
@@ -128,6 +165,9 @@ def hand_meshes(stage, m, frame0):
         mesh.CreateNormalsAttr(Vt.Vec3fArray.FromNumpy(normals.astype(np.float32)))
         mesh.SetNormalsInterpolation(UsdGeom.Tokens.faceVarying)
         mesh.CreateSubdivisionSchemeAttr("none")
+        st = UsdGeom.PrimvarsAPI(mesh).CreatePrimvar("st", Sdf.ValueTypeNames.TexCoord2fArray,
+                                                     UsdGeom.Tokens.faceVarying)
+        st.Set(Vt.Vec2fArray.FromNumpy(planar_uvs(v, faces).astype(np.float32)))
         mat = m.material(m.geom_matid[g]).name if m.geom_matid[g] >= 0 else "black"
         UsdShade.MaterialBindingAPI.Apply(mesh.GetPrim()).Bind(looks.get(mat, looks["black"]))
         n += 1
@@ -176,13 +216,10 @@ def stage_layout() -> dict:
 
     stand = m.body("stand").id
     geom = next(g for g in range(m.ngeom) if m.geom_bodyid[g] == stand)
-    tray = UsdGeom.Cube.Define(stage, "/World/tray")
-    tray.CreateSizeAttr(2.0)
     T_tray = H.pose(d.xmat[stand].reshape(3, 3), d.xpos[stand])
-    tray.AddTransformOp().Set(Gf.Matrix4d(*T_tray.T.flatten().tolist()))
-    tray.AddScaleOp().Set(Gf.Vec3f(*m.geom_size[geom].tolist()))
+    tray = box_mesh(stage, "/World/tray", T_tray, m.geom_size[geom])
     UsdShade.MaterialBindingAPI.Apply(tray.GetPrim()).Bind(
-        solid_material(stage, "/World/Looks/Tray", (0.11, 0.105, 0.10), 0.8))
+        solid_material(stage, "/World/Looks/Tray", *TRAY_LOOK))
 
     wire = L.preview_material(stage, "/World/Looks/Copper", (0.95, 0.64, 0.54), 0.35, metallic=1.0)
     bulb = L.preview_material(stage, "/World/Looks/Bulb", (1.0, 0.9, 0.75), 0.3, emissive=(20.0, 11.0, 4.5))
