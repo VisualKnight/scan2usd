@@ -1,6 +1,7 @@
 """A Shadow Hand places the scanned controller into the scanned holder (MuJoCo).
 
     python scripts/demo_hand_place.py [--trials 12] [--out docs/figures] [--no-video]
+    python scripts/demo_hand_place.py --export-plans output/hand_place_plans.json   # for isaac_hand_place.py
 
 The five-finger version of scripts/demo_holder_place.py, with the same answer key: the controller
 lies face up on a raised tray; the hand comes down over its face, spans its width (thumb on one
@@ -40,9 +41,10 @@ from pathlib import Path
 import mujoco
 import numpy as np
 from scipy.optimize import minimize
-from scipy.spatial.transform import Rotation, Slerp
+from scipy.spatial.transform import Rotation
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import hand_motion  # noqa: E402
 from demo_holder_place import RELEASE_GAP, body_pose, load, pose, quat_wxyz, yaw_matrix  # noqa: E402
 
 from scan2usd.mjcf import asset_body  # noqa: E402
@@ -161,13 +163,20 @@ def span_frame(x) -> np.ndarray:
     return np.linalg.inv(pose(d.xmat[f].reshape(3, 3), d.xpos[f])) @ W
 
 
-def hand_ctrl(model, x) -> np.ndarray:
-    """Actuator targets for a span pose. The index and little fingers follow their neighbours (middle,
-    ring) a little less flexed, so they hover over the face instead of pressing on it; wrist straight."""
-    q = {n: v for n, v in zip(SPAN_JOINTS, x)}
+def hand_q(x) -> dict[str, float]:
+    """Joint targets for a span pose. The index and little fingers follow their neighbours (middle,
+    ring) a little less flexed, so they hover over the face instead of pressing on it; wrist straight.
+    Each J1 equals its J2 (MuJoCo drives the pair through one tendon)."""
+    q = {n: float(v) for n, v in zip(SPAN_JOINTS, x)}
     q.update({"rh_MFJ1": q["rh_MFJ2"], "rh_RFJ1": q["rh_RFJ2"],
               "rh_FFJ4": q["rh_MFJ4"] - 0.1, "rh_FFJ3": 0.7 * q["rh_MFJ3"], "rh_FFJ2": 0.3, "rh_FFJ1": 0.3,
               "rh_LFJ4": q["rh_RFJ4"] + 0.1, "rh_LFJ3": 0.7 * q["rh_RFJ3"], "rh_LFJ2": 0.3, "rh_LFJ1": 0.3})
+    return q
+
+
+def hand_ctrl(model, x) -> np.ndarray:
+    """Actuator targets for a span pose (hand_q mapped onto the actuators; tendons get J1 + J2)."""
+    q = hand_q(x)
     ctrl = np.zeros(model.nu)
     for a in range(model.nu):
         if model.actuator_trntype[a] == mujoco.mjtTrn.mjTRN_JOINT:
@@ -187,10 +196,11 @@ def build(ctrl, holder, T_hold, T_ctrl0, T_stand, stand_half, collision, work: P
         shutil.rmtree(work)
     shutil.copytree(HAND, work)
     xml = (work / "right_hand.xml").read_text()
+    # Studio palette: off-white hand shells, graphite forearm and joints.
     xml = xml.replace('<material name="black" specular="0.5" shininess="0.25" rgba="0.16355 0.16355 0.16355 1"/>',
-                      '<material name="black" specular="0.4" shininess="0.4" rgba="0.93 0.93 0.95 1"/>')
+                      '<material name="black" specular="0.35" shininess="0.5" rgba="0.90 0.90 0.91 1"/>')
     xml = xml.replace('<material name="gray" specular="0.0" shininess="0.25" rgba="0.80848 0.80848 0.80848 1"/>',
-                      '<material name="gray" specular="0.2" shininess="0.3" rgba="0.18 0.45 0.85 1"/>')
+                      '<material name="gray" specular="0.3" shininess="0.6" rgba="0.20 0.21 0.23 1"/>')
     xml = xml.replace('<body name="rh_forearm" childclass="right_hand" quat="0 1 0 1">',
                       '<body name="rh_forearm" childclass="right_hand" quat="0 1 0 1"><freejoint name="forearm_free"/>')
     (work / "right_hand.xml").write_text(xml)
@@ -205,24 +215,25 @@ def build(ctrl, holder, T_hold, T_ctrl0, T_stand, stand_half, collision, work: P
     if ghost is not None:
         ghost_xml = (f'<body name="ghost" pos="{" ".join(f"{v:.6f}" for v in ghost[:3, 3])}" '
                      f'quat="{" ".join(f"{q:.6f}" for q in quat_wxyz(ghost[:3, :3]))}">'
-                     f'<geom type="mesh" mesh="ctrl_visual" contype="0" conaffinity="0" rgba="0.1 0.8 0.35 0.35"/></body>')
+                     f'<geom type="mesh" mesh="ctrl_visual" contype="0" conaffinity="0" rgba="0.1 0.8 0.35 0.3"/></body>')
     sp = T_stand
     scene = f"""<mujoco model="hand_place">
   <include file="right_hand.xml"/>
   <option timestep="0.002" integrator="implicitfast" cone="elliptic" impratio="10" noslip_iterations="8"/>
-  <visual><global offwidth="1280" offheight="960"/><quality shadowsize="4096"/>
-    <headlight ambient="0.35 0.35 0.35" diffuse="0.45 0.45 0.45" specular="0.1 0.1 0.1"/></visual>
+  <visual><global offwidth="1920" offheight="1080"/><quality shadowsize="8192" offsamples="8"/>
+    <headlight ambient="0.32 0.32 0.33" diffuse="0.30 0.30 0.30" specular="0.05 0.05 0.05"/></visual>
   <asset>{hold.assets_xml}{c.assets_xml}
-    <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="0.80 0.84 0.90" width="512" height="512"/>
-    <texture name="grid" type="2d" builtin="checker" rgb1=".82 .82 .80" rgb2=".74 .74 .72" width="512" height="512"/>
-    <material name="grid" texture="grid" texrepeat="10 10"/>
+    <texture type="skybox" builtin="gradient" rgb1="0.97 0.97 0.98" rgb2="0.78 0.80 0.84" width="512" height="512"/>
+    <texture name="grid" type="2d" builtin="checker" rgb1=".88 .88 .87" rgb2=".84 .84 .83" width="512" height="512"/>
+    <material name="grid" texture="grid" texrepeat="12 12"/>
   </asset>
   <worldbody>
-    <light pos="0.4 -0.6 1.2" dir="-0.2 0.5 -1" diffuse="0.8 0.8 0.8" castshadow="true"/>
-    <light pos="-0.5 0.5 1.0" dir="0.4 -0.4 -1" diffuse="0.35 0.35 0.35" castshadow="false"/>
+    <light pos="0.7 -0.5 1.3" dir="-0.45 0.35 -1" diffuse="0.62 0.61 0.60" castshadow="true"/>
+    <light pos="-0.6 0.4 0.9" dir="0.5 -0.3 -0.8" diffuse="0.30 0.32 0.36" castshadow="false"/>
+    <light pos="-0.2 1.0 0.7" dir="0.1 -0.9 -0.4" diffuse="0.25 0.25 0.25" specular="0.3 0.3 0.3" castshadow="false"/>
     <geom name="floor" type="plane" size="1 1 0.05" material="grid" solref="0.005 1"/>
     <body name="stand" pos="{sp[0, 3]:.5f} {sp[1, 3]:.5f} {STAND_H / 2:.5f}" quat="{" ".join(f"{q:.6f}" for q in quat_wxyz(sp[:3, :3]))}">
-      <geom type="box" size="{stand_half[0]} {stand_half[1]} {STAND_H / 2}" rgba="0.18 0.32 0.55 1" friction="0.8 0.005 0.0001"/>
+      <geom type="box" size="{stand_half[0]} {stand_half[1]} {STAND_H / 2}" rgba="0.62 0.60 0.57 1" friction="0.8 0.005 0.0001"/>
     </body>
     <body name="target" mocap="true" quat="0 1 0 1"/>
     {hold.body_xml}{c.body_xml}{ghost_xml}
@@ -315,32 +326,19 @@ class Setup:
 
 
 def place_waypoints(su, H_rel):
-    """Waypoints from the pre-place pose on, for a forearm pose H_rel in the controller frame: tilt
-    upright in front of the holder, slide in along the approach, set down, open, back out, rise."""
-    C = su.C_goal
-
-    def at(v):  # forearm pose with the controller at its goal pose shifted by v (world)
-        return pose(C[:3, :3], C[:3, 3] + v) @ H_rel
-
-    al = su.al
-    return [
-        (at(-0.12 * al + [0, 0, 0.04]), "grip", su.transport),
-        (at(-0.05 * al), "grip", 1.2),
-        (at(np.zeros(3)), "grip", 1.2),
-        (at(np.zeros(3)), su.g_open, 0.8),
-        (at(-0.08 * al), su.g_open, 1.0),
-        (at(-0.08 * al + [0, 0, 0.08]), su.g_open, 0.8),
-    ]
+    return hand_motion.place_waypoints(su.C_goal, su.al, H_rel, su.g_open, su.transport)
 
 
 def path(su):
-    """Mocap waypoints: (forearm pose 4x4, span key, duration s).
+    """Waypoints (hand_motion.wp dicts) for the whole placement.
 
-    Approach the face from above with the fingers open around the sides, close, lift, then turn in two
-    separate moves: a yaw with the palm still down (gravity stays along the approach, which the grip
-    holds best), then the 90-degree tilt upright, which is a turn about the grasp axis itself (from face
-    up on the tray to face forward on the holder there is no way around that) and is the one move the
-    grip resists only by friction. The tilt is about the controller's center, so it doesn't swing.
+    Come down over the face with the fingers open around the sides, close, lift, then turn in two
+    stages blended into one move: a yaw with the palm still down (gravity stays along the approach,
+    which the grip holds best), then the 90-degree tilt upright, a turn about the grasp axis itself
+    (from face up on the tray to face forward on the holder there is no way around that) and the one
+    move the grip resists only by friction. The tilt is about the controller's center, so it doesn't
+    swing. The hand stops in front of the holder (where the re-aimed variant re-measures the
+    controller), slides in, sets it down, opens and backs away.
     """
     A0 = su.T_start @ su.H
     F = span_frame(su.poses[su.g_contact])
@@ -350,18 +348,13 @@ def path(su):
     face = C[:3, :3] @ su.ctrl.face
     tip = Rotation.align_vectors([[0, 0, 1.0]], [face])[0].as_matrix()
     C_mid = pose(tip @ C[:3, :3], C[:3, 3] - 0.12 * su.al + [0, 0, 0.10])
-    return [
-        (A0 @ pose(np.eye(3), -0.10 * (np.linalg.inv(A0[:3, :3]) @ ap) + np.linalg.inv(A0[:3, :3]) @ [0, 0, 0.06]),
-         su.g_open, 1.5),
-        (pose(A0[:3, :3], A0[:3, 3] - 0.06 * ap), su.g_open, 1.0),
-        (A0, su.g_open, 1.0),
-        (A0, "grip", 1.0),
-        (pose(A0[:3, :3], A0[:3, 3] + [0, 0, 0.08]), "grip", 1.2),
-        (C_mid @ su.H, "grip", 1.8),
-    ] + place_waypoints(su, su.H)
+    return hand_motion.pick_waypoints(A0, ap, C_mid @ su.H, su.g_open) + place_waypoints(su, su.H)
 
 
 def execute(su, wps, render=None, fps=30, settle=1.5, on_waypoint=None):
+    """Run the waypoints: the mocap target follows hand_motion's blended moves, the finger targets
+    blend leg by leg. render(d) is called at `fps` (frames are returned); on_waypoint(k, d) after each
+    move, k = the index of the waypoint it ended at."""
     m, d = su.model, su.data
     frames = []
 
@@ -372,41 +365,38 @@ def execute(su, wps, render=None, fps=30, settle=1.5, on_waypoint=None):
 
     # Start: put the hand at the first waypoint in the open pose, settled (the weld pulls the hand to the
     # mocap target; starting it there avoids a jolt across the scene).
-    T0, g0, _ = wps[0]
+    wps = list(wps)
+    T0 = wps[0]["T"]
     fadr = m.joint("forearm_free").qposadr[0]
     vadr = m.joint("forearm_free").dofadr[0]
     d.qpos[fadr:fadr + 3] = T0[:3, 3]
     d.qpos[fadr + 3:fadr + 7] = quat_wxyz(T0[:3, :3])
     d.qvel[vadr:vadr + 6] = 0
     d.mocap_pos[0], d.mocap_quat[0] = T0[:3, 3], quat_wxyz(T0[:3, :3])
-    c_prev = hand_ctrl(m, su.poses[g0])
-    d.ctrl[:] = c_prev
+    d.ctrl[:] = hand_ctrl(m, su.poses[wps[0]["g"]])
     mujoco.mj_forward(m, d)
-    T_prev = T0
-    wps = list(wps)
-    k = 0
+    T_prev, g_prev, k = T0, wps[0]["g"], 1
     while k < len(wps):
-        T, g, dur = wps[k]
-        c_to = hand_ctrl(m, su.poses[g])
-        sl = Slerp([0, 1], Rotation.from_matrix([T_prev[:3, :3], T[:3, :3]]))
-        n = max(1, int(dur / m.opt.timestep))
+        a, b = hand_motion.moves(wps, k)[0]
+        mv = hand_motion.Move(T_prev, g_prev, wps[a:b + 1])
+        c = [hand_ctrl(m, su.poses[g]) for g in mv.g]
+        n = max(1, int(round(mv.duration / m.opt.timestep)))
         for i in range(n):
-            s = 0.5 - 0.5 * np.cos(np.pi * (i + 1) / n)
-            d.mocap_pos[0] = T_prev[:3, 3] + (T[:3, 3] - T_prev[:3, 3]) * s
-            q = sl([s]).as_quat()[0]
-            d.mocap_quat[0] = (q[3], q[0], q[1], q[2])
-            d.ctrl[:] = c_prev + (c_to - c_prev) * min(1.0, (i + 1) / n)
+            T, leg, u = mv.at((i + 1) * m.opt.timestep)
+            d.mocap_pos[0] = T[:3, 3]
+            d.mocap_quat[0] = quat_wxyz(T[:3, :3])
+            d.ctrl[:] = c[leg] + (c[leg + 1] - c[leg]) * u
             step()
-        T_prev, c_prev = T, c_to
+        T_prev, g_prev = wps[b]["T"], wps[b]["g"]
         if on_waypoint is not None:
-            on_waypoint(k, d)
-        if su.correct and k == len(wps) - 6:
-            # At the pre-place pose: re-measure the controller in the hand (a wrist camera running the
+            on_waypoint(b, d)
+        if su.correct and wps[b]["tag"] == "preplace":
+            # In front of the holder: re-measure the controller in the hand (a wrist camera running the
             # perception pick's registration would; here it is read from the simulation) and re-aim the
             # rest of the placement at it.
             H_rel = np.linalg.inv(body_pose(m, d, "ctrl")) @ body_pose(m, d, "rh_forearm")
-            wps[k + 1:] = place_waypoints(su, H_rel)[1:]
-        k += 1
+            wps[b + 1:] = place_waypoints(su, H_rel)[1:]
+        k = b + 1
     for _ in range(int(settle / m.opt.timestep)):
         step()
     return frames
@@ -423,6 +413,46 @@ def score(ctrl, m, d, T_target):
             "placed": bool(held and add < 0.02)}
 
 
+def export_plans(ctrl, holder, R_rel, t_rel, poses, seeds, path_out: Path) -> None:
+    """Everything another engine needs to run the same placement (scripts/isaac_hand_place.py): per
+    seed the holder, tray and settled controller poses, the goal, the open-loop waypoints and the
+    re-aim inputs; the hand pose targets per key; the finger servos as simulated here."""
+    su = Setup(0, ctrl, holder, R_rel, t_rel, "hulls", poses)
+    m = su.model
+    servo = {}
+    for a in range(m.nu):
+        kp, frc = float(m.actuator_gainprm[a, 0]), [float(v) for v in m.actuator_forcerange[a]]
+        if m.actuator_trntype[a] == mujoco.mjtTrn.mjTRN_JOINT:
+            joints = [m.joint(m.actuator_trnid[a][0]).name]
+        else:
+            t = m.actuator_trnid[a][0]
+            joints = [m.joint(m.wrap_objid[i]).name for i in range(m.tendon_adr[t], m.tendon_adr[t] + m.tendon_num[t])]
+        for j in joints:
+            jid = m.joint(j).id
+            servo[j] = {"kp": kp, "force_range": frc, "damping": float(m.dof_damping[m.jnt_dofadr[jid]]),
+                        "armature": float(m.dof_armature[m.jnt_dofadr[jid]]),
+                        "frictionloss": float(m.dof_frictionloss[m.jnt_dofadr[jid]]), "tendon": len(joints) > 1}
+    trials = []
+    for seed in seeds:
+        su = Setup(seed, ctrl, holder, R_rel, t_rel, "hulls", poses)
+        m, d = su.model, su.data
+        stand = m.body("stand").id
+        geom = next(g for g in range(m.ngeom) if m.geom_bodyid[g] == stand)
+        trials.append({
+            "seed": seed, "holder": body_pose(m, d, "holder").tolist(), "target": su.T_target.tolist(),
+            "controller_start": su.T_start.tolist(), "c_goal": su.C_goal.tolist(), "approach": su.al.tolist(),
+            "tray": pose(d.xmat[stand].reshape(3, 3), d.xpos[stand]).tolist(),
+            "tray_half_extents": m.geom_size[geom].tolist(),
+            "waypoints": [{**w, "T": w["T"].tolist()} for w in path(su)],
+        })
+    keys = {str(k): hand_q(v) for k, v in su.poses.items()}
+    path_out.parent.mkdir(parents=True, exist_ok=True)
+    path_out.write_text(json.dumps({"hand_q": keys, "open_key": str(su.g_open), "transport": su.transport,
+                                    "servo": servo, "timestep": float(m.opt.timestep),
+                                    "release_gap_m": RELEASE_GAP, "trials": trials}, indent=1))
+    print(f"wrote {path_out} ({len(trials)} plans)")
+
+
 VARIANTS = (("hulls", False), ("hulls", True), ("single", True))
 
 
@@ -433,64 +463,134 @@ def trial(seed, ctrl, holder, R_rel, t_rel, poses, collision, correct):
             **score(ctrl, su.model, su.data, su.T_target)}
 
 
-def video(ctrl, holder, R_rel, t_rel, poses, out: Path, fps: int = 30):
-    """Side by side: open loop vs re-aimed from the in-hand pose, same seed. Each panel: the cell from
-    the right, with a close-up of the holder inset in the bottom-right corner (over empty floor); the green ghost is
-    the real resting pose."""
+CAPTIONS = [  # (from event, text)
+    ("start", "Approach: palm over the face, fingers open around its sides"),
+    ("pick", "Span grasp level with the center of mass: thumb vs. middle + ring"),
+    ("lift", "Lift, yaw palm-down, then tilt upright about the controller's center"),
+    ("preplace", "Re-aim: measure the controller in the hand, re-plan the insertion"),
+    ("insert", "Slide in, set down 5 mm above the pose measured in the real pair"),
+    ("release", "Release and back away"),
+    ("away", "Green: where the real controller sits, measured in a scan of the pair"),
+]
+
+
+def video(ctrl, holder, R_rel, t_rel, poses, out: Path, summary=None, fps: int = 30, size=(1280, 720)):
+    """The hero shot (re-aimed run, seed 0) as MP4 (30 fps), a lighter animated WebP for the README, a
+    poster frame, and a still comparing where open loop and re-aimed leave the controller."""
+    import imageio.v2 as iio
     from PIL import Image, ImageDraw
 
     from scan2usd.preview import _font
 
-    wide = ((0.05, 0.25, 0.15), 0.85, -30, 170)
-    close = ((-0.03, 0.22, 0.12), 0.42, -10, 20)
-    W, Hh, IW, IH = 560, 420, 220, 176
-    panels = []
+    W, Hh = size
+    su = Setup(0, ctrl, holder, R_rel, t_rel, "hulls", poses, ghost=True, correct=True, work_tag="video")
+    wps = path(su)
+    shots = [(t0, hand_motion.camera_track(k))
+             for t0, k in hand_motion.shot_keys(su.T_start[:3, 3], su.T_target[:3, 3], wps)]
+    ev = hand_motion.event_times(wps)
+    caps = sorted((ev[k], txt) for k, txt in CAPTIONS)
+    rend = mujoco.Renderer(su.model, Hh, W)
+    cam = mujoco.MjvCamera()
+    opt = mujoco.MjvOption()
+
+    ghost = [g for g in range(su.model.ngeom) if su.model.geom_bodyid[g] == su.model.body("ghost").id]
+    g_alpha = float(su.model.geom_rgba[ghost[0], 3])
+
+    def render(d):
+        track = [tr for t0, tr in shots if d.time >= t0][-1]
+        x = track(d.time)
+        cam.lookat[:], cam.distance, cam.azimuth, cam.elevation = x[:3], x[3], x[4], x[5]
+        su.model.geom_rgba[ghost, 3] = g_alpha * float(np.clip((d.time - ev["release"]) / 0.8, 0, 1))
+        rend.update_scene(d, camera=cam, scene_option=opt)
+        return d.time, rend.render().copy()
+
+    tail = 3.5
+    raw = execute(su, wps, render=render, fps=fps, settle=tail)
+    res = score(ctrl, su.model, su.data, su.T_target)
+    rend.close()
+    f_title, f_cap, f_small = _font(17), _font(25), _font(19)
+    t_end = raw[-1][0]
+    frames = []
+    for t, img in raw:
+        im = Image.fromarray(img).convert("RGBA")
+        ov = Image.new("RGBA", im.size, (0, 0, 0, 0))
+        d = ImageDraw.Draw(ov)
+        d.text((28, 22), "Shadow Hand places the scanned controller into the scanned holder  \u2014  MuJoCo",
+               fill=(30, 41, 59, 200), font=f_title)
+        # Caption: the latest phase, faded in over 0.3 s and out before the end card.
+        k = max([i for i, (t0, _) in enumerate(caps) if t >= t0 - 1e-6], default=0)
+        a = min(1.0, (t - caps[k][0]) / 0.3) if k > 0 else min(1.0, t / 0.3 + 0.01)
+        a = min(a, max(0.0, (t_end - 1.6 - t) / 0.3))
+        if a > 0:
+            txt = caps[k][1]
+            tw = d.textlength(txt, font=f_cap)
+            x0, y0 = 28, Hh - 74
+            d.rounded_rectangle([x0, y0, x0 + tw + 36, y0 + 46], 10, fill=(15, 23, 42, int(170 * a)))
+            d.text((x0 + 18, y0 + 8), txt, fill=(255, 255, 255, int(255 * a)), font=f_cap)
+        if t > t_end - 1.6:  # end card
+            b = min(1.0, (t - (t_end - 1.6)) / 0.4)
+            lines = [f"Placed: {res['add_mm']:.1f} mm / {res['rot_deg']:.0f}\u00b0 from the real pose"]
+            if summary:
+                o, r, h = summary["hulls_open_loop"], summary["hulls_reaimed"], summary["single_reaimed"]
+                lines += [f"12 jittered trials \u2014 re-aimed {r['held']}/{r['trials']} held, median "
+                          f"{r['add_mm_median']:.1f} mm / {r['rot_deg_median']:.0f}\u00b0",
+                          f"open loop {o['held']}/{o['trials']}, {o['add_mm_median']:.1f} mm / "
+                          f"{o['rot_deg_median']:.0f}\u00b0  \u00b7  one convex hull for the holder: "
+                          f"{h['held']}/{h['trials']}"]
+            fonts = [f_cap] + [f_small] * (len(lines) - 1)
+            wmax = max(d.textlength(L, font=f) for L, f in zip(lines, fonts))
+            x0, y0 = 28, Hh - 40 - 36 * len(lines)
+            d.rounded_rectangle([x0, y0, x0 + wmax + 36, Hh - 24], 10, fill=(255, 255, 255, int(225 * b)))
+            for i, (L, f) in enumerate(zip(lines, fonts)):
+                d.text((x0 + 18, y0 + 10 + 36 * i), L, fill=(21, 128, 61, int(255 * b)) if i == 0 else
+                       (30, 41, 59, int(255 * b)), font=f)
+        frames.append(Image.alpha_composite(im, ov).convert("RGB"))
+    out.mkdir(parents=True, exist_ok=True)
+    with iio.get_writer(out / "hand_place.mp4", fps=fps, codec="libx264", quality=None, pixelformat="yuv420p",
+                        macro_block_size=8, output_params=["-crf", "23", "-preset", "slow"]) as w:
+        for f in frames:
+            w.append_data(np.asarray(f))
+    small = [f.resize((800, 450), Image.LANCZOS) for f in frames[::3]]
+    small[0].save(out / "hand_place.webp", save_all=True, append_images=small[1:], duration=100, loop=0,
+                  quality=50, method=6)
+    poster = frames[min(len(frames) - 1, int((ev["away"] + 0.8) * fps))]
+    poster.save(out / "hand_place.jpg", quality=90)
+    print(f"wrote {out / 'hand_place.mp4'} ({len(frames)} frames, {len(frames) / fps:.1f} s), webp, poster")
+    compare_still(ctrl, holder, R_rel, t_rel, poses, out / "hand_place_compare.jpg")
+
+
+def compare_still(ctrl, holder, R_rel, t_rel, poses, path_out: Path, size=(640, 480)):
+    """Where the controller ends up, open loop vs re-aimed (seed 0), next to the real pose (green)."""
+    from PIL import Image, ImageDraw
+
+    from scan2usd.preview import _font
+
+    W, Hh = size
+    tiles = []
     for correct, title in ((False, "Open loop"), (True, "Re-aimed from the in-hand pose")):
         su = Setup(0, ctrl, holder, R_rel, t_rel, "hulls", poses, ghost=True, correct=correct,
-                   work_tag=f"video_{int(correct)}")
+                   work_tag=f"still_{int(correct)}")
+        execute(su, path(su), settle=2.0)
+        res = score(ctrl, su.model, su.data, su.T_target)
         rend = mujoco.Renderer(su.model, Hh, W)
-        cams = []
-        for la, dist, el, az in (wide, close):
-            c = mujoco.MjvCamera()
-            c.lookat[:], c.distance, c.elevation, c.azimuth = la, dist, el, az
-            cams.append(c)
-
-        def render(d, rend=rend, cams=cams):
-            rend.update_scene(d, camera=cams[0])
-            a = rend.render().copy()
-            rend.update_scene(d, camera=cams[1])
-            return a, rend.render().copy()
-
-        frames = execute(su, path(su), render=render, fps=fps)
+        cam = mujoco.MjvCamera()
+        cam.lookat[:] = su.T_target[:3, 3] + [0, 0, 0.015]
+        cam.distance, cam.azimuth, cam.elevation = 0.36, 128, -10
+        rend.update_scene(su.data, camera=cam)
+        im = Image.fromarray(rend.render().copy())
         rend.close()
-        panels.append((title, frames, score(ctrl, su.model, su.data, su.T_target)))
-    n = min(len(p[1]) for p in panels)
-    out_frames = []
-    for i in range(n):
-        sheet = Image.new("RGB", (2 * W + 10, Hh + 44), "white")
-        d = ImageDraw.Draw(sheet)
-        for k, (title, frames, res) in enumerate(panels):
-            x = k * (W + 10)
-            wide_img, close_img = (Image.fromarray(a) for a in frames[i])
-            close_img = close_img.crop(((W - IW * Hh // IH) // 2, 0, (W + IW * Hh // IH) // 2, Hh)).resize((IW, IH))
-            sheet.paste(wide_img, (x, 44))
-            ix, iy = x + W - IW - 8, 44 + Hh - IH - 8
-            sheet.paste(close_img, (ix, iy))
-            d.rectangle([ix - 1, iy - 1, ix + IW, iy + IH], outline=(30, 41, 59), width=1)
-            d.text((x + 8, 10), title, fill=(30, 41, 59), font=_font(19))
-            if i > n * 0.82:
-                ok = res["held"] and res["placed"]
-                msg = (f"held: {res['add_mm']:.1f} mm / {res['rot_deg']:.0f}\u00b0 from the real pose" if ok
-                       else "dropped")
-                tw = d.textlength(msg, font=_font(20))
-                d.rectangle([x + 4, 44 + 4, x + 16 + tw, 44 + 36], fill=(255, 255, 255))
-                d.text((x + 10, 44 + 8), msg, fill=(21, 128, 61) if ok else (185, 28, 28), font=_font(20))
-        out_frames.append(sheet)
-    out.mkdir(parents=True, exist_ok=True)
-    out_frames[0].save(out / "hand_place.webp", save_all=True, append_images=out_frames[3::3], duration=100, loop=0,
-                       quality=45, method=6)
-    out_frames[int(n * 0.86)].save(out / "hand_place.jpg", quality=88)
-    print(f"wrote {out / 'hand_place.webp'} ({len(out_frames[::3])} frames at 10 fps)")
+        d = ImageDraw.Draw(im)
+        d.rounded_rectangle([12, 12, 12 + d.textlength(title, font=_font(20)) + 24, 48], 8, fill="white")
+        d.text((24, 17), title, fill=(30, 41, 59), font=_font(20))
+        msg = f"{res['add_mm']:.1f} mm / {res['rot_deg']:.0f}\u00b0 from the real pose (green)"
+        d.rounded_rectangle([12, Hh - 48, 12 + d.textlength(msg, font=_font(18)) + 24, Hh - 12], 8, fill="white")
+        d.text((24, Hh - 43), msg, fill=(21, 128, 61), font=_font(18))
+        tiles.append(im)
+    sheet = Image.new("RGB", (2 * W + 8, Hh), "white")
+    for i, t in enumerate(tiles):
+        sheet.paste(t, (i * (W + 8), 0))
+    sheet.save(path_out, quality=90)
+    print(f"wrote {path_out}")
 
 
 def main() -> None:
@@ -498,11 +598,15 @@ def main() -> None:
     ap.add_argument("--trials", type=int, default=12)
     ap.add_argument("--out", type=Path, default=ROOT / "docs" / "figures")
     ap.add_argument("--no-video", action="store_true")
+    ap.add_argument("--export-plans", type=Path, help="write the plans + hand targets (JSON) for Isaac Sim and exit")
     args = ap.parse_args()
     if not HAND.exists():
         raise SystemExit(f"{HAND} not found; fetch mujoco_menagerie/shadow_hand first (see README)")
     poses = span_poses()
     ctrl, holder, R_rel, t_rel = load()
+    if args.export_plans:
+        export_plans(ctrl, holder, R_rel, t_rel, poses, range(args.trials), args.export_plans)
+        return
     results = {}
     for collision, correct in VARIANTS:
         key = f"{collision}_{'reaimed' if correct else 'open_loop'}"
@@ -520,7 +624,7 @@ def main() -> None:
     (args.out / "hand_place.json").write_text(json.dumps({"summary": summary, "trials": results,
                                                           "release_gap_m": RELEASE_GAP}, indent=2))
     if not args.no_video:
-        video(ctrl, holder, R_rel, t_rel, poses, args.out)
+        video(ctrl, holder, R_rel, t_rel, poses, args.out, summary=summary)
 
 
 if __name__ == "__main__":

@@ -30,8 +30,11 @@ for r in CFG["renders"]:
     out = cfg.find_or_add_setting_by_class(unreal.MoviePipelineOutputSetting)
     out.output_directory = unreal.DirectoryPath(CFG["output_dir"])
     out.output_resolution = unreal.IntPoint(*r["resolution"])
-    out.file_name_format = r["name"] + ("" if CFG.get("frames", 1) == 1 else ".{frame_number}")
+    out.file_name_format = r["name"] + ("" if CFG.get("frames", 1) == 1 or r.get("single") else ".{frame_number}")
     out.override_existing_output = True
+    if "range" in r:  # a part of the sequence: [first frame, end frame)
+        out.use_custom_playback_range = True
+        out.custom_start_frame, out.custom_end_frame = r["range"]
 
     if r["pass"] == "path_tracer":
         cfg.find_or_add_setting_by_class(unreal.MoviePipelineDeferredPass_PathTracer)

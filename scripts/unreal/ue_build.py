@@ -2,8 +2,10 @@
 
     UnrealEditor-Cmd Scan2USD_UE.uproject -run=pythonscript -script="ue_build.py"
 
-Settings come from scan2usd_ue.json next to this script (written by scripts/unreal_render.py). The
-level is rebuilt from scratch each run: /Game/Scene, /Game/Maps and /Game/Render are deleted first.
+Settings come from scan2usd_ue.json next to this script (written by scripts/unreal_render.py or
+scripts/unreal_hand_render.py). The level is rebuilt from scratch each run: its map and its content
+folders (default /Game/Scene, /Game/Render) are deleted first. With "animation" (a JSON file: per-frame
+poses of named actors and of the camera) the sequence keys every frame, e.g. a simulated hand.
 """
 import json
 import math
@@ -13,7 +15,9 @@ import unreal
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CFG = json.load(open(os.path.join(HERE, "scan2usd_ue.json")))
-MAP = "/Game/Maps/Tabletop"
+MAP = CFG.get("map", "/Game/Maps/Tabletop")
+SCENE_DIR = CFG.get("scene_dir", "/Game/Scene")
+RENDER_DIR = CFG.get("render_dir", "/Game/Render")
 eal = unreal.EditorAssetLibrary
 les = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 eas = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
@@ -49,9 +53,11 @@ def look_rotation(eye, target):
     return unreal.Rotator(roll=0.0, pitch=pitch, yaw=yaw)
 
 
-for d in ("/Game/Scene", "/Game/Maps", "/Game/Render"):
+for d in (SCENE_DIR, RENDER_DIR):
     if eal.does_directory_exist(d):
         eal.delete_directory(d)
+if eal.does_asset_exist(MAP):
+    eal.delete_asset(MAP)
 les.new_level(MAP)
 
 # --- the USD layout: table, scans, fairy lights, key light -----------------------------------------
@@ -64,7 +70,7 @@ opts.import_level_sequences = False
 opts.purposes_to_import = 2  # render (default-purpose prims always come along); skips the "guide" colliders
 opts.prim_path_folder_structure = False
 opts.nanite_triangle_threshold = 200000
-imported = import_file(CFG["layout"], "/Game/Scene", opts)
+imported = import_file(CFG["layout"], SCENE_DIR, opts)
 log(f"imported {len(imported)} assets from the layout")
 
 actors = eas.get_all_level_actors()
@@ -94,7 +100,7 @@ log(f"{n_point} point lights, MegaLights allowed on each")
 # DirectX-convention (-Y) maps. Flip green on import unless the importer already did.
 n_flip = 0
 if CFG.get("flip_normal_green", True):
-    for path in eal.list_assets("/Game/Scene", recursive=True):
+    for path in eal.list_assets(SCENE_DIR, recursive=True):
         tex = unreal.load_asset(path)
         if isinstance(tex, unreal.Texture2D) and "normal" in tex.get_name().lower():
             tex.set_editor_property("flip_green_channel", True)
@@ -105,7 +111,7 @@ for a in actors:
     log(f"actor {a.get_class().get_name()} {a.get_actor_label()} {a.get_actor_location()}")
 
 # --- environment: the HDRI as a backdrop sphere + sky light ----------------------------------------
-hdr = import_file(CFG["hdri"], "/Game/Scene/HDRI")
+hdr = import_file(CFG["hdri"], SCENE_DIR + "/HDRI")
 cube = unreal.load_asset(hdr[0])
 bp = unreal.EditorAssetLibrary.load_blueprint_class("/HDRIBackdrop/Blueprints/HDRIBackdrop")
 backdrop = eas.spawn_actor_from_class(bp, unreal.Vector(0, 0, -3.5), unreal.Rotator(0, 0, CFG["hdri_yaw"]))
@@ -181,7 +187,7 @@ fs.set_editor_property("manual_focus_distance",
                        100.0 * math.dist(cam_cfg["eye"], cam_cfg.get("focus", cam_cfg["target"])))
 cc.set_editor_property("focus_settings", fs)
 
-seq = unreal.AssetToolsHelpers.get_asset_tools().create_asset("Shot", "/Game/Render", unreal.LevelSequence,
+seq = unreal.AssetToolsHelpers.get_asset_tools().create_asset("Shot", RENDER_DIR, unreal.LevelSequence,
                                                               unreal.LevelSequenceFactoryNew())
 frames = CFG.get("frames", 1)
 seq.set_display_rate(unreal.FrameRate(CFG.get("fps", 24), 1))
@@ -193,7 +199,50 @@ sec = cut.add_section()
 sec.set_range(0, frames)
 sec.set_camera_binding_id(seq.get_binding_id(binding))
 
-if CFG.get("animate"):
+anim = json.load(open(CFG["animation"])) if CFG.get("animation") else None
+if anim:
+    # Keyed animation: one key per frame for every named actor and for the camera (eye, aim point,
+    # focus distance). Constant interpolation: each frame shows the simulated pose of that frame, so
+    # Euler angle wrap-around between keys can't spin anything.
+    const = unreal.MovieSceneKeyInterpolation.CONSTANT
+    by_label = {a.get_actor_label(): a for a in eas.get_all_level_actors()}
+    for a in eas.get_all_level_actors():  # Lumen is fully dynamic; animated actors and their children must move
+        rc = a.get_editor_property("root_component")
+        if rc is not None:
+            rc.set_mobility(unreal.ComponentMobility.MOVABLE)
+    n_keys = 0
+    for label, poses in anim["tracks"].items():
+        actor = by_label.get(label)
+        if actor is None:
+            log(f"animation: no actor labelled {label}")
+            continue
+        b = seq.add_possessable(actor)
+        sec = b.add_track(unreal.MovieScene3DTransformTrack).add_section()
+        sec.set_range(0, frames)
+        ch = sec.get_all_channels()
+        for f, (x, y, z, qx, qy, qz, qw) in enumerate(poses):
+            r = unreal.Quat(qx, qy, qz, qw).rotator()
+            t = unreal.FrameNumber(f)
+            for c, v in zip(ch[:6], (x, y, z, r.roll, r.pitch, r.yaw)):
+                c.add_key(t, v, interpolation=const)
+            n_keys += 1
+    xf = binding.add_track(unreal.MovieScene3DTransformTrack).add_section()
+    xf.set_range(0, frames)
+    ch = xf.get_all_channels()
+    cc_binding = seq.add_possessable(cc)
+    ftrack = cc_binding.add_track(unreal.MovieSceneFloatTrack)
+    ftrack.set_property_name_and_path("ManualFocusDistance", "FocusSettings.ManualFocusDistance")
+    fsec = ftrack.add_section()
+    fsec.set_range(0, frames)
+    fch = fsec.get_all_channels()[0]
+    for f, (eye, tgt) in enumerate(zip(anim["camera"]["eye"], anim["camera"]["target"])):
+        loc, rot = ue_location(eye), look_rotation(eye, tgt)
+        t = unreal.FrameNumber(f)
+        for c, v in zip(ch[:6], (loc.x, loc.y, loc.z, 0.0, rot.pitch, rot.yaw)):
+            c.add_key(t, v, interpolation=const)
+        fch.add_key(t, 100.0 * math.dist(eye, tgt), interpolation=const)
+    log(f"animation: {len(anim['tracks'])} actors, {n_keys} pose keys, camera over {frames} frames")
+elif CFG.get("animate"):
     # A slow orbit around the hero (the focus point): eye and aim point rotate together about it, 36
     # degrees, rising slightly. The hero stays at the same distance, so a fixed focus keeps it sharp.
     eye0, tgt0 = cam_cfg["eye"], cam_cfg["target"]
@@ -223,4 +272,4 @@ if CFG.get("animate"):
 
 eal.save_loaded_asset(seq)
 les.save_current_level()
-log(f"saved {MAP} and /Game/Render/Shot ({frames} frame(s))")
+log(f"saved {MAP} and {RENDER_DIR}/Shot ({frames} frame(s))")

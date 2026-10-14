@@ -4,7 +4,7 @@
 
 Every synced number in the docs sits inside a marker such as <!--n:sim_add-->9.9<!--/n--> (HTML
 comments are invisible on GitHub and in the page). This script rewrites them from
-output/holder_fit/state.json and docs/figures/ (isaac_holder_fit, holder_place, hand_place, unreal_render .json),
+output/holder_fit/state.json and docs/figures/ (isaac_holder_fit, holder_place, hand_place, isaac_hand_place, unreal_render .json),
 so the published text always matches the published figures.
 """
 
@@ -38,6 +38,7 @@ def values() -> dict[str, str]:
         **unreal_values(),
         **place_values(),
         **hand_values(),
+        **isaac_hand_values(),
     }
 
 
@@ -61,6 +62,18 @@ def hand_values() -> dict[str, str]:
             "hand_rot": f"{ok['rot_deg_median']:.0f}", "hand_open_held": f"{op['held']}/{op['trials']}",
             "hand_open_add": f"{op['add_mm_median']:.1f}", "hand_open_rot": f"{op['rot_deg_median']:.0f}",
             "hand_hull_held": f"{hull['held']}/{hull['trials']}"}
+
+
+def isaac_hand_values() -> dict[str, str]:
+    p = ROOT / "docs" / "figures" / "isaac_hand_place.json"
+    if not p.exists():
+        return {}
+    s = json.loads(p.read_text())["summary"]
+    ok, op, hull = s["decomposed_reaimed"], s["decomposed_open_loop"], s["convex_hull_reaimed"]
+    return {"ihand_held": f"{ok['held']}/{ok['trials']}", "ihand_add": f"{ok['add_mm_median']:.1f}",
+            "ihand_rot": f"{ok['rot_deg_median']:.0f}", "ihand_open_held": f"{op['held']}/{op['trials']}",
+            "ihand_open_add": f"{op['add_mm_median']:.1f}", "ihand_open_rot": f"{op['rot_deg_median']:.0f}",
+            "ihand_hull_held": f"{hull['held']}/{hull['trials']}"}
 
 
 def unreal_values() -> dict[str, str]:

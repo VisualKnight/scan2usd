@@ -1,0 +1,286 @@
+{
+  "summary": {
+    "decomposed_open_loop": {
+      "trials": 12,
+      "held": 12,
+      "placed": 12,
+      "add_mm_median": 19.456141927604182,
+      "rot_deg_median": 27.17026166501032
+    },
+    "decomposed_reaimed": {
+      "trials": 12,
+      "held": 12,
+      "placed": 12,
+      "add_mm_median": 6.2951760182984575,
+      "rot_deg_median": 5.304683544552103
+    },
+    "convex_hull_reaimed": {
+      "trials": 12,
+      "held": 0,
+      "placed": 0,
+      "add_mm_median": 156.38303130196704,
+      "rot_deg_median": 86.27027258122381
+    }
+  },
+  "trials": {
+    "decomposed_open_loop": [
+      {
+        "seed": 0,
+        "add_mm": 19.47587112100692,
+        "rot_deg": 27.14437789487595,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 1,
+        "add_mm": 19.461084882896866,
+        "rot_deg": 27.15372309222994,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 2,
+        "add_mm": 19.50692402230758,
+        "rot_deg": 27.216932234503922,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 3,
+        "add_mm": 19.436455052308947,
+        "rot_deg": 27.180805261371816,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 4,
+        "add_mm": 19.505259499149133,
+        "rot_deg": 27.152081374182337,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 5,
+        "add_mm": 19.438033048497804,
+        "rot_deg": 27.165067554462958,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 6,
+        "add_mm": 19.4511989723115,
+        "rot_deg": 27.17186334208613,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 7,
+        "add_mm": 19.462965206784368,
+        "rot_deg": 27.138679014670135,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 8,
+        "add_mm": 19.441710209092868,
+        "rot_deg": 27.343135163353633,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 9,
+        "add_mm": 19.42362907231798,
+        "rot_deg": 27.23876145420642,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 10,
+        "add_mm": 19.73249639843162,
+        "rot_deg": 27.250056639415703,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 11,
+        "add_mm": 19.43976417580538,
+        "rot_deg": 27.168659987934507,
+        "held": true,
+        "placed": true
+      }
+    ],
+    "decomposed_reaimed": [
+      {
+        "seed": 0,
+        "add_mm": 6.330178400961044,
+        "rot_deg": 5.368336521135548,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 1,
+        "add_mm": 6.273148401097336,
+        "rot_deg": 5.285823322184208,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 2,
+        "add_mm": 6.299178570929714,
+        "rot_deg": 5.26139756992502,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 3,
+        "add_mm": 6.3465212314370065,
+        "rot_deg": 5.462518263076068,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 4,
+        "add_mm": 7.701009370429293,
+        "rot_deg": 8.797263963793455,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 5,
+        "add_mm": 6.304592547390683,
+        "rot_deg": 5.342016023425174,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 6,
+        "add_mm": 6.291173465667201,
+        "rot_deg": 5.280454327373521,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 7,
+        "add_mm": 6.3593018056231845,
+        "rot_deg": 5.44706386885122,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 8,
+        "add_mm": 6.208934355310106,
+        "rot_deg": 5.105457881291053,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 9,
+        "add_mm": 6.2886471189022926,
+        "rot_deg": 5.323543766919998,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 10,
+        "add_mm": 6.2524189427254955,
+        "rot_deg": 5.24585258240599,
+        "held": true,
+        "placed": true
+      },
+      {
+        "seed": 11,
+        "add_mm": 6.275884674921026,
+        "rot_deg": 5.243854432493057,
+        "held": true,
+        "placed": true
+      }
+    ],
+    "convex_hull_reaimed": [
+      {
+        "seed": 0,
+        "add_mm": 151.74424990737054,
+        "rot_deg": 87.78714990577451,
+        "held": false,
+        "placed": false
+      },
+      {
+        "seed": 1,
+        "add_mm": 157.16925856924777,
+        "rot_deg": 86.12624074638569,
+        "held": false,
+        "placed": false
+      },
+      {
+        "seed": 2,
+        "add_mm": 153.4370377895987,
+        "rot_deg": 86.45198654553758,
+        "held": false,
+        "placed": false
+      },
+      {
+        "seed": 3,
+        "add_mm": 159.40428601392244,
+        "rot_deg": 86.139073087486,
+        "held": false,
+        "placed": false
+      },
+      {
+        "seed": 4,
+        "add_mm": 153.887718875623,
+        "rot_deg": 86.12524367678834,
+        "held": false,
+        "placed": false
+      },
+      {
+        "seed": 5,
+        "add_mm": 153.70355728332282,
+        "rot_deg": 88.2449631220305,
+        "held": false,
+        "placed": false
+      },
+      {
+        "seed": 6,
+        "add_mm": 156.58423697260432,
+        "rot_deg": 86.11993786062294,
+        "held": false,
+        "placed": false
+      },
+      {
+        "seed": 7,
+        "add_mm": 158.2436769701356,
+        "rot_deg": 87.38121202386122,
+        "held": false,
+        "placed": false
+      },
+      {
+        "seed": 8,
+        "add_mm": 152.9744993473946,
+        "rot_deg": 86.36645261551341,
+        "held": false,
+        "placed": false
+      },
+      {
+        "seed": 9,
+        "add_mm": 160.9646706648805,
+        "rot_deg": 86.1740925469342,
+        "held": false,
+        "placed": false
+      },
+      {
+        "seed": 10,
+        "add_mm": 156.18182563132976,
+        "rot_deg": 86.12820383335904,
+        "held": false,
+        "placed": false
+      },
+      {
+        "seed": 11,
+        "add_mm": 156.79386742379722,
+        "rot_deg": 86.99331810720653,
+        "held": false,
+        "placed": false
+      }
+    ]
+  },
+  "physics_hz": 480
+}
