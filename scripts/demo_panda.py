@@ -103,25 +103,35 @@ class Arm:
         return q, float(np.linalg.norm(ep))
 
 
+def prepare_panda(work: Path, grip_stiffness: float = 2000.0, pad_friction: float = 1.5,
+                  pad_torsion: float = 0.02) -> Path:
+    """Copy the Menagerie Panda into `work` with grippy fingertip pads and a realistic gripper servo.
+
+    Pads: rubber-like friction, torsional friction via condim 4. Menagerie's gripper servo is soft
+    (100 N/m: ~0.5 N when pinching a 5 mm cup wall); a real Panda hand squeezes with up to 70 N, so it
+    is stiffened (default 2000 N/m: ~9 N on a mug wall). Returns the patched panda.xml.
+    """
+    if work.exists():
+        shutil.rmtree(work)
+    shutil.copytree(PANDA, work)
+    panda_xml = work / "panda.xml"
+    text = panda_xml.read_text().replace(
+        '<geom type="mesh" group="3"/>',
+        f'<geom type="mesh" group="3" friction="{pad_friction:g} {pad_torsion:g} 0.002" condim="4" solref="0.005 1"/>', 1)
+    k = grip_stiffness
+    text = text.replace('gainprm="0.01568627451 0 0" biasprm="0 -100 -10"',
+                        f'gainprm="{k * 0.04 / 255:.8g} 0 0" biasprm="0 -{k:g} -{0.03 * k:g}"')
+    panda_xml.write_text(text)
+    return panda_xml
+
+
 def build_scene(asset, collision: str, work: Path, mug_pos=MUG_POS, mug_quat=(1, 0, 0, 0), extras=(),
                 extra_xml: str = "", mug_body=None) -> mujoco.MjModel:
     """Panda + scanned mug (+ optional extra MjAsset bodies and raw worldbody XML, e.g. cameras).
 
     mug_body: a prebuilt MjAsset named "mug" (e.g. with modified physics), instead of building from `asset`.
     """
-    if work.exists():
-        shutil.rmtree(work)
-    shutil.copytree(PANDA, work)
-    # Grippy fingertip pads (rubber-like friction, torsional friction via condim 4).
-    panda_xml = work / "panda.xml"
-    text = panda_xml.read_text().replace(
-        '<geom type="mesh" group="3"/>',
-        '<geom type="mesh" group="3" friction="1.5 0.02 0.002" condim="4" solref="0.005 1"/>', 1)
-    # Menagerie's gripper servo is soft (100 N/m: ~0.5 N when pinching a 5 mm cup wall). A real
-    # Panda hand squeezes with up to 70 N, so stiffen it to 2000 N/m (~9 N here).
-    text = text.replace('gainprm="0.01568627451 0 0" biasprm="0 -100 -10"',
-                        'gainprm="0.31372549 0 0" biasprm="0 -2000 -60"')
-    panda_xml.write_text(text)
+    prepare_panda(work)
     mug = mug_body or asset_body(asset, "mug", pos=tuple(mug_pos), quat=tuple(mug_quat), collision=collision)
     bodies = [mug, *extras]
     for b in bodies:

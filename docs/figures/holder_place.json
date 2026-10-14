@@ -1,0 +1,293 @@
+{
+  "summary": {
+    "hulls": {
+      "trials": 12,
+      "held": 12,
+      "placed": 12,
+      "add_mm_median": 4.565103576098593,
+      "rot_deg_median": 7.290653471012638
+    },
+    "single": {
+      "trials": 12,
+      "held": 0,
+      "placed": 0,
+      "add_mm_median": 147.60267069261437,
+      "rot_deg_median": 87.40078459449867
+    }
+  },
+  "trials": {
+    "hulls": [
+      {
+        "seed": 0,
+        "collision": "hulls",
+        "add_mm": 4.502668621365273,
+        "rot_deg": 7.213211023132329,
+        "held": true,
+        "placed": true,
+        "ik_error_mm": 0.06312118594268587,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -71.22196677755446
+      },
+      {
+        "seed": 1,
+        "collision": "hulls",
+        "add_mm": 4.255234901394177,
+        "rot_deg": 6.947881403111213,
+        "held": true,
+        "placed": true,
+        "ik_error_mm": 0.03535577196691026,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -76.5265219760204
+      },
+      {
+        "seed": 2,
+        "collision": "hulls",
+        "add_mm": 4.574922775166232,
+        "rot_deg": 7.314722974175887,
+        "held": true,
+        "placed": true,
+        "ik_error_mm": 0.06271355287038015,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -65.44349735892877
+      },
+      {
+        "seed": 3,
+        "collision": "hulls",
+        "add_mm": 4.577457795944352,
+        "rot_deg": 7.281261892572125,
+        "held": true,
+        "placed": true,
+        "ik_error_mm": 0.0633791381164254,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -65.71783596852677
+      },
+      {
+        "seed": 4,
+        "collision": "hulls",
+        "add_mm": 4.555284377030954,
+        "rot_deg": 7.300045049453151,
+        "held": true,
+        "placed": true,
+        "ik_error_mm": 0.06811577919345667,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -62.251689963078775
+      },
+      {
+        "seed": 5,
+        "collision": "hulls",
+        "add_mm": 4.6140368103433556,
+        "rot_deg": 7.505883922861121,
+        "held": true,
+        "placed": true,
+        "ik_error_mm": 0.06651825202125429,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -70.10030188084752
+      },
+      {
+        "seed": 6,
+        "collision": "hulls",
+        "add_mm": 4.490489727664442,
+        "rot_deg": 7.1647744819902845,
+        "held": true,
+        "placed": true,
+        "ik_error_mm": 0.06188025245217426,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -74.53861092981136
+      },
+      {
+        "seed": 7,
+        "collision": "hulls",
+        "add_mm": 4.67890361621059,
+        "rot_deg": 7.5064383396221475,
+        "held": true,
+        "placed": true,
+        "ik_error_mm": 0.06392517117716182,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -64.277960074473
+      },
+      {
+        "seed": 8,
+        "collision": "hulls",
+        "add_mm": 4.4334820234815515,
+        "rot_deg": 6.919621665296104,
+        "held": true,
+        "placed": true,
+        "ik_error_mm": 0.05997226292714168,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -72.60392878330876
+      },
+      {
+        "seed": 9,
+        "collision": "hulls",
+        "add_mm": 4.635601105315817,
+        "rot_deg": 7.500781901216653,
+        "held": true,
+        "placed": true,
+        "ik_error_mm": 0.06450946508520779,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -70.52274644042643
+      },
+      {
+        "seed": 10,
+        "collision": "hulls",
+        "add_mm": 4.550330267554664,
+        "rot_deg": 7.220770934428089,
+        "held": true,
+        "placed": true,
+        "ik_error_mm": 0.06829016905678889,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -66.44471408567894
+      },
+      {
+        "seed": 11,
+        "collision": "hulls",
+        "add_mm": 4.6195020160249864,
+        "rot_deg": 7.48171765446803,
+        "held": true,
+        "placed": true,
+        "ik_error_mm": 0.06541843786625834,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -68.66198344656243
+      }
+    ],
+    "single": [
+      {
+        "seed": 0,
+        "collision": "single",
+        "add_mm": 147.56021183700372,
+        "rot_deg": 87.14047674976788,
+        "held": false,
+        "placed": false,
+        "ik_error_mm": 0.06312118594268587,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -71.22196677755446
+      },
+      {
+        "seed": 1,
+        "collision": "single",
+        "add_mm": 148.67665539429353,
+        "rot_deg": 101.16030614244032,
+        "held": false,
+        "placed": false,
+        "ik_error_mm": 0.03535577196691026,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -76.5265219760204
+      },
+      {
+        "seed": 2,
+        "collision": "single",
+        "add_mm": 147.3268764105735,
+        "rot_deg": 87.67987229933341,
+        "held": false,
+        "placed": false,
+        "ik_error_mm": 0.06271355287038015,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -65.44349735892877
+      },
+      {
+        "seed": 3,
+        "collision": "single",
+        "add_mm": 147.645129548225,
+        "rot_deg": 87.74120543906214,
+        "held": false,
+        "placed": false,
+        "ik_error_mm": 0.0633791381164254,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -65.71783596852677
+      },
+      {
+        "seed": 4,
+        "collision": "single",
+        "add_mm": 147.14004304356575,
+        "rot_deg": 87.40256651433998,
+        "held": false,
+        "placed": false,
+        "ik_error_mm": 0.06811577919345667,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -62.251689963078775
+      },
+      {
+        "seed": 5,
+        "collision": "single",
+        "add_mm": 147.3416907159638,
+        "rot_deg": 87.29141884053595,
+        "held": false,
+        "placed": false,
+        "ik_error_mm": 0.06651825202125429,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -70.10030188084752
+      },
+      {
+        "seed": 6,
+        "collision": "single",
+        "add_mm": 147.8034543760157,
+        "rot_deg": 87.9506446222643,
+        "held": false,
+        "placed": false,
+        "ik_error_mm": 0.06188025245217426,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -74.53861092981136
+      },
+      {
+        "seed": 7,
+        "collision": "single",
+        "add_mm": 146.14011351989748,
+        "rot_deg": 87.13135940213033,
+        "held": false,
+        "placed": false,
+        "ik_error_mm": 0.06392517117716182,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -64.277960074473
+      },
+      {
+        "seed": 8,
+        "collision": "single",
+        "add_mm": 148.70161976346776,
+        "rot_deg": 87.39900267465737,
+        "held": false,
+        "placed": false,
+        "ik_error_mm": 0.05997226292714168,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -72.60392878330876
+      },
+      {
+        "seed": 9,
+        "collision": "single",
+        "add_mm": 147.23326577954379,
+        "rot_deg": 87.30417178901966,
+        "held": false,
+        "placed": false,
+        "ik_error_mm": 0.06450946508520779,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -70.52274644042643
+      },
+      {
+        "seed": 10,
+        "collision": "single",
+        "add_mm": 148.16659343358867,
+        "rot_deg": 87.63119710061336,
+        "held": false,
+        "placed": false,
+        "ik_error_mm": 0.06829016905678889,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -66.44471408567894
+      },
+      {
+        "seed": 11,
+        "collision": "single",
+        "add_mm": 147.99469101921366,
+        "rot_deg": 87.08935548928582,
+        "held": false,
+        "placed": false,
+        "ik_error_mm": 0.06541843786625834,
+        "edge_thickness_mm": 35.840863827615976,
+        "holder_yaw_deg": -68.66198344656243
+      }
+    ]
+  },
+  "grasp": {
+    "lateral_m": 0.055,
+    "side": 1
+  },
+  "release_gap_m": 0.005
+}

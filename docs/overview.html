@@ -133,7 +133,7 @@
   <div class="s-use"><b>4 · Use</b><p>Robot picks, synthetic training data, renders in Isaac Sim and Unreal</p></div>
 </div>
 <img class="board" src="figures/hero.jpg" alt="Real photos to a simulation-ready OpenUSD asset" style="margin-bottom:16px">
-<details class="demo"><summary>Watch the 94-second demo <span>· photos → USD → MuJoCo, Isaac Sim, perception, own phone scans, Unreal, splats</span></summary>
+<details class="demo"><summary>Watch the 103-second demo <span>· photos → USD → MuJoCo, Isaac Sim, perception, own phone scans, a robot placing a scan, Unreal, splats</span></summary>
   <video controls preload="none" poster="figures/demo_poster.jpg" style="width:100%;border-radius:8px;margin-top:8px"><source src="scan2usd_demo.mp4" type="video/mp4"></video></details>
 <div class="numbers">
   <div class="kpi"><b>0.78 mm</b><span>mean surface error, 78 photos → USD (speckled mug vs. ground truth)</span></div>
@@ -158,6 +158,8 @@
     <p class="cap">12 drops with ±8 mm / ±8° jitter. Decomposition: held <!--n:sim_held-->12/12<!--/n-->, median <!--n:sim_add-->9.1<!--/n--> mm / <!--n:sim_rot-->11<!--/n-->° from the real pose (released <!--n:release-->31<!--/n--> mm away). One hull: <!--n:hull_held-->0/12<!--/n--> held.</p></div>
 <div class="card" style="margin-bottom:12px"><h3>Same drop in Isaac Sim 6 (PhysX)</h3><img src="figures/isaac_holder_fit.webp" alt="Isaac Sim drop">
   <p class="cap">The same USD assets and the same 12 jittered releases in PhysX: <!--n:isaac_held-->11/12<!--/n--> held, median <!--n:isaac_add-->9.0<!--/n--> mm / <!--n:isaac_rot-->13<!--/n-->° from the real pose (MuJoCo: <!--n:sim_held-->12/12<!--/n-->, <!--n:sim_add-->9.1<!--/n--> mm). Both engines agree that one hull can't hold it (<!--n:isaac_hull_held-->0/12<!--/n--> in PhysX). <code>scripts/isaac_holder_fit.py</code></p></div>
+<div class="card" style="margin-bottom:12px"><h3>A robot puts it there: Franka Panda places the controller (MuJoCo)</h3><img src="figures/holder_place.webp" alt="Panda places the scanned controller into the scanned holder">
+  <p class="cap">The robot does the whole job instead of a drop. The controller lies face up on a tray; the Panda pinches its top edge near a corner (the figure stands right behind the middle, so only the corners leave room for the back finger), lifts it, turns it upright in the air, lowers it to 5 mm above the measured pose and lets go. Inset: the hands; green is the real pose. 12 trials with the tray and holder moved ±2 cm / ±10°: <b><!--n:place_held-->12/12<!--/n--> held</b>, median <b><!--n:place_add-->4.6<!--/n--> mm / <!--n:place_rot-->7<!--/n-->°</b> from the real pose (the drop: <!--n:sim_add-->9.1<!--/n--> mm). One convex hull: <!--n:place_hull_held-->0/12<!--/n-->. The controller hangs 6 cm off the pinch, so the grip needs a realistic force (~45 N per finger; a real Panda hand reaches 70 N) and MuJoCo's no-slip solver; without it soft-contact creep turns the controller out of the fingers. <code>scripts/demo_holder_place.py</code></p></div>
 <div class="card" style="margin-bottom:12px"><h3>Path traced with the other scans (Isaac Sim 6 RTX)</h3><img src="figures/holder_fit_render.jpg" alt="Path-traced holder and controller">
   <p class="cap">The two phone-scanned assets, the controller in its measured resting pose, beside the speckled mug and lion from the benchmark. Same lights and camera settings as the other renders; textures are the scans' own photo colors (2K baked). <code>isaac_pathtrace.py --shots real</code></p></div>
 <div class="card small"><h3>How the answer key is made</h3><ul>
@@ -372,7 +374,7 @@
 </ol>
 
 <div class="chap s-note" id="timeline"><div class="no">13</div><div><div class="eb">Notes</div><h2>Timeline</h2></div></div>
-<p class="small muted">Pipeline core (clean, color, collide, weigh, export, validate) → photos to USD with COLMAP, scored against ground truth → articulation → Isaac Sim + MuJoCo demos, sim-to-real detector → path-traced look-dev, asset library → grasps, uncertainty and Gaussian splats inside the USD asset → own phone captures: scanned controller settles into a scanned holder, checked against a scan of the real pair → the same USD files in Unreal Engine 5.8 with Lumen and MegaLights. <b>Next:</b> real phone captures with a ColorChecker (no-ruler scale on real photos); texture-aware capture guidance.</p>
+<p class="small muted">Pipeline core (clean, color, collide, weigh, export, validate) → photos to USD with COLMAP, scored against ground truth → articulation → Isaac Sim + MuJoCo demos, sim-to-real detector → path-traced look-dev, asset library → grasps, uncertainty and Gaussian splats inside the USD asset → own phone captures: scanned controller settles into a scanned holder, checked against a scan of the real pair, then placed there by a Franka Panda → the same USD files in Unreal Engine 5.8 with Lumen and MegaLights. <b>Next:</b> real phone captures with a ColorChecker (no-ruler scale on real photos); texture-aware capture guidance.</p>
 
 <div class="chap s-cap" id="capture"><div class="no">14</div><div><div class="eb">Capture</div><h2>Capture your own</h2></div></div>
 <div class="grid g2">

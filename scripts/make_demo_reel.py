@@ -37,6 +37,18 @@ def _holder_subtitle() -> str:
             f"(Isaac Sim PhysX: {isaac['held_in_holder']}/{isaac['of']}); one convex hull: {h['held_in_holder']}/{h['of']}")
 
 
+def _place_subtitle() -> str:
+    import json
+
+    try:
+        s = json.loads((FIG / "holder_place.json").read_text())["summary"]
+    except (OSError, KeyError):
+        return "The Panda pinches the controller, turns it upright and sets it into the holder"
+    d, h = s["hulls"], s["single"]
+    return (f"Pick, turn upright, set down: {d['held']}/{d['trials']} held, median {d['add_mm_median']:.1f} mm "
+            f"from the real pose; one convex hull: {h['held']}/{h['trials']}")
+
+
 # (file, title, subtitle, seconds for stills / max seconds for animations)
 SEGMENTS = [
     ("hero.jpg", "Phone photos in, physics-ready OpenUSD out",
@@ -61,6 +73,7 @@ SEGMENTS = [
     ("holder_fit_lead.jpg", "Own phone photos: does the scan behave like the real thing?",
      "A holder and a controller, each scanned alone, then photographed together as the answer key", 5),
     ("holder_fit.webp", "Scanned controller settles into the scanned holder", _holder_subtitle(), 6),
+    ("holder_place.webp", "A robot puts it there", _place_subtitle(), 8),
     ("holder_fit_render.jpg", "Path traced beside the other scans",
      "Phone-scanned holder and controller in the measured resting pose, Isaac Sim 6 RTX", 4),
     ("unreal_flythrough.mp4", "The same USD files in Unreal Engine 5.8",
