@@ -534,6 +534,15 @@ def stage_figure(state):
     img.save(FIG / "holder_fit_results.png")
 
 
+def real_pair_photo(size: int, photo: str = "IMG_0024.jpg"):
+    """The real pair: one source photo (iPhone), cropped tight on the holder and controller, square."""
+    from PIL import Image
+
+    im = Image.open(ROOT / "data" / "raw" / "holder_with_controller" / photo).convert("RGB")
+    side, cx, top = 2750, im.width // 2, 360  # tight on the pair; drops most of the floor and flyers
+    return im.crop((cx - side // 2, top, cx + side // 2, top + side)).resize((size, size), Image.LANCZOS)
+
+
 def stage_lead(state, photo: str = "IMG_0024.jpg"):
     """Lead strip for the docs: the real pair (one source photo, cropped) -> each scan alone -> the drop."""
     import trimesh
@@ -542,9 +551,7 @@ def stage_lead(state, photo: str = "IMG_0024.jpg"):
     from scan2usd.preview import _font, render
 
     S = 420
-    im = Image.open(ROOT / "data" / "raw" / "holder_with_controller" / photo).convert("RGB")
-    side, cx, top = 2750, im.width // 2, 360  # tight on the pair; drops most of the floor and flyers
-    photo_img = im.crop((cx - side // 2, top, cx + side // 2, top + side)).resize((S, S), Image.LANCZOS)
+    photo_img = real_pair_photo(S, photo)
 
     def scan(path, az, el):
         full = trimesh.load(path, force="mesh")

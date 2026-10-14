@@ -114,16 +114,25 @@ def planar_uvs(points: np.ndarray, faces: np.ndarray, scale: float = 0.05) -> np
 
 
 def box_mesh(stage, path: str, T, half) -> UsdGeom.Mesh:
-    """A box (pose T, half extents) as a mesh with face-varying UVs and normals."""
+    """A box (pose T, half extents) as a mesh with face-varying UVs and per-face normals (hard edges)."""
     hx, hy, hz = half
     c = np.array([[sx * hx, sy * hy, sz * hz] for sz in (-1, 1) for sy in (-1, 1) for sx in (-1, 1)])
     quads = [(4, 5, 7, 6), (0, 2, 3, 1), (0, 1, 5, 4), (2, 6, 7, 3), (0, 4, 6, 2), (1, 3, 7, 5)]
     faces = np.array([[q[0], q[1], q[2]] for q in quads] + [[q[0], q[2], q[3]] for q in quads])
+    tri = c[faces]
+    n = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
+    inward = np.sum(n * tri.mean(axis=1), axis=1) < 0
+    faces[inward] = faces[inward][:, ::-1]  # outward winding
+    n[inward] *= -1
+    n /= np.linalg.norm(n, axis=1, keepdims=True)
     mesh = UsdGeom.Mesh.Define(stage, path)
     mesh.CreatePointsAttr(Vt.Vec3fArray.FromNumpy(c.astype(np.float32)))
     mesh.CreateFaceVertexCountsAttr([3] * len(faces))
     mesh.CreateFaceVertexIndicesAttr(Vt.IntArray.FromNumpy(faces.reshape(-1).astype(np.int32)))
     mesh.CreateSubdivisionSchemeAttr("none")
+    # One normal per face corner: hard edges (shared corners would otherwise be smoothed).
+    mesh.CreateNormalsAttr(Vt.Vec3fArray.FromNumpy(np.repeat(n, 3, axis=0).astype(np.float32)))
+    mesh.SetNormalsInterpolation(UsdGeom.Tokens.faceVarying)
     st = UsdGeom.PrimvarsAPI(mesh).CreatePrimvar("st", Sdf.ValueTypeNames.TexCoord2fArray, UsdGeom.Tokens.faceVarying)
     st.Set(Vt.Vec2fArray.FromNumpy(planar_uvs(c, faces).astype(np.float32)))
     mesh.AddTransformOp().Set(Gf.Matrix4d(*np.asarray(T, float).T.flatten().tolist()))

@@ -41,6 +41,8 @@ parser.add_argument("--trials", type=int, default=12)
 parser.add_argument("--physics-hz", type=int, default=480)
 parser.add_argument("--video", action="store_true", help="also render the re-aimed run of seed 0 (RTX)")
 parser.add_argument("--video-only", action="store_true", help="only the video (keeps the benchmark JSON)")
+parser.add_argument("--stills", action="store_true",
+                    help="path-traced stills of the re-aimed run (grasp, place, result) for make_hand_hero.py")
 parser.add_argument("--probe", action="store_true", help="one open-loop trial with a per-waypoint trace")
 parser.add_argument("--skin", type=float, nargs=2, default=None, metavar=("STIFFNESS", "DAMPING"),
                     help="compliant contact on the hand (N/m, N s/m), as MuJoCo's soft contacts")
@@ -471,6 +473,68 @@ def video(trial, path_mp4):
     return res
 
 
+def stills(trial, out_dir, size=1024, spp=64, total_spp=2048):
+    """Path-traced stills of the re-aimed run (seed 0): the timeline pauses at each moment (no physics
+    steps while paused) while the path tracer accumulates, then the run continues."""
+    import omni.replicator.core as rep
+    import omni.timeline
+    from PIL import Image
+
+    settings = carb.settings.get_settings()
+    tl = omni.timeline.get_timeline_interface()
+    os.makedirs(out_dir, exist_ok=True)
+    # (event, offset s, name, lookat offset from the controller (start or goal), distance, azimuth, elevation)
+    shots = [("lift", 0.0, "grasp", "start", (0.0, 0.0, 0.06), 0.85, 160, -26),
+             ("seat", -0.45, "place", "goal", (0.0, -0.03, 0.06), 0.85, 140, -28),
+             ("away", 1.4, "result", "goal", (0.0, 0.0, 0.01), 0.52, 100, -10)]
+    state = {"done": set()}
+
+    def record(t, wps):
+        if "ev" not in state:
+            state["ev"] = hand_motion.event_times(wps)
+            stage = omni.usd.get_context().get_stage()
+            cam = UsdGeom.Camera(stage.GetPrimAtPath("/World/cam"))
+            cam.GetHorizontalApertureAttr().Set(24.0)
+            cam.GetVerticalApertureAttr().Set(24.0)
+            cam.GetFocalLengthAttr().Set(45.0)  # 30 deg square view
+            state["cam"] = cam.GetPrim()
+            state["op"] = UsdGeom.Xformable(cam.GetPrim()).GetOrderedXformOps()[0]
+            state["ghost"] = stage.GetPrimAtPath("/World/ghost")
+            state["rp"] = rep.create.render_product("/World/cam", (size, size))
+            state["rgb"] = rep.AnnotatorRegistry.get_annotator("rgb")
+            state["rgb"].attach([state["rp"]])
+        for ev, dt, name, ref, off, dist, az, el in shots:
+            if name in state["done"] or t < state["ev"][ev] + dt:
+                continue
+            state["done"].add(name)
+            base = np.array(trial["controller_start" if ref == "start" else "target"])[:3, 3]
+            eye, look = hand_motion.orbit_eye([*(base + off), dist, az, el])
+            state["op"].Set(Gf.Matrix4d().SetLookAt(Gf.Vec3d(*eye), Gf.Vec3d(*look), Gf.Vec3d(0, 0, 1)).GetInverse())
+            if name == "result":  # a fainter ghost than in the video: the scanned controller stays readable
+                UsdGeom.Mesh(stage_ghost := state["ghost"].GetStage().GetPrimAtPath("/World/ghost/render")
+                             ).GetDisplayOpacityAttr().Set([0.2])
+                del stage_ghost
+                UsdGeom.Imageable(state["ghost"]).MakeVisible()
+            tl.pause()
+            settings.set("/rtx/rendermode", "PathTracing")
+            settings.set("/rtx/pathtracing/spp", spp)
+            settings.set("/rtx/pathtracing/totalSpp", total_spp)
+            for _ in range(total_spp // spp + 12):
+                app.update()
+            img = np.asarray(state["rgb"].get_data())[..., :3]
+            Image.fromarray(img).save(os.path.join(out_dir, f"{name}.png"))
+            print(f"still {name} at t {t:.2f} s", flush=True)
+            settings.set("/rtx/rendermode", "RaytracedLighting")
+            tl.play()
+
+    res, _ = run(trial, "decomposed", True, record=record, settle=2.0)
+    state["rgb"].detach()
+    state["rp"].destroy()
+    with open(os.path.join(out_dir, "stills.json"), "w") as f:
+        json.dump({"seed": trial["seed"], "result": res, "shots": [s[2] for s in shots]}, f, indent=1)
+    print("stills:", res, flush=True)
+
+
 trials = plans["trials"][: args.trials]
 if args.probe and args.sweep:
     for pair in args.sweep.split(";"):
@@ -484,6 +548,8 @@ elif args.probe:
     print("drives set:", n_drive, "result:", res, flush=True)
 elif args.video_only:
     video(trials[0], os.path.join(OUT, "isaac_hand_place.mp4"))
+elif args.stills:
+    stills(trials[0], os.path.join(ROOT, "output", "isaac_hand_stills"))
 else:
     results = {}
     for collision, correct in (("decomposed", False), ("decomposed", True), ("convex_hull", True)):

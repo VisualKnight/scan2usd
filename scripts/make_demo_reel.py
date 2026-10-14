@@ -78,6 +78,8 @@ def _isaac_hand_subtitle() -> str:
 SEGMENTS = [
     ("hero.jpg", "Phone photos in, physics-ready OpenUSD out",
      "67 real photos → USD asset → 21 convex colliders + mass → Isaac Sim / MuJoCo", 6),
+    ("hand_hero.jpg", "From my phone photos to a robot hand placing the scans",
+     "The real pair → Shadow Hand picks, turns and seats the scanned controller (Isaac Sim 6, PhysX, path traced)", 5),
     ("buddha_real.jpg", "Real photos → simulation asset",
      "COLMAP reconstruction, table removed automatically, watertight, convex decomposition", 4),
     ("texture_bake.jpg", "Scored against ground truth",
