@@ -1,4 +1,4 @@
-"""Demo reel: one ~90 s MP4 from the project's figures and animations.
+"""Demo reel: one ~2.5 min MP4 from the project's figures and animations.
 
     pip install "imageio[ffmpeg]"
     python scripts/make_demo_reel.py [--out docs/scan2usd_demo.mp4]
@@ -101,14 +101,14 @@ SEGMENTS = [
      "A holder and a controller, each scanned alone, then photographed together as the answer key", 5),
     ("holder_fit.webp", "Scanned controller settles into the scanned holder", _holder_subtitle(), 6),
     ("holder_place.webp", "A robot puts it there", _place_subtitle(), 8),
-    ("hand_place.mp4", "Five fingers: Shadow Hand places it", _hand_subtitle(), 9),
-    ("isaac_hand_place.mp4", "The same plan in Isaac Sim (PhysX)", _isaac_hand_subtitle(), 5),
+    ("hand_place.mp4", "Five fingers: Shadow Hand places it", _hand_subtitle(), 18),
+    ("isaac_hand_place.mp4", "The same plan in Isaac Sim (PhysX)", _isaac_hand_subtitle(), 11),
     ("holder_fit_render.jpg", "Path traced beside the other scans",
      "Phone-scanned holder and controller in the measured resting pose, Isaac Sim 6 RTX", 4),
     ("unreal_flythrough.mp4", "The same USD files in Unreal Engine 5.8",
      "Lumen + MegaLights: 80 shadow-casting fairy lights, real time on an RTX 4090", 6),
     ("unreal_hand_place.mp4", "The hand in Unreal: Lumen + MegaLights",
-     "The MuJoCo run frame for frame, every link keyed in Sequencer, 108 shadow-casting fairy lights", 7),
+     "The MuJoCo run frame for frame, every link keyed in Sequencer, 108 shadow-casting fairy lights", 13),
     ("uncertainty.png", "Assets that know what they don't know",
      "Seen / guessed / sealed surface and mass intervals stored in USD: truth inside for 5 of 6 objects", 4),
     ("splat_buddha.jpg", "Gaussian splat for looks, convex hulls for physics",
@@ -152,10 +152,12 @@ def animation_frames(path: Path, max_seconds: float):
 
 
 def video_frames(path: Path, max_seconds: float):
-    """MP4 frames, sped up (frames skipped) to fit max_seconds."""
+    """MP4 frames at real time, or sped up just enough to fit max_seconds (frames resampled, not
+    skipped in whole steps, so a 17 s clip in 11 s plays at 1.5x, not 2x)."""
     frames = [Image.fromarray(f) for f in imageio.mimread(path, memtest=False)]
-    step = max(1, int(np.ceil(len(frames) / (max_seconds * FPS))))
-    return frames[::step]
+    speed = max(1.0, len(frames) / (max_seconds * FPS))
+    idx = np.minimum(np.round(np.arange(int(len(frames) / speed)) * speed).astype(int), len(frames) - 1)
+    return [frames[i] for i in idx]
 
 
 def end_card() -> np.ndarray:
@@ -174,14 +176,42 @@ def main() -> None:
     p.add_argument("--out", type=Path, default=ROOT / "docs" / "scan2usd_demo.mp4")
     p.add_argument("--poster", type=Path, default=ROOT / "docs" / "figures" / "demo_poster.jpg")
     args = p.parse_args()
-    writer = imageio.get_writer(args.out, fps=FPS, codec="libx264", quality=7, pixelformat="yuv420p",
-                                macro_block_size=16, ffmpeg_log_level="error")
+    raw = imageio.get_writer(args.out, fps=FPS, codec="libx264", quality=None, pixelformat="yuv420p",
+                             macro_block_size=16, ffmpeg_log_level="error",
+                             output_params=["-crf", "25", "-preset", "slow", "-movflags", "+faststart"])
+
+    class Fader:
+        """Dissolves each segment's first FADE frames from the previous segment's last frame."""
+        FADE = 9
+
+        def __init__(self):
+            self.last, self.left = None, 0
+
+        def cut(self):
+            self.left = self.FADE if self.last is not None else 0
+
+        def append_data(self, f):
+            f = np.asarray(f)
+            if self.left:
+                a = 1.0 - self.left / (self.FADE + 1)
+                out = (self.last.astype(np.float32) * (1 - a) + f.astype(np.float32) * a).astype(np.uint8)
+                self.left -= 1
+                raw.append_data(out)
+            else:
+                raw.append_data(f)
+                self.last = f
+
+        def close(self):
+            raw.close()
+
+    writer = Fader()
     total = 0
     title = end_card()  # the same card opens and closes the reel
     for _ in range(int(2.5 * FPS)):
         writer.append_data(title)
     total += int(2.5 * FPS)
     for name, title, subtitle, seconds in SEGMENTS:
+        writer.cut()
         path = FIG / name
         if path.suffix in (".webp", ".mp4"):
             frames = animation_frames(path, seconds) if path.suffix == ".webp" else video_frames(path, seconds)
@@ -201,11 +231,15 @@ def main() -> None:
         total += n
         print(f"  {name}: {n / FPS:.1f} s")
     end = end_card()
+    writer.cut()
     for _ in range(4 * FPS):
         writer.append_data(end)
     total += 4 * FPS
     writer.close()
     print(f"wrote {args.out} ({total / FPS:.0f} s, {args.out.stat().st_size / 1e6:.1f} MB)")
+    import json  # the docs quote the length (scripts/sync_holder_numbers.py)
+
+    (FIG / "demo_reel.json").write_text(json.dumps({"seconds": round(total / FPS)}))
 
 
 if __name__ == "__main__":

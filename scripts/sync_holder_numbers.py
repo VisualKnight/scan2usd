@@ -39,6 +39,7 @@ def values() -> dict[str, str]:
         **place_values(),
         **hand_values(),
         **isaac_hand_values(),
+        **reel_values(),
     }
 
 
@@ -76,6 +77,30 @@ def isaac_hand_values() -> dict[str, str]:
             "ihand_hull_held": f"{hull['held']}/{hull['trials']}"}
 
 
+def reel_values() -> dict[str, str]:
+    p = ROOT / "docs" / "figures" / "demo_reel.json"
+    return {"reel_s": str(json.loads(p.read_text())["seconds"])} if p.exists() else {}
+
+
+def version_videos(text: str, absolute_only: bool = False) -> str:
+    """Append ?v=<content hash> to every linked MP4, so browsers fetch a re-rendered video instead of
+    a cached one under the same URL (GitHub Pages lets browsers cache for 10 minutes)."""
+    import hashlib
+
+    def sub(m):
+        url = m.group(2)
+        if absolute_only and not url.startswith("http"):  # repo-relative README links: no cache to bust
+            return m.group(1) + url
+        local = url.split("visualknight.github.io/scan2usd/")[-1]
+        for base in (ROOT / "docs", ROOT):
+            f = base / local
+            if f.exists():
+                return f"{m.group(1)}{url}?v={hashlib.sha1(f.read_bytes()).hexdigest()[:8]}"
+        return m.group(0)
+
+    return re.sub(r'(["(])([^"()\s]*?\.mp4)(\?v=[0-9a-f]+)?(?=[")])', sub, text)
+
+
 def unreal_values() -> dict[str, str]:
     p = ROOT / "docs" / "figures" / "unreal_render.json"
     if not p.exists():
@@ -98,6 +123,7 @@ def main() -> None:
             return f"<!--n:{m.group(1)}-->{v[m.group(1)]}<!--/n-->"
 
         s = re.sub(r"<!--n:(\w+)-->.*?<!--/n-->", sub, s)
+        s = version_videos(s, absolute_only=rel == "README.md")
         p.write_text(s, encoding="utf-8")
         print(f"{rel}: {len(used)} numbers synced ({', '.join(sorted(used))})")
 
