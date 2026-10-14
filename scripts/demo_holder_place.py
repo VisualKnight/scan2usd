@@ -260,7 +260,7 @@ class Setup:
     """One trial's scene: holder and tray poses (jittered by seed), the model, settled data, the plan."""
 
     def __init__(self, seed, ctrl, holder_asset, R_rel, t_rel, collision, lateral, side, tilt=20.0, ghost=False,
-                 work_tag=None):
+                 work_tag=None, tip_depth=0.0):
         rng = np.random.default_rng(seed)
         jitter = seed > 0
         hold_xy = HOLDER_XY + (rng.uniform(-0.02, 0.02, 2) if jitter else 0)
@@ -274,11 +274,12 @@ class Setup:
         yaw0 = np.degrees(np.arctan2(EDGE_DIR[1], EDGE_DIR[0]) - np.arctan2(ctrl.top[1], ctrl.top[0]))
         yaw0 += rng.uniform(-10, 10) if jitter else 0
         R0 = yaw_matrix(yaw0)
-        # Tray under the controller, aligned with its natural axes. It spans the grips (up to 4 cm below
-        # the center) and stops 2.5 cm short of the top edge: the grasp corner overhangs with room under
-        # it for the lower finger, and the center of mass (1.4 cm above center) is well inside.
+        # Tray under the controller, aligned with its natural axes: 3.5 cm either side of center, from the
+        # grips to 2.5 cm short of the top edge. The grasp corner (5.5 cm out, at the edge) overhangs, so
+        # the lower finger has room under it (Isaac Sim's Franka has bulkier finger colliders than
+        # MuJoCo's, and caught a wider tray), and the center of mass is well inside.
         t_lo, t_hi = ctrl.up.min() + 0.005, ctrl.up.max() - 0.025
-        half = (0.075, 0.5 * (t_hi - t_lo))
+        half = (0.035, 0.5 * (t_hi - t_lo))
         t_local = 0.5 * (t_lo + t_hi)  # tray center along the controller's top axis
         stand_center = stand_xy + (R0[:2, :2] @ (t_local * ctrl.top[:2]))
         T_stand = pose(R0 @ np.c_[ctrl.right, ctrl.top, ctrl.face], [*stand_center, 0.0])
@@ -301,7 +302,7 @@ class Setup:
             mujoco.mj_step(model, data)
         data.time = 0.0
         self.T_start = body_pose(model, data, "ctrl")  # the robot is told the controller's pose
-        self.G, self.thick = ctrl.grasp_frame(lateral, side, tilt_deg=tilt)
+        self.G, self.thick = ctrl.grasp_frame(lateral, side, tilt_deg=tilt, tip_depth=tip_depth)
         T_goal = self.T_target.copy()
         T_goal[2, 3] += RELEASE_GAP
         self.steps = make_plan(self.arm, self.G, self.thick, self.T_start, T_goal)
@@ -392,11 +393,11 @@ def video(ctrl, holder, R_rel, t_rel, lateral, side, out: Path, fps: int = 30):
     print(f"wrote {out / 'holder_place.webp'} ({len(out_frames[::3])} frames at 10 fps)")
 
 
-def export_plans(ctrl, holder, R_rel, t_rel, lateral, side, seeds, path: Path) -> None:
+def export_plans(ctrl, holder, R_rel, t_rel, lateral, side, seeds, path: Path, tip_depth: float = 0.0) -> None:
     """Joint plans and scene poses for replay in another simulator (scripts/isaac_holder_place.py)."""
     out = []
     for seed in seeds:
-        su = Setup(seed, ctrl, holder, R_rel, t_rel, "hulls", lateral, side)
+        su = Setup(seed, ctrl, holder, R_rel, t_rel, "hulls", lateral, side, tip_depth=tip_depth)
         m = su.model
         stand = m.body("stand").id
         geom = next(g for g in range(m.ngeom) if m.geom_bodyid[g] == stand)
@@ -410,7 +411,7 @@ def export_plans(ctrl, holder, R_rel, t_rel, lateral, side, seeds, path: Path) -
                            "ik_error_mm": float(e) * 1000} for q, g, d, e in su.steps],
         })
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"grasp": {"lateral_m": lateral, "side": side}, "release_gap_m": RELEASE_GAP,
+    path.write_text(json.dumps({"grasp": {"lateral_m": lateral, "side": side, "tip_depth_m": tip_depth}, "release_gap_m": RELEASE_GAP,
                                 "grip_stiffness_n_per_m": GRIP_STIFFNESS, "trials": out}, indent=1))
     print(f"wrote {path} ({len(out)} plans)")
 
@@ -432,12 +433,14 @@ def main() -> None:
     ap.add_argument("--out", type=Path, default=ROOT / "docs" / "figures")
     ap.add_argument("--no-video", action="store_true")
     ap.add_argument("--export-plans", type=Path, help="write joint plans + poses (JSON) for Isaac Sim and exit")
+    ap.add_argument("--tip-depth", type=float, default=0.0, help="push the pinch this far further in (m)")
     args = ap.parse_args()
     if not PANDA.exists():
         raise SystemExit(f"{PANDA} not found; fetch mujoco_menagerie/franka_emika_panda first (see README)")
     ctrl, holder, R_rel, t_rel = load()
     if args.export_plans:
-        export_plans(ctrl, holder, R_rel, t_rel, args.lateral, args.side, range(args.trials), args.export_plans)
+        export_plans(ctrl, holder, R_rel, t_rel, args.lateral, args.side, range(args.trials), args.export_plans,
+                     tip_depth=args.tip_depth)
         return
     results = {}
     for collision in ("hulls", "single"):

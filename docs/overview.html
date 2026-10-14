@@ -147,7 +147,7 @@
 
 <div class="chap s-bld" id="architecture"><div class="no">01</div><div><div class="eb">Build</div><h2>Architecture</h2></div></div>
 <img class="board" src="figures/architecture.svg" alt="Whiteboard architecture diagram">
-<p class="cap">Photos become a mesh (COLMAP), the pipeline turns it into a simulation asset, and the validator re-opens the written file. Downstream: simulators, ground-truth scoring, and what the asset knows about itself.</p>
+<p class="cap">Four stages around one file. Photos and references become an OpenUSD asset; it is checked three ways, and the same file goes to every simulator and renderer. What the scan couldn't see feeds back into which photos to take next. Module-level detail: the README's <a href="https://github.com/VisualKnight/scan2usd#what-it-does">stage table</a>.</p>
 
 <div class="chap s-ver" id="real"><div class="no">02</div><div><div class="eb">Verify</div><h2>Real-world check: scan, simulate, compare</h2></div></div>
 <p class="muted" style="max-width:900px">My own iPhone photos of a controller holder and a controller, each scanned alone, then photographed together. The combined scan is the answer key: does the simulated controller settle where the real one sits?</p>
@@ -160,7 +160,7 @@
 <div class="card" style="margin-bottom:12px"><h3>Same drop in Isaac Sim 6 (PhysX)</h3><img src="figures/isaac_holder_fit.webp" alt="Isaac Sim drop">
   <p class="cap">Same assets, same releases: <!--n:isaac_held-->11/12<!--/n--> held, median <!--n:isaac_add-->9.0<!--/n--> mm / <!--n:isaac_rot-->13<!--/n-->°. One hull: <!--n:isaac_hull_held-->0/12<!--/n-->. <code>scripts/isaac_holder_fit.py</code></p></div>
 <div class="card" style="margin-bottom:12px"><h3>A robot puts it there: Franka Panda places the controller (MuJoCo)</h3><img src="figures/holder_place.webp" alt="Panda places the scanned controller into the scanned holder">
-  <p class="cap">Instead of a drop, the Panda picks the controller off a tray by a corner of its top edge, turns it upright and sets it down 5 mm above the measured pose. 12 trials, tray and holder moved ±2 cm / ±10°: <b><!--n:place_held-->12/12<!--/n--> held</b>, median <b><!--n:place_add-->4.6<!--/n--> mm / <!--n:place_rot-->7<!--/n-->°</b> from the real pose. One convex hull: <!--n:place_hull_held-->0/12<!--/n-->. Five fingers: chapter 04. <code>scripts/demo_holder_place.py</code></p></div>
+  <p class="cap">Instead of a drop, the Panda picks the controller off a tray by a corner of its top edge, turns it upright and sets it down 5 mm above the measured pose. 12 trials, tray and holder moved ±2 cm / ±10°: <b><!--n:place_held-->12/12<!--/n--> held</b>, median <b><!--n:place_add-->5.1<!--/n--> mm / <!--n:place_rot-->7<!--/n-->°</b> from the real pose. One convex hull: <!--n:place_hull_held-->0/12<!--/n-->. The same plans in Isaac Sim PhysX hold only <!--n:iplace_held-->1/12<!--/n--> (<a href="figures/isaac_holder_place.webp">video</a>): hanging 6 cm off the pinch, the controller twists out of the two pads on the lift. The Shadow Hand, gripping level with the center of mass, works in both engines (chapter 04). <code>scripts/demo_holder_place.py</code> ? <code>isaac_holder_place.py</code></p></div>
 <div class="card" style="margin-bottom:12px"><h3>Path traced with the other scans (Isaac Sim 6 RTX)</h3><img src="figures/holder_fit_render.jpg" alt="Path-traced holder and controller">
   <p class="cap">The phone-scanned pair in its measured pose, path traced beside two benchmark scans. <code>isaac_pathtrace.py --shots real</code></p></div>
 <div class="card small"><h3>How the answer key is made</h3><ul>
@@ -382,6 +382,7 @@
   <li><b>Control at the physics rate.</b> In Isaac Sim the hand kept dropping the controller: targets set once per 60 Hz frame moved it in jolts across 8 PhysX substeps. Setting them every substep took it from 0/4 to 12/12.</li>
   <li><b>Meshes need UVs, even for flat colors.</b> In Unreal the hand rendered dark whatever its color: without UVs its tangents were degenerate, so even a flat normal map shaded it dark.</li>
   <li><b>A wide lens makes the nearest thing look big.</b> The true-scale Shadow Hand looked oversized on MuJoCo's default 24 mm-equivalent view, because it's always nearest the camera. A 57 mm lens from farther back reads naturally.</li>
+  <li><b>Grasp near the center of mass when you can.</b> The Panda's corner pinch held 12/12 in MuJoCo (with its no-slip solver) and about 1/12 in PhysX: 6 cm from the center of mass, a two-pad pinch is only marginally stable, and the engines disagree at the margin. The Shadow Hand's center-of-mass grasp agreed in both.</li>
 </ol>
 
 <div class="chap s-note" id="timeline"><div class="no">13</div><div><div class="eb">Notes</div><h2>Timeline</h2></div></div>

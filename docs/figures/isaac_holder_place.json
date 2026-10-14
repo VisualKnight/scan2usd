@@ -1,0 +1,242 @@
+{
+  "plans": "output/holder_place_plans.json (demo_holder_place.py --export-plans)",
+  "physics_hz": 480,
+  "summary": {
+    "decomposed": {
+      "trials": 12,
+      "held": 1,
+      "placed": 1,
+      "add_mm_median": 187.07079441267098,
+      "rot_deg_median": 112.80056804864086
+    },
+    "convex_hull": {
+      "trials": 12,
+      "held": 0,
+      "placed": 0,
+      "add_mm_median": 167.9459910317072,
+      "rot_deg_median": 123.51206578967371
+    }
+  },
+  "results": {
+    "decomposed": [
+      {
+        "seed": 0,
+        "collision": "decomposed",
+        "add_mm": 171.6015524789991,
+        "rot_deg": 120.24391249811252,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 1,
+        "collision": "decomposed",
+        "add_mm": 191.08481643687264,
+        "rot_deg": 128.05388235428694,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 2,
+        "collision": "decomposed",
+        "add_mm": 186.76131552323446,
+        "rot_deg": 90.81705825447565,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 3,
+        "collision": "decomposed",
+        "add_mm": 8.891877613304564,
+        "rot_deg": 15.09001782929709,
+        "held": true,
+        "placed": true,
+        "carried": true
+      },
+      {
+        "seed": 4,
+        "collision": "decomposed",
+        "add_mm": 206.00526341674012,
+        "rot_deg": 89.58533961609173,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 5,
+        "collision": "decomposed",
+        "add_mm": 203.08601207773202,
+        "rot_deg": 113.9949656623952,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 6,
+        "collision": "decomposed",
+        "add_mm": 169.05498422733788,
+        "rot_deg": 115.77985650273938,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 7,
+        "collision": "decomposed",
+        "add_mm": 165.29341300437045,
+        "rot_deg": 136.61330541372067,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 8,
+        "collision": "decomposed",
+        "add_mm": 163.9582663172692,
+        "rot_deg": 111.60617043488651,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 9,
+        "collision": "decomposed",
+        "add_mm": 303.2998459373308,
+        "rot_deg": 119.25655587037619,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 10,
+        "collision": "decomposed",
+        "add_mm": 187.52579586515677,
+        "rot_deg": 89.74516877147803,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 11,
+        "collision": "decomposed",
+        "add_mm": 187.38027330210753,
+        "rot_deg": 91.79954063503497,
+        "held": false,
+        "placed": false,
+        "carried": false
+      }
+    ],
+    "convex_hull": [
+      {
+        "seed": 0,
+        "collision": "convex_hull",
+        "add_mm": 166.15411786298654,
+        "rot_deg": 123.42764134445756,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 1,
+        "collision": "convex_hull",
+        "add_mm": 168.15124028121193,
+        "rot_deg": 123.55557426004096,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 2,
+        "collision": "convex_hull",
+        "add_mm": 168.97462593993126,
+        "rot_deg": 125.0212094600406,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 3,
+        "collision": "convex_hull",
+        "add_mm": 189.05574839763275,
+        "rot_deg": 115.96494839201507,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 4,
+        "collision": "convex_hull",
+        "add_mm": 168.02093115840665,
+        "rot_deg": 123.1117301537521,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 5,
+        "collision": "convex_hull",
+        "add_mm": 169.70073419318004,
+        "rot_deg": 125.9102583865618,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 6,
+        "collision": "convex_hull",
+        "add_mm": 167.36341410447778,
+        "rot_deg": 124.3442879384578,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 7,
+        "collision": "convex_hull",
+        "add_mm": 167.14620551788258,
+        "rot_deg": 123.47217385352818,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 8,
+        "collision": "convex_hull",
+        "add_mm": 167.77751930787105,
+        "rot_deg": 123.55195772581925,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 9,
+        "collision": "convex_hull",
+        "add_mm": 190.86240031960733,
+        "rot_deg": 111.5638296059213,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 10,
+        "collision": "convex_hull",
+        "add_mm": 165.42035728333443,
+        "rot_deg": 119.35554991914253,
+        "held": false,
+        "placed": false,
+        "carried": false
+      },
+      {
+        "seed": 11,
+        "collision": "convex_hull",
+        "add_mm": 167.87105090500776,
+        "rot_deg": 126.02767179478934,
+        "held": false,
+        "placed": false,
+        "carried": false
+      }
+    ]
+  }
+}

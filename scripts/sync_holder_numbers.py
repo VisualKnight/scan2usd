@@ -48,7 +48,12 @@ def place_values() -> dict[str, str]:
     if not p.exists():
         return {}
     s = json.loads(p.read_text())["summary"]
-    return {"place_held": f"{s['hulls']['held']}/{s['hulls']['trials']}",
+    out = {}
+    ip = ROOT / "docs" / "figures" / "isaac_holder_place.json"
+    if ip.exists():
+        d = json.loads(ip.read_text())["summary"]["decomposed"]
+        out["iplace_held"] = f"{d['held']}/{d['trials']}"
+    return {**out, "place_held": f"{s['hulls']['held']}/{s['hulls']['trials']}",
             "place_add": f"{s['hulls']['add_mm_median']:.1f}", "place_rot": f"{s['hulls']['rot_deg_median']:.0f}",
             "place_hull_held": f"{s['single']['held']}/{s['single']['trials']}"}
 

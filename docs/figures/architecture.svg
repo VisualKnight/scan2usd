@@ -1,243 +1,93 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 800" font-family="'Segoe Print', 'Comic Sans MS', cursive">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 640" font-family="'Segoe Print', 'Comic Sans MS', cursive">
   <defs>
-    <!-- Slight wobble so lines look marker-drawn -->
     <filter id="marker" x="-5%" y="-5%" width="110%" height="110%">
       <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="3"/>
-      <feDisplacementMap in="SourceGraphic" scale="3"/>
+      <feDisplacementMap in="SourceGraphic" scale="2.5"/>
     </filter>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10" fill="none" stroke="#1d4ed8" stroke-width="1.6"/>
-    </marker>
-    <marker id="arrowg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10" fill="none" stroke="#15803d" stroke-width="1.6"/>
-    </marker>
-    <marker id="arrowr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10" fill="none" stroke="#b91c1c" stroke-width="1.6"/>
-    </marker>
-    <!-- UML component icon -->
-    <g id="cmp"><rect x="0" y="0" width="14" height="16" fill="none" stroke="#334155" stroke-width="1.2"/><rect x="-4" y="3" width="8" height="3" fill="#fff" stroke="#334155" stroke-width="1.1"/><rect x="-4" y="9" width="8" height="3" fill="#fff" stroke="#334155" stroke-width="1.1"/></g>
+    <marker id="a_cap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#0e7490" stroke-width="1.8"/></marker>
+    <marker id="a_bld" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#6d28d9" stroke-width="1.8"/></marker>
+    <marker id="a_ver" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#047857" stroke-width="1.8"/></marker>
+    <marker id="a_use" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#c2410c" stroke-width="1.8"/></marker>
+    <marker id="a_ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#1e293b" stroke-width="1.8"/></marker>
+    <marker id="a_soft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#64748b" stroke-width="1.8"/></marker>
   </defs>
-
-  <rect width="1120" height="800" fill="#fbfbf7"/>
-  <text x="24" y="40" font-size="22" fill="#1e293b">Scan2USD · how the code fits together</text>
-  <text x="24" y="62" font-size="12.5" fill="#64748b">UML-ish component view · blue = calls · green = data in · red = data out</text>
-
-  <g filter="url(#marker)" stroke-linecap="round" stroke-linejoin="round">
-    <!-- Actor -->
-    <g stroke="#1e293b" stroke-width="2" fill="none">
-      <circle cx="52" cy="104" r="10"/><path d="M52,114 V140 M36,124 H68 M52,140 L40,160 M52,140 L64,160"/>
-    </g>
-
-    <!-- CLI and demo -->
-    <rect x="110" y="96" width="160" height="58" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
-    <rect x="110" y="200" width="160" height="58" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
-
-    <!-- Orchestrator -->
-    <rect x="340" y="88" width="740" height="74" rx="8" fill="#e0f2fe" stroke="#1e293b" stroke-width="2.2"/>
-
-    <!-- Stage modules -->
-    <rect x="320" y="240" width="140" height="84" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
-    <rect x="478" y="240" width="140" height="84" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
-    <rect x="636" y="240" width="140" height="84" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
-    <rect x="794" y="240" width="140" height="84" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
-    <rect x="952" y="240" width="140" height="118" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
-    <rect x="964" y="300" width="116" height="48" rx="4" fill="#ffffff" stroke="#334155" stroke-width="1.5"/>
-
-    <!-- Inputs (documents) -->
-    <path d="M20,330 H180 V378 Q140,366 100,378 Q60,390 20,378 Z" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
-    <path d="M20,420 H180 V468 Q140,456 100,468 Q60,480 20,468 Z" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
-
-    <!-- Outputs (documents) -->
-    <path d="M794,450 H934 V498 Q899,486 864,498 Q829,510 794,498 Z" fill="#fee2e2" stroke="#b91c1c" stroke-width="2"/>
-    <path d="M952,450 H1092 V498 Q1057,486 1022,498 Q987,510 952,498 Z" fill="#fee2e2" stroke="#b91c1c" stroke-width="2"/>
-    <path d="M478,450 H618 V498 Q583,486 548,498 Q513,510 478,498 Z" fill="#fee2e2" stroke="#b91c1c" stroke-width="2"/>
-    <rect x="636" y="450" width="140" height="50" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
-
-    <!-- Future (ghost) -->
-    <rect x="794" y="550" width="140" height="56" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
-    <rect x="952" y="550" width="140" height="68" rx="6" fill="#e0f2fe" stroke="#1e293b" stroke-width="2"/>
-    <rect x="636" y="350" width="140" height="56" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
-    <rect x="636" y="550" width="140" height="56" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
-    <rect x="478" y="552" width="140" height="56" rx="6" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
-    <rect x="250" y="600" width="150" height="54" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
-    <rect x="20" y="512" width="160" height="58" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
-    <path d="M20,604 H180 V650 Q140,638 100,650 Q60,662 20,650 Z" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
-
-    <!-- Calls -->
-    <g stroke="#1d4ed8" stroke-width="2" fill="none">
-      <path d="M74,125 H106" marker-end="url(#arrow)"/>
-      <path d="M270,125 H336" marker-end="url(#arrow)"/>
-      <path d="M190,154 V196" marker-end="url(#arrow)"/>
-      <path d="M390,162 V236" marker-end="url(#arrow)"/>
-      <path d="M548,162 V236" marker-end="url(#arrow)"/>
-      <path d="M706,162 V236" marker-end="url(#arrow)"/>
-      <path d="M864,162 V236" marker-end="url(#arrow)"/>
-      <path d="M1022,162 V236" marker-end="url(#arrow)"/>
-    </g>
-    <!-- Data in -->
-    <g stroke="#15803d" stroke-width="2" fill="none">
-      <path d="M182,352 C240,352 270,300 316,290" marker-end="url(#arrowg)"/>
-      <path d="M182,444 H548 V328" marker-end="url(#arrowg)"/>
-      <path d="M150,258 C150,290 120,300 110,326" stroke-dasharray="6 5" marker-end="url(#arrowg)"/>
-      <path d="M100,602 V574" marker-end="url(#arrowg)"/>
-      <path d="M182,628 H194 V478 L176,472" marker-end="url(#arrowg)"/>
-      <path d="M22,520 C6,480 6,400 18,372" marker-end="url(#arrowg)"/>
-      <path d="M182,642 C210,640 225,632 246,628" marker-end="url(#arrowg)"/>
-    </g>
-    <!-- Data out -->
-    <g stroke="#b91c1c" stroke-width="2" fill="none">
-      <path d="M864,324 V446" marker-end="url(#arrowr)"/>
-      <path d="M1022,358 V446" marker-end="url(#arrowr)"/>
-      <path d="M636,475 H622" marker-end="url(#arrowr)"/>
-      <path d="M864,502 V546" stroke="#7c3aed" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
-      <path d="M936,500 C960,520 990,530 1010,546" marker-end="url(#arrowr)"/>
-      <path d="M812,506 C795,525 785,535 774,546" marker-end="url(#arrowr)"/>
-      <path d="M806,504 C800,522 760,528 700,528 H560 Q548,528 548,548" marker-end="url(#arrowr)"/>
-      <path d="M776,398 C790,420 800,435 812,448" marker-end="url(#arrowr)"/>
-    </g>
-    <!-- Read-back loops -->
-    <g stroke="#7c3aed" stroke-width="2" fill="none" stroke-dasharray="7 5">
-      <path d="M936,470 C960,420 950,390 958,362" marker-end="url(#arrow)"/>
-      <path d="M792,475 H780" marker-end="url(#arrow)"/>
-      <path d="M706,348 V328" marker-end="url(#arrow)"/>
-      <path d="M778,362 C800,350 820,340 840,328" marker-end="url(#arrow)"/>
-    </g>
-  </g>
-
-  <!-- Labels (unfiltered for legibility) -->
-  <g fill="#1e293b" font-size="13">
-    <text x="52" y="178" text-anchor="middle" font-size="12">you</text>
-
-    <use href="#cmp" x="246" y="104"/>
-    <text x="122" y="120" font-size="15">cli.py</text>
-    <text x="122" y="141" font-size="11" fill="#475569">scan · build · articulate</text>
-    <use href="#cmp" x="246" y="208"/>
-    <text x="122" y="224" font-size="15">demo.py</text>
-    <text x="122" y="245" font-size="11" fill="#475569">synthetic mug "scan"</text>
-
-    <use href="#cmp" x="1052" y="96"/>
-    <text x="356" y="112" font-size="11.5" fill="#475569">«orchestrator»</text>
-    <text x="356" y="136" font-size="16">pipeline.py · build_asset()</text>
-    <text x="356" y="154" font-size="11.5" fill="#475569">runs the stages in order, times each one, writes build_report.json</text>
-
-    <g font-size="11.5" fill="#1d4ed8">
-      <text x="396" y="206">1. load + clean</text>
-      <text x="554" y="206">2. calibrate</text>
-      <text x="712" y="206">3. hulls + mass</text>
-      <text x="870" y="206">4. write</text>
-      <text x="1028" y="206">5. check</text>
-    </g>
-
-    <g font-size="14.5">
-      <text x="332" y="262">mesh_ops.py</text>
-      <text x="490" y="262">color.py</text>
-      <text x="648" y="262">physics.py</text>
-      <text x="806" y="262">usd_io.py</text>
-      <text x="964" y="262">validate.py</text>
-    </g>
-    <g font-size="10.5" fill="#475569">
-      <text x="332" y="281">clean · Z-up · meters</text><text x="332" y="296">decimate · bake maps</text><text x="332" y="315" fill="#7c3aed">trimesh, pymeshlab</text>
-      <text x="490" y="281">CCM / gray card</text><text x="490" y="296">CIEDE2000</text><text x="490" y="315" fill="#7c3aed">numpy</text>
-      <text x="648" y="281">convex hulls</text><text x="648" y="296">mass · inertia</text><text x="648" y="315" fill="#7c3aed">CoACD, manifold3d</text>
-      <text x="806" y="281">UsdGeom · UsdShade</text><text x="806" y="296">UsdPhysics · glTF</text><text x="806" y="315" fill="#7c3aed">usd-core (pxr)</text>
-      <text x="964" y="281">33 checks on the file</text>
-      <text x="972" y="318" font-size="13" fill="#1e293b">simulate.py</text><text x="972" y="337" fill="#7c3aed">MuJoCo drop tests</text>
-    </g>
-
-    <g font-size="12.5">
-      <text x="30" y="350">scan mesh</text><text x="30" y="367" font-size="10.5" fill="#475569">.ply · .obj · .glb</text>
-      <text x="30" y="440">chart / gray-card</text><text x="30" y="457" font-size="10.5" fill="#475569">photo</text>
-      <text x="804" y="470">asset .usd(a)</text><text x="804" y="487" font-size="10.5" fill="#475569">+ .glb</text>
-      <text x="962" y="470">validation.md</text><text x="962" y="487" font-size="10.5" fill="#475569">build_report.json</text>
-      <text x="488" y="470">preview.png</text><text x="488" y="487" font-size="10.5" fill="#475569">no 3D app needed</text>
-      <text x="648" y="472">preview.py</text><text x="648" y="490" font-size="10.5" fill="#475569">numpy rasterizer</text>
-    </g>
-    <text x="966" y="402" font-size="10.5" fill="#7c3aed">reads the</text>
-    <text x="966" y="416" font-size="10.5" fill="#7c3aed">file back</text>
-    <use href="#cmp" x="160" y="518"/>
-    <text x="32" y="532" font-size="14.5">reconstruct.py</text>
-    <text x="32" y="548" font-size="10.5" fill="#475569">photos → mesh, Z-up</text>
-    <text x="32" y="563" font-size="10.5" fill="#7c3aed">COLMAP (CUDA)</text>
-    <text x="30" y="624" font-size="12.5">photos</text>
-    <text x="30" y="640" font-size="10.5" fill="#475569">phone · Blender renders</text>
-    <use href="#cmp" x="914" y="556"/>
-    <text x="806" y="572" font-size="14.5">evaluate.py</text>
-    <text x="806" y="590" font-size="10.5" fill="#475569">scores vs ground truth</text>
-    <use href="#cmp" x="380" y="606"/>
-    <text x="262" y="622" font-size="14">chart.py</text>
-    <text x="258" y="640" font-size="10" fill="#475569">chart: color + metric scale</text>
-    <text x="964" y="572" font-size="14">Isaac Sim 6</text>
-    <text x="964" y="590" font-size="10.5" fill="#475569">PhysX · RTX path tracing</text>
-    <text x="964" y="606" font-size="10.5" fill="#7c3aed">→ synth data, sim2real</text>
-    <use href="#cmp" x="756" y="356"/>
-    <text x="646" y="372" font-size="12.5">articulation.py</text>
-    <text x="648" y="390" font-size="10.5" fill="#475569">split + hinge joint</text>
-    <use href="#cmp" x="756" y="556"/>
-    <text x="648" y="572" font-size="14">mjcf.py</text>
-    <use href="#cmp" x="598" y="558"/>
-    <text x="490" y="574" font-size="14">library.py</text>
-    <text x="490" y="592" font-size="10.5" fill="#475569">payloads · variants</text>
-    <text x="648" y="590" font-size="10.5" fill="#475569">Panda · bin · robustness</text>
-
-    <!-- Sticky note -->
-    <g transform="rotate(-2 330 540)">
-      <rect x="250" y="515" width="200" height="62" fill="#fde68a" stroke="#d97706" stroke-width="1"/>
-      <text x="262" y="538" font-size="11.5">each stage = one module,</text>
-      <text x="262" y="555" font-size="11.5">plain functions in, data out</text>
-      <text x="262" y="571" font-size="11.5" fill="#92400e">→ easy to test (106 tests)</text>
-    </g>
-  </g>
-  <g filter="url(#marker)" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="478" y="630" width="186" height="40" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
-    <path d="M666,650 C720,650 765,640 794,620" stroke="#7c3aed" stroke-width="2" fill="none" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
-  </g>
-  <g fill="#1e293b">
-    <use href="#cmp" x="644" y="636"/>
-    <text x="488" y="649" font-size="13">register.py · carve.py</text>
-    <text x="488" y="664" font-size="10" fill="#475569">align scans · carve free space</text>
-  </g>
-<!-- assets that know what they don't know -->
-  <g filter="url(#marker)" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="236" y="676" width="870" height="112" rx="10" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="8 6"/>
-    <rect x="252" y="714" width="156" height="60" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
-    <rect x="424" y="714" width="156" height="60" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
-    <rect x="596" y="714" width="156" height="60" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
-    <rect x="768" y="714" width="156" height="60" rx="6" fill="#fef9c3" stroke="#1e293b" stroke-width="2"/>
-    <rect x="952" y="714" width="140" height="60" rx="6" fill="#e0f2fe" stroke="#1e293b" stroke-width="2"/>
-    <g stroke="#b91c1c" stroke-width="2" fill="none">
-      <path d="M943,504 V672" marker-end="url(#arrowr)"/>
-    </g>
-    <g stroke="#1d4ed8" stroke-width="2" fill="none">
-      <path d="M408,744 H420" marker-end="url(#arrow)"/>
-      <path d="M580,744 H592" marker-end="url(#arrow)"/>
-      <path d="M924,734 H948" marker-end="url(#arrow)"/>
-      <path d="M952,758 H928" marker-end="url(#arrow)"/>
-    </g>
-    <g stroke="#15803d" stroke-width="2" fill="none" stroke-dasharray="7 5">
-      <path d="M250,744 H100 V656" marker-end="url(#arrowg)"/>
-    </g>
-  </g>
-  <g fill="#1e293b" font-size="13">
-    <text x="252" y="700" font-size="13" fill="#475569">assets that know what they don't know</text>
-    <text x="104" y="738" font-size="10.5" fill="#15803d">shot list: take</text>
-    <text x="104" y="752" font-size="10.5" fill="#15803d">these 8 photos</text>
-    <use href="#cmp" x="386" y="720"/>
-    <text x="262" y="736" font-size="14">guide.py</text>
-    <text x="262" y="754" font-size="10.5" fill="#475569">what to shoot next</text>
-    <use href="#cmp" x="558" y="720"/>
-    <text x="434" y="736" font-size="14">uncertainty.py</text>
-    <text x="434" y="754" font-size="10.5" fill="#475569">seen · guessed · sealed</text>
-    <text x="434" y="767" font-size="10.5" fill="#475569">mass / friction intervals</text>
-    <use href="#cmp" x="730" y="720"/>
-    <text x="606" y="736" font-size="14">schemas.py</text>
-    <text x="606" y="754" font-size="10.5" fill="#475569">grasps + uncertainty</text>
-    <text x="606" y="767" font-size="10.5" fill="#7c3aed">codeless USD schema</text>
-    <use href="#cmp" x="902" y="720"/>
-    <text x="778" y="736" font-size="14">splat.py</text>
-    <text x="778" y="754" font-size="10.5" fill="#475569">mesh masks · hybrid USD</text>
-    <text x="778" y="767" font-size="10.5" fill="#7c3aed">UsdVol Gaussian splat</text>
-    <text x="962" y="736" font-size="14">Brush</text>
-    <text x="962" y="754" font-size="10.5" fill="#475569">trains the splat</text>
-    <text x="962" y="767" font-size="10.5" fill="#7c3aed">masked photos → .ply</text>
-  </g>
+  <rect width="1180" height="640" fill="#fbfbf7"/>
+  <text x="24" y="42" font-size="24" fill="#1e293b">Scan2USD · system view</text>
+  <text x="24" y="68" font-size="13" fill="#64748b">phone photos in, one physics-ready OpenUSD asset out; every simulator and renderer reads the same file</text>
+  <rect x="20" y="96" width="210" height="490" rx="14" fill="#ecfeff" opacity="0.7"/>
+  <text x="34" y="122" font-size="13" fill="#0e7490" text-anchor="start" font-weight="bold">1 · CAPTURE</text>
+  <rect x="250" y="96" width="300" height="490" rx="14" fill="#f5f3ff" opacity="0.7"/>
+  <text x="264" y="122" font-size="13" fill="#6d28d9" text-anchor="start" font-weight="bold">2 · BUILD</text>
+  <rect x="570" y="96" width="230" height="490" rx="14" fill="#ecfdf5" opacity="0.7"/>
+  <text x="584" y="122" font-size="13" fill="#047857" text-anchor="start" font-weight="bold">3 · VERIFY</text>
+  <rect x="820" y="96" width="340" height="490" rx="14" fill="#fff7ed" opacity="0.7"/>
+  <text x="834" y="122" font-size="13" fill="#c2410c" text-anchor="start" font-weight="bold">4 · USE</text>
+  <rect x="36" y="150" width="178" height="100" rx="10" fill="#ffffff" stroke="#0e7490" stroke-width="2.2" filter="url(#marker)"/>
+  <text x="50" y="176" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Phone photos</text>
+  <text x="50" y="198" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">60–150 shots</text>
+  <text x="50" y="217" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">of an everyday object</text>
+  <rect x="36" y="274" width="178" height="100" rx="10" fill="#ffffff" stroke="#0e7490" stroke-width="2.2" filter="url(#marker)"/>
+  <text x="50" y="300" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">References</text>
+  <text x="50" y="322" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">color chart · weight</text>
+  <text x="50" y="341" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">tape (optional)</text>
+  <rect x="36" y="444" width="178" height="100" rx="10" fill="#ffffff" stroke="#0e7490" stroke-width="2.2" filter="url(#marker)"/>
+  <text x="50" y="470" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Capture guide</text>
+  <text x="50" y="492" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">which photos</text>
+  <text x="50" y="511" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">to take next</text>
+  <rect x="266" y="150" width="268" height="210" rx="10" fill="#ffffff" stroke="#6d28d9" stroke-width="2.2" filter="url(#marker)"/>
+  <text x="280" y="176" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">scan2usd pipeline</text>
+  <text x="280" y="198" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">reconstruct (COLMAP → mesh)</text>
+  <text x="280" y="217" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">clean, bake textures</text>
+  <text x="280" y="236" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">calibrate color, metric scale</text>
+  <text x="280" y="255" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">convex hulls, mass, inertia</text>
+  <text x="280" y="274" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">joints for articulated objects</text>
+  <rect x="266" y="392" width="268" height="152" rx="10" fill="#ede9fe" stroke="#6d28d9" stroke-width="2.2" filter="url(#marker)"/>
+  <text x="280" y="418" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">OpenUSD asset</text>
+  <text x="280" y="440" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">look · colliders · mass</text>
+  <text x="280" y="459" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">+ tested grasps, uncertainty,</text>
+  <text x="280" y="478" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">   Gaussian-splat look</text>
+  <text x="280" y="497" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">one file every engine reads</text>
+  <rect x="600" y="150" width="184" height="100" rx="10" fill="#ffffff" stroke="#047857" stroke-width="2.2" filter="url(#marker)"/>
+  <text x="614" y="176" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Validator</text>
+  <text x="614" y="198" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">33 checks on the</text>
+  <text x="614" y="217" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">written file</text>
+  <rect x="600" y="272" width="184" height="100" rx="10" fill="#ffffff" stroke="#047857" stroke-width="2.2" filter="url(#marker)"/>
+  <text x="614" y="298" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Ground truth</text>
+  <text x="614" y="320" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">surface error vs</text>
+  <text x="614" y="339" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">true meshes</text>
+  <rect x="600" y="444" width="184" height="100" rx="10" fill="#ffffff" stroke="#047857" stroke-width="2.2" filter="url(#marker)"/>
+  <text x="614" y="470" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Real-world check</text>
+  <text x="614" y="492" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">scan vs the real</text>
+  <text x="614" y="511" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">objects, posed</text>
+  <rect x="836" y="150" width="308" height="118" rx="10" fill="#ffffff" stroke="#c2410c" stroke-width="2.2" filter="url(#marker)"/>
+  <text x="850" y="176" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Physics + robots</text>
+  <text x="850" y="198" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">MuJoCo · Isaac Sim PhysX</text>
+  <text x="850" y="217" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">Franka Panda · Shadow Hand</text>
+  <text x="850" y="236" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">pick, place, drop tests</text>
+  <rect x="836" y="288" width="308" height="100" rx="10" fill="#ffffff" stroke="#c2410c" stroke-width="2.2" filter="url(#marker)"/>
+  <text x="850" y="314" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Perception</text>
+  <text x="850" y="336" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">Replicator synthetic data →</text>
+  <text x="850" y="355" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">detector → pose → pick</text>
+  <rect x="836" y="408" width="308" height="136" rx="10" fill="#ffffff" stroke="#c2410c" stroke-width="2.2" filter="url(#marker)"/>
+  <text x="850" y="434" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Rendering + library</text>
+  <text x="850" y="456" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">Isaac Sim RTX path tracing</text>
+  <text x="850" y="475" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">Unreal Engine 5.8 (MegaLights)</text>
+  <text x="850" y="494" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">USD asset library, 3D gallery</text>
+  <path d="M214,200 C240,200 244,230 262,230" fill="none" stroke="#0e7490" stroke-width="2.2" stroke-linecap="round" marker-end="url(#a_cap)"/>
+  <path d="M214,324 C240,324 244,296 262,292" fill="none" stroke="#0e7490" stroke-width="2.2" stroke-linecap="round" marker-end="url(#a_cap)"/>
+  <path d="M400,360 L400,388" fill="none" stroke="#6d28d9" stroke-width="2.6" stroke-linecap="round" marker-end="url(#a_bld)"/>
+  <path d="M534,430 L574,430 M574,200 L574,494" fill="none" stroke="#047857" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M574,200 L596,200" fill="none" stroke="#047857" stroke-width="2.2" stroke-linecap="round" marker-end="url(#a_ver)"/>
+  <path d="M574,322 L596,322" fill="none" stroke="#047857" stroke-width="2.2" stroke-linecap="round" marker-end="url(#a_ver)"/>
+  <path d="M574,494 L596,494" fill="none" stroke="#047857" stroke-width="2.2" stroke-linecap="round" marker-end="url(#a_ver)"/>
+  <path d="M400,544 L400,566 L812,566 L812,209" fill="none" stroke="#c2410c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M812,209 L832,209" fill="none" stroke="#c2410c" stroke-width="2.2" stroke-linecap="round" marker-end="url(#a_use)"/>
+  <path d="M812,338 L832,338" fill="none" stroke="#c2410c" stroke-width="2.2" stroke-linecap="round" marker-end="url(#a_use)"/>
+  <path d="M812,476 L832,476" fill="none" stroke="#c2410c" stroke-width="2.2" stroke-linecap="round" marker-end="url(#a_use)"/>
+  <text x="606" y="584" font-size="12" fill="#c2410c" text-anchor="start" font-weight="normal">same file in every engine</text>
+  <path d="M266,494 L218,494" fill="none" stroke="#0e7490" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="8 6" marker-end="url(#a_cap)"/>
+  <path d="M30,494 L30,206 L32,206" fill="none" stroke="#0e7490" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="8 6" marker-end="url(#a_cap)"/>
+  <path d="M36,494 L30,494" fill="none" stroke="#0e7490" stroke-width="2.2" stroke-dasharray="8 6"/>
+  <text x="222" y="482" font-size="11" fill="#0e7490" text-anchor="start" font-weight="normal">unknowns</text>
+  <text x="1156" y="622" font-size="11" fill="#64748b" text-anchor="end">module-level map: README, "What it does"</text>
 </svg>
