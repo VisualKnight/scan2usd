@@ -1,6 +1,6 @@
 # Scan2USD
 
-**Scan-to-Sim asset pipeline**: phone photos of everyday objects in, physics-ready **OpenUSD** assets out, verified in NVIDIA **Isaac Sim** and **MuJoCo**.
+**Scan-to-Sim asset pipeline**: phone photos of everyday objects in, physics-ready **OpenUSD** assets out, verified in NVIDIA **Isaac Sim** and **MuJoCo**, and rendered in **Unreal Engine**.
 
 ![Scan2USD: real photos to a simulation-ready OpenUSD asset](docs/figures/hero.jpg)
 
