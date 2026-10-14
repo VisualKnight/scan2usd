@@ -6,12 +6,13 @@
 
 ![A Shadow Hand places the scanned controller into the scanned holder, Isaac Sim 6](docs/figures/hand_hero.jpg)
 
-- **Accurate:** 0.6–0.8 mm mean surface error on the well-textured benchmark objects, scored against ground-truth meshes; metric size within 1.43% (worst of six objects) from a ColorChecker alone, no ruler.
-- **Physics-ready:** convex decomposition, mass and inertia, articulated joints. A Franka Panda picks a scanned mug that it can't pick when the mug has a single convex hull.
-- **Useful for robot learning:** a detector trained only on Isaac Sim renders of scanned assets ranks the Buddha first in **67/67** real photos of the Buddha dataset; in simulation, the same detector drives a perception-to-grasp loop (10/10 picks). From my own phone photos: a scanned controller dropped into a scanned holder comes to rest a median <!--n:sim_add-->9.1<!--/n--> mm from where the real one sits.
-- **Assets that know what they don't know:** grasps and measurement uncertainty stored in the USD file (codeless schemas), an experimental next-photo planner, and a **Gaussian-splat look riding on the physics hulls** that beats the textured mesh on 18/18 held-out photos.
+- **Accurate:** 0.6–0.8 mm mean surface error on textured objects, scored against ground truth; size within 1.43% from a ColorChecker alone, no ruler.
+- **Physics-ready:** convex decomposition, mass, inertia, articulated joints. A Franka Panda picks a scanned mug that a single convex hull makes unpickable.
+- **Checked against reality:** from my own phone photos, a scanned controller settles into a scanned holder a median <!--n:sim_add-->9.1<!--/n--> mm from where the real one sits, and a Shadow Hand places it there in MuJoCo and Isaac Sim.
+- **Useful for robot learning:** a detector trained only on Isaac Sim renders finds the object in **67/67** real photos and drives a see-locate-pick loop (10/10).
+- **Assets that know what they don't know:** tested grasps, measurement uncertainty and a Gaussian-splat look stored in the USD file.
 
-> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[<!--n:reel_s-->148<!--/n--> s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4?v=aa841812)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** (toggle collision hulls) · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · benchmark: [docs/benchmark.md](docs/benchmark.md)
+> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[<!--n:reel_s-->148<!--/n--> s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4?v=aa841812)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · [benchmark](docs/benchmark.md)
 
 ## What it does
 
@@ -19,26 +20,23 @@
 
 | Stage | What happens | Module |
 |---|---|---|
-| Reconstruct | COLMAP structure-from-motion + multi-view stereo; the table plane becomes z = 0 (Z-up); the object is isolated as the densest footprint above the table; screened Poisson surface; flat base | `reconstruct.py` |
-| Clean | Debris removed, holes filled, meters / Z-up, origin at the base, topology-preserving decimation, optional texture bake (xatlas UV atlas, color transfer, island padding) and high-to-low tangent-space normal map bake | `mesh_ops.py`, `bake.py` |
-| Color | 3×3 color-correction matrix from a ColorChecker (or gray card) applied to the albedo; CIEDE2000 reported. The chart is found automatically in the photos (OpenCV mcc) | `color.py`, `chart.py` |
-| Scale | Metric scale without a ruler: the chart's patch centers are triangulated with COLMAP's camera poses (RANSAC over views) and compared with its physical patch pitch; **0.35–1.43% error** on the benchmark | `chart.py` |
-| Physics | CoACD convex decomposition; mass, center of mass and principal inertia from volume × density or a measured mass; voxel-fill solids for scans with holes | `physics.py` |
-| Articulation | Split a scan by a seam plane, one rigid body per part, `UsdPhysics.RevoluteJoint` with limits under an articulation root | `articulation.py` |
-| Export | OpenUSD (`UsdGeom`, `UsdShade` preview surface with per-material PBR look presets (roughness, IOR, clearcoat for glazes, metallic) and normal maps, `UsdPhysics` rigid body / mass / colliders / physics material) and glTF | `usd_io.py` |
-| Library | Many assets in one stage as payloads (load on demand), with `collision` (decomposed / convex_hull / bounding_box) and `friction` (measured / low / high) variant sets authored in the library layer; asset files untouched. [Catalog](https://visualknight.github.io/scan2usd/library/) | `library.py` |
-| Grasps | Grasp poses with their tested success rate per gripper and collision variant, stored as `Scan2UsdGraspAPI` prims (codeless USD schema plugin) | `schemas.py` |
-| Uncertainty | Per-vertex observation labels (observed / inferred / sealed), a "carved" geometry hypothesis for unseen cavities, and intervals for mass, scale and friction (`Scan2UsdUncertaintyAPI`); samplers for domain randomization | `uncertainty.py` |
-| Capture guide | Which extra photos would see the physics-relevant surface no photo saw twice: a ranked shot list and a top-down map | `guide.py` |
-| Splat hybrid | Mesh silhouettes as alpha masks for splat training; the trained Gaussian splat (`UsdVol.ParticleField3DGaussianSplat`) added under the rigid body with an `appearance` variant set (mesh / splat / splat + shadow proxy) | `splat.py` |
-| Validate | 33 checks on the written file, including MuJoCo drop tests | `validate.py`, `simulate.py` |
-| Evaluate | Accuracy / completeness / F-score / volume against ground truth after alignment | `evaluate.py` |
-| Register | Align two scans, or a scan with a scene that contains it, up to scale: trimmed similarity ICP over a rotation search (merging capture passes, finding where an object really rests) | `register.py` |
-| Carve | Silhouette carving: count, per 3D point, the photos that see background through it, and cut that volume out of the mesh (openings Poisson bridged, like the gap between a figure's legs) | `carve.py` |
+| Reconstruct | COLMAP SfM + MVS; table plane → z = 0; object isolated; Poisson surface | `reconstruct.py` |
+| Clean | Repair, meters / Z-up, decimation; texture and normal-map bake | `mesh_ops.py`, `bake.py` |
+| Color | Color correction from a ColorChecker or gray card, found automatically | `color.py`, `chart.py` |
+| Scale | Metric scale from the chart's patch spacing, no ruler (0.35–1.43% error) | `chart.py` |
+| Physics | CoACD convex decomposition; mass, center of mass, inertia | `physics.py` |
+| Articulation | Split a scan into parts joined by a USD revolute joint | `articulation.py` |
+| Export | OpenUSD (geometry, PBR look, rigid body, colliders) and glTF | `usd_io.py` |
+| Library | Many assets as payloads with `collision` and `friction` variant sets ([catalog](https://visualknight.github.io/scan2usd/library/)) | `library.py` |
+| Grasps, uncertainty | Tested grasps and property intervals in codeless USD schemas | `schemas.py`, `uncertainty.py` |
+| Capture guide | Which photos to take next | `guide.py` |
+| Splat hybrid | A Gaussian splat for looks under the physics hulls | `splat.py` |
+| Validate, evaluate | 33 checks on the written file; scoring against ground truth | `validate.py`, `evaluate.py` |
+| Register, carve | Align scans up to scale; cut out space the photos see through | `register.py`, `carve.py` |
 
 ## Results
 
-**Photos → USD, scored against ground truth.** Each object is a 78-photo phone-style capture rendered in Blender (with a ColorChecker in the scene), reconstructed with COLMAP, and scaled for geometry scoring with one known height. Full table: [docs/benchmark.md](docs/benchmark.md).
+**Photos → USD, scored against ground truth.** 78-photo phone-style captures rendered in Blender, reconstructed with COLMAP. Full table: [docs/benchmark.md](docs/benchmark.md).
 
 | Object | Accuracy mean / p95 (mm) | F-score @2 mm | Volume error | Chart ΔE2000 |
 |---|---|---|---|---|
@@ -49,42 +47,40 @@
 | Printed coffee mug | 2.00 / 10.20 | 0.731 | +191.5% | 8.0 → 1.30 |
 | Ceramic bowl | 3.03 / 9.61 | 0.494 | +82.0% | 7.8 → 1.32 |
 
-The three well-textured benchmark objects reconstruct to 0.6–0.8 mm. Plain or hidden surfaces (the printed mug's white interior, the bowl's underside) never get matched and are sealed, so their volume is off; the asset records this as uncertainty (below), and a measured `--mass` keeps physics right. In a separate test on the same captures, the ColorChecker alone (no ruler) gives the scale to 0.35–1.43%.
+Surfaces no photo can match (a plain white interior, a bowl's underside) get sealed, so their volume is off; the asset records that as uncertainty, and a measured `--mass` keeps physics right.
 
 ![Real pair, each scan, simulated drop](docs/figures/holder_fit_lead.jpg)
 
-**Real-world check: scan, simulate, compare** ([drop animation](docs/figures/holder_fit.webp), [per-drop errors](docs/figures/holder_fit_results.png)). I photographed a controller holder (81 photos) and a controller (two passes of 78 and 38, merged by similarity ICP at <!--n:merge_rmse-->0.5<!--/n--> mm RMSE), then the two together, which gives the reference pose. In MuJoCo, the scanned controller dropped into the scanned holder settles <!--n:sim_held-->12/12<!--/n--> times, median **<!--n:sim_add-->9.1<!--/n--> mm / <!--n:sim_rot-->11<!--/n-->°** from where the real one sits in the combined scan. With a single convex hull for the holder it slides off (<!--n:hull_held-->0/12<!--/n--> held). The same drops in [Isaac Sim 6 PhysX](docs/figures/isaac_holder_fit.webp): <!--n:isaac_held-->11/12<!--/n--> held, median <!--n:isaac_add-->9.0<!--/n--> mm. A [Franka Panda places it](docs/figures/holder_place.webp) instead: it pinches the controller's top edge near a corner, turns it upright and sets it down 5 mm above the measured pose, <!--n:place_held-->12/12<!--/n--> held at a median <!--n:place_add-->4.6<!--/n--> mm / <!--n:place_rot-->7<!--/n-->° from the real pose (one convex hull: <!--n:place_hull_held-->0/12<!--/n-->; `scripts/demo_holder_place.py`). A [Shadow Hand does it too](docs/figures/hand_place.webp), spanning the controller's width at its center of mass (a pinch is beyond its fingertip torque): <!--n:hand_held-->12/12<!--/n--> held at <!--n:hand_add-->6.4<!--/n--> mm / <!--n:hand_rot-->6<!--/n-->° when re-aimed from the in-hand pose, <!--n:hand_open_add-->13.1<!--/n--> mm / <!--n:hand_open_rot-->22<!--/n-->° open loop (`scripts/demo_hand_place.py`). The same plan [in Isaac Sim 6 PhysX](docs/figures/isaac_hand_place.mp4): <!--n:ihand_held-->12/12<!--/n--> at <!--n:ihand_add-->6.3<!--/n--> mm / <!--n:ihand_rot-->5<!--/n-->° re-aimed, <!--n:ihand_open_add-->19.5<!--/n--> mm / <!--n:ihand_open_rot-->27<!--/n-->° open loop (`scripts/isaac_hand_place.py`), and [rendered in Unreal Engine 5.8](docs/figures/unreal_hand_place.mp4) with Lumen + MegaLights (`scripts/unreal_hand_render.py`). The hand is the real robot's size (Shadow: “similar in shape and size to a typical male hand”, 201 mm wrist to fingertip); the videos use a 57 mm lens, because at 24 mm the hand, always nearest the camera, looked oversized. [Path traced](docs/figures/holder_fit_render.jpg) beside the other scans. Scale came from two tape measurements; the combined scan agrees within <!--n:scale_agree-->1.2<!--/n-->%. The holder's glossy base, pitted in the scan, is replaced by a cylinder fitted to its measured top (<!--n:base_rms-->0.25<!--/n--> mm rim error), and the gap between its legs, which Poisson had filled in, is [carved back out where the photos see through it](docs/figures/holder_gap.jpg). `scripts/study_holder_fit.py`
+**Real-world check: scan, simulate, compare.** I photographed a controller holder and a controller, each alone, then together; the combined scan is the answer key. Dropped into the scanned holder, the scanned controller settles <!--n:sim_held-->12/12<!--/n--> times, median **<!--n:sim_add-->9.1<!--/n--> mm / <!--n:sim_rot-->11<!--/n-->°** from where the real one sits ([MuJoCo](docs/figures/holder_fit.webp); [Isaac Sim PhysX](docs/figures/isaac_holder_fit.webp): <!--n:isaac_held-->11/12<!--/n-->, <!--n:isaac_add-->9.0<!--/n--> mm). With one convex hull for the holder it slides off (<!--n:hull_held-->0/12<!--/n-->). `scripts/study_holder_fit.py`
+
+**Robots put it there.** A [Franka Panda](docs/figures/holder_place.webp) pinches the controller, turns it upright and seats it: <!--n:place_held-->12/12<!--/n--> held, <!--n:place_add-->4.6<!--/n--> mm / <!--n:place_rot-->7<!--/n-->° from the real pose. A [Shadow Hand](docs/figures/hand_place.webp) spans it at its center of mass instead: <!--n:hand_held-->12/12<!--/n--> at <!--n:hand_add-->6.4<!--/n--> mm / <!--n:hand_rot-->6<!--/n-->°, re-aimed from the in-hand pose. The same plan [in Isaac Sim PhysX](docs/figures/isaac_hand_place.mp4): <!--n:ihand_held-->12/12<!--/n--> at <!--n:ihand_add-->6.3<!--/n--> mm / <!--n:ihand_rot-->5<!--/n-->°, also [rendered in Unreal Engine 5.8](docs/figures/unreal_hand_place.mp4). With one convex hull for the holder, every placement fails. `scripts/demo_holder_place.py`, `demo_hand_place.py`, `isaac_hand_place.py`
 
 ![Panda](docs/figures/panda_demo.jpg)
 
-**Why collision geometry matters** ([animation](docs/figures/panda_demo.webp)). A Franka Panda (MuJoCo Menagerie) rim-grasps the scanned mug with one finger inside the cup and places it 25 cm away. With a single convex hull, that finger lands on a phantom "lid" and the pick fails. `scripts/demo_panda.py`
-
-![Isaac pick](docs/figures/isaac_franka_pick.jpg)
-
-**Same plan, second physics engine** ([animation](docs/figures/isaac_franka_pick.webp)). The plan, built from the grasp stored in the USD asset, replayed on Isaac Sim 6's Franka with PhysX: lifted 14.1 cm, placed within 5.5 mm. The `convex_hull` variant fails the same way as in MuJoCo. `scripts/isaac_franka_pick.py`
+**Why collision geometry matters** ([animation](docs/figures/panda_demo.webp)). A Franka Panda rim-grasps the scanned mug with one finger inside. With a single convex hull, that finger lands on a phantom lid and the pick fails. The [same plan in Isaac Sim](docs/figures/isaac_franka_pick.webp), from the grasp stored in the USD asset, places it within 5.5 mm, and fails the same way with one hull. `scripts/demo_panda.py`, `isaac_franka_pick.py`
 
 ![Sim-to-real](docs/figures/sim2real_compare.jpg)
 
-**Sim-to-real perception.** A detector trained only on 900 domain-randomized Isaac Sim renders of the scanned assets finds the object in **100%** of 67 real photos; unlabeled distractors in training cut false positives by 84%. It then drives a [see-locate-pick loop](docs/figures/perception_pick.webp): detector → fit the scanned lion's mesh to RGB-D → 10/10 picks at 0.6 mm / 0.3° median pose error. `scripts/train_detector.py`
+**Sim-to-real perception.** A detector trained only on Isaac Sim renders of the scanned assets finds the object in **100%** of 67 real photos; unlabeled distractors in training cut false positives by 84%. It drives a [see-locate-pick loop](docs/figures/perception_pick.webp): 10/10 picks, 0.6 mm median pose error. `scripts/train_detector.py`
 
 ![Uncertainty](docs/figures/uncertainty.png)
 
-**Assets that know what they don't know** (`scan2usd uncertainty`). Each vertex is labeled observed / inferred / sealed, and mass, scale and friction are stored as intervals in a codeless USD schema. The true mass falls inside the stored interval for 5/6 objects; a single value is within 10% for only 2/6. A stored "carved" hypothesis fixes the bowl (F-score 0.49 → 0.95). Tested grasps live in the benchmark assets too (`Scan2UsdGraspAPI`), read by MuJoCo and Isaac Sim.
+**Assets that know what they don't know.** Each vertex is labeled observed / inferred / sealed, and mass, scale and friction are stored as intervals: the true mass is inside for 5/6 objects. Tested grasps are stored too, and Isaac Sim's Franka picks with the best one. `scan2usd uncertainty`, `scan2usd grasps`
 
 ![Splat vs mesh](docs/figures/splat_buddha.jpg)
 
-**Gaussian splat for looks, convex hulls for physics** (`scan2usd splat`). A splat trained on the same photos, using the mesh's silhouettes as masks, goes under the rigid body as a `UsdVol.ParticleField3DGaussianSplat`. Rendered in Isaac Sim RTX from photos it never saw, it beats the textured mesh on all 18 (Buddha PSNR 19.7 → 27.0 dB; mug 17.1 → 28.9 dB). The splats [ride on PhysX](docs/figures/splat_drop.mp4) and the [Franka picks a splat mug](docs/figures/isaac_franka_pick_splat.webp).
+**Gaussian splat for looks, convex hulls for physics.** A splat trained on the same photos rides on the rigid body as a `UsdVol.ParticleField3DGaussianSplat`. On photos it never saw, it beats the textured mesh 18/18 (Buddha PSNR 19.7 → 27.0 dB), and it [falls on PhysX](docs/figures/splat_drop.mp4). `scan2usd splat`
 
 ![Path traced](docs/figures/render_modes.jpg)
 
-**Path-traced look-dev.** PBR look presets, baked 2K albedo + normal maps from the 4.3M-triangle scan, HDRI lighting, physical 50 mm f/5.6 depth of field (Isaac Sim 6 RTX). Rendered from a real photo's solved camera, 63% of the silhouette lies within 3 px of the photo's edges. `scripts/isaac_pathtrace.py`
+**Path-traced look-dev.** PBR look presets and baked 2K albedo + normal maps, path traced in Isaac Sim 6 RTX. `scripts/isaac_pathtrace.py`
 
 ![Unreal Engine 5.8, Lumen + MegaLights](docs/figures/unreal_render.jpg)
 
-**The same USD files in Unreal Engine 5.8.** One USD stage holds the scans (the lion in focus, the phone-scanned holder pair soft in the background), a table and 80 shadow-casting fairy lights; Unreal's USD importer brings it in as is. Lumen (hardware ray tracing) and MegaLights at 1080p: <!--n:ue_on-->8.8<!--/n--> ms GPU per frame vs <!--n:ue_off-->14.8<!--/n--> ms with MegaLights off, and slightly closer to Unreal's path tracer (<!--n:ue_on_db-->24.8<!--/n--> vs <!--n:ue_off_db-->23.3<!--/n--> dB PSNR; [comparison](docs/figures/unreal_megalights.jpg), [10 s orbit](docs/figures/unreal_flythrough.mp4)). `scripts/unreal_layout.py`, `scripts/unreal_render.py`
+**The same USD files in Unreal Engine 5.8.** One USD stage with the scans and 80 shadow-casting fairy lights, imported as is. MegaLights renders it in <!--n:ue_on-->8.8<!--/n--> ms per frame vs <!--n:ue_off-->14.8<!--/n--> ms without, slightly closer to the path tracer ([comparison](docs/figures/unreal_megalights.jpg), [orbit](docs/figures/unreal_flythrough.mp4)). `scripts/unreal_render.py`
 
+**More on the [overview page](https://visualknight.github.io/scan2usd/):** dexterous grasping, how accurate a scan must be, articulated assets, the asset library, color calibration, capture guidance, and lessons learned.
 
-**More on the [overview page](https://visualknight.github.io/scan2usd/):** Shadow Hand grasp benchmark (1,440 trials), how accurate a scan must be (93 picks vs. collider, friction, mass and size error), articulated assets in both engines, a bin of 14 scans, the USD asset library, color calibration, and capture guidance (work in progress).
 ## Quickstart
 
 Python 3.10–3.12, with [uv](https://docs.astral.sh/uv/):
@@ -93,7 +89,7 @@ Python 3.10–3.12, with [uv](https://docs.astral.sh/uv/):
 uv venv --python 3.11
 uv pip install -e ".[dev]"
 .venv\Scripts\scan2usd demo            # synthetic mug -> output\demo\ (see preview.png)
-.venv\Scripts\python -m pytest         # 106 tests
+.venv\Scripts\python -m pytest         # 107 tests
 ```
 
 Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (CUDA build): unzip it to `tools\colmap\` or set `SCAN2USD_COLMAP`.

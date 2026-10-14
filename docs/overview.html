@@ -134,7 +134,7 @@
 </div>
 <img class="board" src="figures/hero.jpg" alt="Real photos to a simulation-ready OpenUSD asset" style="margin-bottom:10px">
 <a href="#hand"><img class="board" src="figures/hand_hero.jpg" alt="A Shadow Hand places the scanned controller into the scanned holder (Isaac Sim 6)" style="margin-bottom:16px"></a>
-<details class="demo"><summary>Watch the <!--n:reel_s-->148<!--/n-->-second demo <span>· photos → USD → MuJoCo, Isaac Sim, perception, own phone scans, a Panda and a Shadow Hand placing a scan, Unreal, splats</span></summary>
+<details class="demo"><summary>Watch the <!--n:reel_s-->148<!--/n-->-second demo <span>· from phone photos to robots placing the scans, in MuJoCo, Isaac Sim and Unreal</span></summary>
   <video controls preload="none" poster="figures/demo_poster.jpg" style="width:100%;border-radius:8px;margin-top:8px"><source src="scan2usd_demo.mp4?v=aa841812" type="video/mp4"></video></details>
 <div class="numbers">
   <div class="kpi"><b>0.78 mm</b><span>mean surface error, 78 photos → USD (speckled mug vs. ground truth)</span></div>
@@ -147,37 +147,37 @@
 
 <div class="chap s-bld" id="architecture"><div class="no">01</div><div><div class="eb">Build</div><h2>Architecture</h2></div></div>
 <img class="board" src="figures/architecture.svg" alt="Whiteboard architecture diagram">
-<p class="cap">Photos become a mesh (COLMAP), the pipeline turns it into a simulation asset, and the validator re-opens the written file. Downstream: MuJoCo demos, Isaac Sim, and scoring against ground truth. Bottom row: what the asset knows about itself, and the loop back to the camera.</p>
+<p class="cap">Photos become a mesh (COLMAP), the pipeline turns it into a simulation asset, and the validator re-opens the written file. Downstream: simulators, ground-truth scoring, and what the asset knows about itself.</p>
 
 <div class="chap s-ver" id="real"><div class="no">02</div><div><div class="eb">Verify</div><h2>Real-world check: scan, simulate, compare</h2></div></div>
-<p class="muted" style="max-width:900px">Own iPhone 13 Pro photos of a controller holder and a game controller, each scanned on its own, then photographed together. The combined scan is the answer key: does the simulated controller settle where the real one sits?</p>
+<p class="muted" style="max-width:900px">My own iPhone photos of a controller holder and a controller, each scanned alone, then photographed together. The combined scan is the answer key: does the simulated controller settle where the real one sits?</p>
 <div class="card" style="margin-bottom:12px"><img src="figures/holder_fit_lead.jpg" alt="The real pair, each object scanned alone, and the simulated drop">
-  <p class="cap">One of the 58 photos of the real pair (left), the two objects each scanned on their own, and the simulation that puts them back together.</p></div>
+  <p class="cap">One photo of the real pair, each object scanned on its own, and the simulation that puts them back together.</p></div>
 <div class="card" style="margin-bottom:12px"><img src="figures/holder_fit.webp" alt="Scanned controller dropped into the scanned holder">
-  <p class="cap">MuJoCo, both objects from phone photos (holder 81 photos, controller 78 + 38 in two passes). The controller is released 3 cm above its real pose; green is where it really rests, from the combined scan. Left: the holder's <!--n:holder_hulls-->64<!--/n--> convex pieces form the cupped hands, and the controller settles into them. Right: with one convex hull, the hands are a smooth bulge and the controller slides off.</p></div>
+  <p class="cap">MuJoCo. The controller is released 3 cm above its real pose; green is where it really rests. Left: the holder's <!--n:holder_hulls-->64<!--/n--> convex pieces form cupped hands that catch it. Right: one convex hull turns the hands into a smooth bulge, and it slides off.</p></div>
 <div class="card" style="margin-bottom:12px"><img src="figures/holder_fit_results.png" alt="Settle error per drop">
     <p class="cap">12 drops with ±8 mm / ±8° jitter. Decomposition: held <!--n:sim_held-->12/12<!--/n-->, median <!--n:sim_add-->9.1<!--/n--> mm / <!--n:sim_rot-->11<!--/n-->° from the real pose (released <!--n:release-->31<!--/n--> mm away). One hull: <!--n:hull_held-->0/12<!--/n--> held.</p></div>
 <div class="card" style="margin-bottom:12px"><h3>Same drop in Isaac Sim 6 (PhysX)</h3><img src="figures/isaac_holder_fit.webp" alt="Isaac Sim drop">
-  <p class="cap">The same USD assets and the same 12 jittered releases in PhysX: <!--n:isaac_held-->11/12<!--/n--> held, median <!--n:isaac_add-->9.0<!--/n--> mm / <!--n:isaac_rot-->13<!--/n-->° from the real pose (MuJoCo: <!--n:sim_held-->12/12<!--/n-->, <!--n:sim_add-->9.1<!--/n--> mm). Both engines agree that one hull can't hold it (<!--n:isaac_hull_held-->0/12<!--/n--> in PhysX). <code>scripts/isaac_holder_fit.py</code></p></div>
+  <p class="cap">Same assets, same releases: <!--n:isaac_held-->11/12<!--/n--> held, median <!--n:isaac_add-->9.0<!--/n--> mm / <!--n:isaac_rot-->13<!--/n-->°. One hull: <!--n:isaac_hull_held-->0/12<!--/n-->. <code>scripts/isaac_holder_fit.py</code></p></div>
 <div class="card" style="margin-bottom:12px"><h3>A robot puts it there: Franka Panda places the controller (MuJoCo)</h3><img src="figures/holder_place.webp" alt="Panda places the scanned controller into the scanned holder">
-  <p class="cap">The robot does the whole job instead of a drop. The controller lies face up on a tray; the Panda pinches its top edge near a corner (the figure stands right behind the middle, so only the corners leave room for the back finger), lifts it, turns it upright in the air, lowers it to 5 mm above the measured pose and lets go. Inset: the holder from the front; green is the real pose. 12 trials with the tray and holder moved ±2 cm / ±10°: <b><!--n:place_held-->12/12<!--/n--> held</b>, median <b><!--n:place_add-->4.6<!--/n--> mm / <!--n:place_rot-->7<!--/n-->°</b> from the real pose (the drop: <!--n:sim_add-->9.1<!--/n--> mm). One convex hull: <!--n:place_hull_held-->0/12<!--/n-->. The controller hangs 6 cm off the pinch, so the grip needs a realistic force (~45 N per finger; a real Panda hand reaches 70 N) and MuJoCo's no-slip solver; without it soft-contact creep turns the controller out of the fingers. A five-finger version is in chapter 04. <code>scripts/demo_holder_place.py</code></p></div>
+  <p class="cap">Instead of a drop, the Panda picks the controller off a tray by a corner of its top edge, turns it upright and sets it down 5 mm above the measured pose. 12 trials, tray and holder moved ±2 cm / ±10°: <b><!--n:place_held-->12/12<!--/n--> held</b>, median <b><!--n:place_add-->4.6<!--/n--> mm / <!--n:place_rot-->7<!--/n-->°</b> from the real pose. One convex hull: <!--n:place_hull_held-->0/12<!--/n-->. Five fingers: chapter 04. <code>scripts/demo_holder_place.py</code></p></div>
 <div class="card" style="margin-bottom:12px"><h3>Path traced with the other scans (Isaac Sim 6 RTX)</h3><img src="figures/holder_fit_render.jpg" alt="Path-traced holder and controller">
-  <p class="cap">The two phone-scanned assets, the controller in its measured resting pose, beside the speckled mug and lion from the benchmark. Same lights and camera settings as the other renders; textures are the scans' own photo colors (2K baked). <code>isaac_pathtrace.py --shots real</code></p></div>
+  <p class="cap">The phone-scanned pair in its measured pose, path traced beside two benchmark scans. <code>isaac_pathtrace.py --shots real</code></p></div>
 <div class="card small"><h3>How the answer key is made</h3><ul>
-    <li><b>Scale:</b> from two tape measurements (holder 21 cm tall; controller 5.5 cm thick). The combined scan, fitted with the holder at free scale, agrees within <!--n:scale_agree-->1.2<!--/n-->%.</li>
-    <li><b>Two passes, one controller:</b> face-up and standing scans aligned by a similarity ICP over a rotation search (<!--n:merge_rmse-->0.5<!--/n--> mm RMSE), pen box and paper removed, colors matched on the overlap, Poisson-meshed.</li>
-    <li><b>Ground truth:</b> both assets registered into the combined scan (holder <!--n:truth_holder-->2.8<!--/n--> mm RMSE, controller <!--n:truth_ctrl-->1.0<!--/n--> mm). The dark, glossy figure limits this to a few mm, so the <!--n:sim_add-->9.1<!--/n--> mm settle error is an upper bound.</li>
-    <li><b>Leg gap:</b> Poisson had filled in the space between the figure's legs. From the front, the dark legs stand against bright paper, so each photo votes for the 3D points it sees background through; those are cut out of the mesh (<a href="figures/holder_gap.jpg">before/after</a>). Below 35 mm the gap is seen only against the black base, so its outline is extended down from there. <code>carve.py</code></li>
+    <li><b>Scale</b> from two tape measurements; the combined scan agrees within <!--n:scale_agree-->1.2<!--/n-->%.</li>
+    <li><b>Two controller passes</b> merged by similarity ICP (<!--n:merge_rmse-->0.5<!--/n--> mm RMSE).</li>
+    <li><b>Ground truth:</b> both assets registered into the combined scan (holder <!--n:truth_holder-->2.8<!--/n--> mm, controller <!--n:truth_ctrl-->1.0<!--/n--> mm RMSE), so the settle error is an upper bound.</li>
+    <li><b>Leg gap:</b> Poisson filled in the space between the figure's legs; it's carved back out where the photos see background through it (<a href="figures/holder_gap.jpg">before/after</a>).</li>
     <li><code>scripts/study_holder_fit.py</code> · <code>register.py</code> · <code>carve.py</code></li></ul></div>
 
 <div class="chap s-use" id="robotics"><div class="no">03</div><div><div class="eb">Use</div><h2>Robotics demos</h2></div></div>
 <div class="card" style="margin-bottom:12px"><h3>Franka Panda pick-and-place (MuJoCo Menagerie robot)</h3><img src="figures/panda_demo.webp" alt="Panda pick and place">
-  <p class="cap">A real robot model rim-grasps the scanned mug (one finger inside), lifts it 14 cm and places it 25 cm away on the green target (11 mm error). Right: with a single convex hull the inner finger hits a phantom "lid" and the pick fails.</p></div>
+  <p class="cap">Rim grasp with one finger inside the scanned mug, placed 25 cm away (11 mm error). Right: one convex hull gives the mug a phantom lid, and the pick fails.</p></div>
 <div class="card" style="margin-bottom:12px"><h3>Same pick in Isaac Sim 6: one plan, two physics engines</h3><img src="figures/isaac_franka_pick.webp" alt="Franka pick in Isaac Sim">
-  <p class="cap">The MuJoCo joint plan replayed on NVIDIA's Franka with PhysX contacts, mug loaded from the USD library. Decomposition: lifted 14.1 cm, placed with 5.5 mm error (plan from the asset's best stored grasp). The <code>convex_hull</code> variant fails the same way in both engines. Hand poses agree to 0.5 mm.</p></div>
+  <p class="cap">The same joint plan on Isaac Sim's Franka with PhysX contacts: placed within 5.5 mm. The <code>convex_hull</code> variant fails here too.</p></div>
 <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(330px, 1fr))">
   <div class="card"><h3>Articulated asset, two engines</h3><img src="figures/isaac_articulation.webp" alt="Isaac Sim hinge drive">
-    <p class="cap">One scan + a seam plane + a hinge line → base and lid with a USD revolute joint (0–105°). Unmodified in Isaac Sim PhysX: 90° commanded → 90.1°; 150° → stops at the 105° limit. <a href="figures/articulation_demo.webp">MuJoCo version</a>.</p></div>
+    <p class="cap">One scan, a seam plane and a hinge line → base and lid with a USD revolute joint (0–105°). PhysX tracks a 90° command to 90.1° and stops at the limit. <a href="figures/articulation_demo.webp">MuJoCo version</a>.</p></div>
   <div class="card"><h3>Bin of scanned objects</h3><img src="figures/clutter_demo.webp" alt="Clutter demo">
     <p class="cap">14 object instances, 392 convex colliders: all end in the tote and settle; resting penetration 0.08 mm.</p></div>
   <div class="card"><h3>USD asset library in Isaac Sim</h3><img src="figures/isaac_library.jpg" alt="Asset library in Isaac Sim">
@@ -187,44 +187,44 @@
 <div class="chap s-use" id="hand"><div class="no">04</div><div><div class="eb">Use</div><h2>Dexterous grasping: Shadow Hand</h2></div></div>
 <div class="grid" style="grid-template-columns: 1.15fr 1fr">
   <div class="card"><img src="figures/hand_grasp.webp" alt="Shadow Hand grasps scanned objects">
-    <p class="cap">The 24-joint Shadow Hand (MuJoCo Menagerie) lifts scanned objects and survives a ±2 cm / 3 Hz shake. The camera picks the side where the thumb is visible.</p></div>
+    <p class="cap">The 24-joint Shadow Hand lifts scanned objects and survives a ±2 cm / 3 Hz shake.</p></div>
   <div class="card"><img src="figures/hand_grasp.png" alt="Grasp success per asset">
-    <p class="cap">A benchmark for comparing <b>assets</b>, not a grasp planner: 90 random, unoptimized power grasps for each of 8 benchmark assets and 2 collision variants (1,440 trials, ~1 min on 16 cores). Convex decomposition holds more of them than one hull on the six hand-sized objects (23.5% vs 18.9%), and grasps from above beat grasps from the side (34% vs 4%). The best of these grasps are stored in the assets (see <i>Assets that know what they don’t know</i>).</p></div>
+    <p class="cap">A benchmark for comparing <b>assets</b>, not a grasp planner: 1,440 random power grasps over 8 assets. Convex decomposition holds more than one hull (23.5% vs 18.9%), and grasps from above beat the side (34% vs 4%).</p></div>
 </div>
 <div class="card" style="margin-top:12px"><h3>Five fingers: Shadow Hand places the controller (MuJoCo, then Isaac Sim and Unreal)</h3>
   <video autoplay muted loop playsinline preload="metadata" poster="figures/hand_place.jpg" style="width:100%;border-radius:8px;display:block"><source src="figures/hand_place.mp4?v=b97f5f26" type="video/mp4"></video>
-  <p class="cap">The Panda's job (chapter 02) with a floating Shadow Hand. A pinch fails: the 243 g controller hangs 6 cm off it, beyond what the fingertip servos (1 N·m) can hold. So the hand spans the controller's width level with its center of mass (thumb on one side, middle and ring fingers on the other), lifts, yaws palm-down, then tilts upright about the controller's center: blended moves with minimum-jerk timing, stopping only to grip, to re-aim and to let go. Four fixes, each from a failed trial: span instead of pinch; curl the middle finger so the grip isn't two points it can spin about; two separate turns (one slerp swung the palm up); tray out of the forearm's way. 12 trials (±2 cm / ±10°): open loop <b><!--n:hand_open_held-->12/12<!--/n--> held, <!--n:hand_open_add-->13.1<!--/n--> mm / <!--n:hand_open_rot-->22<!--/n-->°</b> (the grip rolls it in the hand); re-aimed from the in-hand pose before inserting (read from the simulation, standing in for a wrist camera): <b><!--n:hand_held-->12/12<!--/n-->, <!--n:hand_add-->6.4<!--/n--> mm / <!--n:hand_rot-->6<!--/n-->°</b> (<a href="figures/hand_place_compare.jpg">both, side by side</a>). One convex hull: <!--n:hand_hull_held-->0/12<!--/n-->. No arm, so reach isn't checked. <b>Scale:</b> the hand is the real robot's size, which Shadow specifies as &ldquo;similar in shape and size to a typical male hand&rdquo; (201 mm wrist to fingertip, 84 mm palm; an average man's hand is about 190 mm); the big cylinder is its motor-filled forearm. All three videos use a 57 mm lens: at 24 mm the hand, always nearest the camera, looked oversized. <code>scripts/demo_hand_place.py</code>; plan, timing and cameras shared by all three engines: <code>scripts/hand_motion.py</code></p>
+  <p class="cap">The Panda's job with a floating Shadow Hand. A pinch can't hold the 243 g controller (fingertip motors: 1 N·m), so the hand spans its width level with the center of mass, lifts, turns it upright and seats it. 12 trials (±2 cm / ±10°): <b><!--n:hand_held-->12/12<!--/n--> held, <!--n:hand_add-->6.4<!--/n--> mm / <!--n:hand_rot-->6<!--/n-->°</b> when re-aimed from the in-hand pose before inserting; open loop <!--n:hand_open_held-->12/12<!--/n-->, <!--n:hand_open_add-->13.1<!--/n--> mm / <!--n:hand_open_rot-->22<!--/n-->° (<a href="figures/hand_place_compare.jpg">side by side</a>). One convex hull: <!--n:hand_hull_held-->0/12<!--/n-->. The hand is the real robot's size (&ldquo;similar to a typical male hand&rdquo;), filmed on a 57 mm lens. <code>scripts/demo_hand_place.py</code> · <code>hand_motion.py</code></p>
   <div class="grid g2" style="margin-top:10px">
     <div><video controls muted loop playsinline preload="none" poster="figures/isaac_hand_place.jpg" style="width:100%;border-radius:8px;display:block"><source src="figures/isaac_hand_place.mp4?v=b0cc260c" type="video/mp4"></video>
-      <p class="cap"><b>Isaac Sim 6 (PhysX): the same experiment.</b> The same Menagerie hand (Isaac's MJCF importer), scanned USD assets, per-seed poses and waypoints; PhysX simulates every contact, and the re-aimed run measures the controller in PhysX. Re-aimed <b><!--n:ihand_held-->12/12<!--/n-->, <!--n:ihand_add-->6.3<!--/n--> mm / <!--n:ihand_rot-->5<!--/n-->°</b>; open loop <!--n:ihand_open_held-->12/12<!--/n-->, <!--n:ihand_open_add-->19.5<!--/n--> mm / <!--n:ihand_open_rot-->27<!--/n-->°; one convex hull <!--n:ihand_hull_held-->0/12<!--/n-->. One fix needed: targets every physics substep (see Lessons). <code>scripts/isaac_hand_place.py</code></p></div>
+      <p class="cap"><b>Isaac Sim 6 (PhysX).</b> Same hand, assets and waypoints; PhysX simulates every contact. Re-aimed <b><!--n:ihand_held-->12/12<!--/n-->, <!--n:ihand_add-->6.3<!--/n--> mm / <!--n:ihand_rot-->5<!--/n-->°</b>; open loop <!--n:ihand_open_held-->12/12<!--/n-->, <!--n:ihand_open_add-->19.5<!--/n--> mm / <!--n:ihand_open_rot-->27<!--/n-->°; one hull <!--n:ihand_hull_held-->0/12<!--/n-->. <code>scripts/isaac_hand_place.py</code></p></div>
     <div><video controls muted loop playsinline preload="none" poster="figures/unreal_hand_place.jpg" style="width:100%;border-radius:8px;display:block"><source src="figures/unreal_hand_place.mp4?v=548012c4" type="video/mp4"></video>
-      <p class="cap"><b>Unreal Engine 5.8, Lumen + MegaLights.</b> The MuJoCo run, frame for frame: the hand's meshes (from the Menagerie model) and the scanned assets in one USD stage, every link keyed in Sequencer, 108 shadow-casting fairy lights. Rendered, not simulated. <code>scripts/unreal_hand_render.py</code></p></div>
+      <p class="cap"><b>Unreal Engine 5.8, Lumen + MegaLights.</b> The MuJoCo run rendered frame for frame, with 108 shadow-casting fairy lights. <code>scripts/unreal_hand_render.py</code></p></div>
   </div></div>
 
 <div class="chap s-use" id="perception"><div class="no">05</div><div><div class="eb">Use</div><h2>Sim-to-real perception</h2></div></div>
 <div class="card" style="margin-bottom:12px">
   <h3>Train on synthetic images, test on real photos</h3>
   <img src="figures/sim2real_compare.jpg" alt="Detector on real photos: objects-only vs. with distractors">
-  <p class="cap">A Faster R-CNN detector trained <b>only</b> on Isaac Sim renders of our scanned assets, run on the 67 real Buddha photos it never saw. Green: the Buddha. Red: false detections. Trained without distractors, the detector calls markers and lab clutter "mugs".</p>
+  <p class="cap">A detector trained <b>only</b> on Isaac Sim renders of the scanned assets, on real Buddha photos it never saw. Green: the Buddha. Red: false detections. Without distractors in training, markers and chairs become &ldquo;mugs&rdquo;.</p>
 </div>
 <div class="grid g2">
   <div class="card"><h3>The training data</h3><img src="figures/isaac_synth_dataset.jpg" alt="Domain-randomized synthetic frames">
-    <p class="cap">Each frame randomizes which of the 9 assets appear and where, the table, lights and camera, plus unlabeled distractors. 1,000 labeled frames in 3.5 min (900 for training, 100 held out).</p></div>
+    <p class="cap">Each frame randomizes the assets, table, lights and camera, plus unlabeled distractors. 1,000 labeled frames in 3.5 min.</p></div>
   <div class="card"><h3>Results</h3>
     <table>
       <tr><th>Training data</th><th>Synthetic mAP@0.5</th><th>Real: Buddha is top detection</th><th>Real: false positives / photo</th></tr>
       <tr><td>Objects only</td><td>1.00</td><td class="bad">59/67 (88%)</td><td class="bad">4.30</td></tr>
       <tr><td>+&nbsp;distractors</td><td>1.00</td><td class="good">67/67 (100%)</td><td class="good">0.69</td></tr>
     </table>
-    <p class="cap">Synthetic validation saturates either way: it's from the same distribution, so it can't show the gap. Only real photos do. The remaining false positives are mostly a second partial Buddha box or a marker card. 900 training images, 6 epochs, 5.5 min on an RTX 4090.</p></div>
+    <p class="cap">Synthetic validation saturates either way; only real photos show the gap. Trained in 5.5 min on an RTX 4090.</p></div>
 </div>
 <div class="card" style="margin-top:12px"><h3>Closing the loop: see it, locate it, pick it</h3><img src="figures/perception_pick.webp" alt="Perception-in-the-loop pick">
-    <p class="cap">In MuJoCo, the lion figure lands at a random pose among other scans (our scanned mug is now a distractor). Two RGB-D scene cameras → the synthetic-trained detector finds it (left, green) → depth inside the box is fitted with the <b>scanned mesh</b> → the Panda pinches the torso from above, across the body, at the <b>estimated</b> pose. <b>10/10 picks</b>, median pose error 0.6 mm / 0.3°. Unlike the mug (whose handle can hide from both cameras), the lion's head and tail make yaw unambiguous, and the grasp needs it: closing along the body instead of across it would miss. The scan is used three times: training images, pose model, and physics.</p></div>
+    <p class="cap">In MuJoCo the lion lands at a random pose among other scans. The synthetic-trained detector finds it in RGB-D, the scanned mesh is fitted to the depth, and the Panda picks at the <b>estimated</b> pose: <b>10/10</b>, median error 0.6 mm / 0.3°. The scan is used three times: training images, pose model, physics.</p></div>
 
 <div class="chap s-ver" id="tolerance"><div class="no">06</div><div><div class="eb">Verify</div><h2>How accurate must a scan be?</h2></div></div>
 <div class="card" style="margin-bottom:12px">
   <img src="figures/robustness.png" alt="Pick success vs collider, friction, mass, size error">
-  <p class="cap">93 simulated Panda picks. The robot always plans with the nominal scan; the simulated "real" mug differs. <b>A</b>: collision geometry decides it. One hull or a bounding box (library variants) fails at every friction. <b>B</b>: doubling the mass breaks the grip, so weigh your object. <b>C</b>: size errors within ±5% are tolerated even with ±8 mm grasp error; the ColorChecker's ≤1.43% scale error is well inside. A real mug 10–15% smaller than the scan makes the fingers miss the rim. Grip force ~9 N (a real Panda hand: up to 70 N).</p>
+  <p class="cap">93 simulated Panda picks, planned on the nominal scan while the &ldquo;real&rdquo; mug differs. <b>A</b>: collision geometry decides it; one hull or a bounding box fails at every friction. <b>B</b>: doubling the mass breaks the grip, so weigh the object. <b>C</b>: ±5% size error is tolerated; the ColorChecker's ≤1.43% is well inside.</p>
 </div>
 
 <div class="chap s-ver" id="benchmark"><div class="no">07</div><div><div class="eb">Verify</div><h2>Photos → USD, scored against ground truth</h2></div></div>
@@ -237,12 +237,12 @@
 <div class="card" style="margin-top:12px">
   <h3>Texture baking: 1.3M → 50k triangles, same look</h3>
   <img src="figures/texture_bake.jpg" alt="Texture bake">
-  <p class="cap">The dense vertex-colored reconstruction is decimated, unwrapped into a UV atlas (xatlas), and its color baked into a 1K texture with padded islands. 26× fewer triangles for rendering and simulation.</p>
+  <p class="cap">The dense reconstruction is decimated, UV-unwrapped and its color baked into a 1K texture: 26× fewer triangles.</p>
 </div>
 <div class="card" style="margin-top:12px">
   <h3>Real photos: 67 shots of a stone Buddha head (AliceVision dataset, CC-BY 4.0)</h3>
   <img src="figures/buddha_real.jpg" alt="Buddha real photos to USD">
-  <p class="cap">All 67 photos registered; the marker board was removed automatically; a watertight 20 cm head with 21 convex colliders (scale assumed, as the dataset gives no size). <code>scan2usd scan</code> runs the whole thing in one command.</p>
+  <p class="cap">All 67 photos registered, the marker board removed automatically: a watertight head with 21 convex colliders, in one <code>scan2usd scan</code> command.</p>
 </div>
 <div class="card" style="margin-top:12px">
   <h3>Benchmark</h3>
@@ -254,9 +254,9 @@
 <tr><td>Android figure toy</td><td>0.78 / 3.08</td><td>0.96</td><td>0.872</td><td>0.894</td><td>+1.4%</td><td>7.7 → 1.38</td></tr>
 <tr><td>Lion figure</td><td>0.60 / 2.41</td><td>0.62</td><td>0.941</td><td>0.935</td><td>+8.2%</td><td>8.0 → 1.29</td></tr>
 <tr><td>Boat shoe</td><td>1.73 / 7.20</td><td>2.53</td><td>0.747</td><td>0.739</td><td>+32.2%</td><td>8.9 → 1.31</td></tr>
-</table><ul class="small" style="margin-top:10px"><li><b>Textured objects</b> (figures, speckled glaze) reconstruct to 0.6–0.8 mm mean error, F-score 0.87–0.94, volume within 1–12%.</li><li><b>Printed mug:</b> its plain white interior is never matched, so the cup is sealed partway down (+191% volume).</li><li><b>Bowl:</b> its underside, between the foot and the rim's overhang, is never seen from above, and Poisson fills it into a solid pedestal. The walls also come out ~2–3 mm thick.</li><li><b>Shoe:</b> the opening and inside aren't observed and get sealed (+32%).</li><li><b>Visibility carving</b> (removing space cameras saw through) only reaches +175% / +74% / +29%: the sealed parts were never observed (cross-sections below). Fix it in the capture: top-down shots into cavities, or flip the object for a second pass. A measured <code>--mass</code> keeps physics right meanwhile.</li></ul>
+</table><ul class="small" style="margin-top:10px"><li><b>Textured objects</b> reconstruct to 0.6–0.8 mm, volume within 1–12%.</li><li><b>Sealed surfaces:</b> what no camera can match or see (the printed mug's white interior, the bowl's underside, the shoe's inside) gets closed over, inflating volume, as the cross-sections show. Fix it in the capture, or give a measured <code>--mass</code>.</li></ul>
   <img src="figures/carving_study.png" alt="Carving cross-sections" style="margin-top:8px">
-  <p class="cap">Each object: 78 rendered photos → COLMAP → Scan2USD, scaled for scoring with one known height (the chart-only scale is tested separately, right). Accuracy = reconstruction to true surface; F-score = share of both surfaces within 2 mm. Ground truth: Google Scanned Objects (CC-BY 4.0) and a procedural mug.</p>
+  <p class="cap">78 rendered photos per object → COLMAP → Scan2USD, scored against Google Scanned Objects (CC-BY 4.0) and a procedural mug. F-score: share of both surfaces within 2 mm of each other.</p>
 </div>
 <div class="grid g2" style="margin-top:12px">
   <div class="card"><h3>How many photos are enough? (lion figure)</h3>
@@ -267,7 +267,7 @@
       <tr><td>39</td><td>39</td><td>0.61 mm</td><td>0.92</td><td>238 s</td></tr>
       <tr><td>78</td><td>78</td><td class="good">0.60 mm</td><td class="good">0.94</td><td>480 s</td></tr>
     </table>
-    <p class="cap">Too few and photos stop overlapping, so cameras can't be solved. Past ~40, extra photos mostly buy completeness and cost time. Hence the 60–150 recommendation: margin for blurry or badly lit shots.</p></div>
+    <p class="cap">Too few and the cameras can't be solved; past ~40, extra photos mostly buy completeness.</p></div>
   <div class="card"><h3>Metric scale from the chart (no ruler)</h3>
     <table>
       <tr><th>Object</th><th>Chart views used</th><th>Scale error</th></tr>
@@ -283,16 +283,16 @@
 
 <div class="chap s-use" id="rendering"><div class="no">08</div><div><div class="eb">Use</div><h2>Rendering: Isaac Sim and Unreal Engine</h2></div></div>
 <div class="card" style="margin-bottom:12px"><h3>Same USD files in Unreal Engine 5.8: Lumen + MegaLights</h3><img src="figures/unreal_render.jpg" alt="Scanned assets in Unreal Engine 5.8">
-  <p class="cap">The scene is one USD stage (<code>unreal_layout.py</code>): the scan assets by reference, a wood table, a key light and two strings of fairy lights, <b>80 shadow-casting point lights</b>. The lion (a Google Scanned Objects scan) is the in-focus hero; the phone-scanned holder and controller stand at the back, out of focus, where their noisier phone-camera detail doesn't carry the shot. Unreal's USD importer brings it in unchanged, apart from one look override in the scene layer (the holder's paint is satin, not the generic plastic preset). Lumen with hardware ray tracing gives the bounce light; MegaLights gives every bulb its own soft shadow. 1440p, Movie Render Queue; the whole build and render is scripted (<code>unreal_render.py</code>). <a href="figures/unreal_flythrough.mp4?v=774620f9"><b>10-second orbit</b></a>.</p></div>
+  <p class="cap">One USD stage: the scans by reference, a wood table and <b>80 shadow-casting fairy lights</b>, imported unchanged. Lumen gives the bounce light, MegaLights a soft shadow for every bulb. Scripted build and render. <a href="figures/unreal_flythrough.mp4?v=774620f9"><b>10-second orbit</b></a>.</p></div>
 <div class="card" style="margin-bottom:12px"><h3>What MegaLights buys: <!--n:ue_on-->8.8<!--/n--> vs <!--n:ue_off-->14.8<!--/n--> ms GPU per frame</h3><img src="figures/unreal_megalights.jpg" alt="MegaLights on, off, and path-traced reference">
-  <p class="cap">One camera, three renderers. Times are the median GPU frame at 1080p on an RTX 4090 (Unreal's CSV profiler, 600 frames per run, median of 3 runs: 7.8–9.2 ms with MegaLights, 14.8–15.1 ms without). Without MegaLights, each shadowed light is drawn separately: shadow maps plus per-light shading. With it, the lights are sampled stochastically, ray-traced and denoised: about 40% less GPU time, and a slightly closer match to Unreal's own path tracer (PSNR <!--n:ue_on_db-->24.8<!--/n--> vs <!--n:ue_off_db-->23.3<!--/n--> dB against 4,096 samples per pixel). Real-time still isn't the reference: contact shadows and bulb bloom differ.</p></div>
+  <p class="cap">Median GPU frame at 1080p on an RTX 4090. MegaLights samples the lights stochastically instead of drawing a shadow map per light: about 40% less GPU time, and slightly closer to Unreal's path tracer (PSNR <!--n:ue_on_db-->24.8<!--/n--> vs <!--n:ue_off_db-->23.3<!--/n--> dB).</p></div>
 <div class="card" style="margin-bottom:12px"><h3>Scanned assets in Isaac Sim 6 RTX</h3><img src="figures/render_beauty.jpg" alt="Path-traced scanned assets">
-  <p class="cap">Offline path tracing, 1,024 samples per pixel, AI denoiser, 6 bounces. HDRI dome + area key light, NVIDIA MDL oak table, physically correct 50 mm f/5.6 depth of field. Assets carry PBR look presets from their material (the speckled mug's glaze is a clearcoat over a rough body) and baked 2K albedo + normal maps. <a href="figures/render_modes.jpg">Real-time vs offline path tracing</a>.</p></div>
+  <p class="cap">Path traced with HDRI and an area light, physical 50 mm f/5.6 depth of field, PBR look presets and baked 2K albedo + normal maps. <a href="figures/render_modes.jpg">Real-time vs offline</a>.</p></div>
 <div class="grid g2">
   <div class="card"><h3>High-to-low normal map bake</h3><img src="figures/render_normals.jpg" alt="Normal map comparison">
-    <p class="cap">4.3M-triangle scan → 50k triangles. Left: vertex colors only. Right: the scan's detail baked into a tangent-space normal map, under grazing light. A cage-style test ignores source points facing away (the far side of thin walls), and hard edges stay hard: averaged normals across a fitted base's 90° rim once streaked its wall.</p></div>
+    <p class="cap">4.3M-triangle scan → 50k triangles. Left: vertex colors only. Right: the scan's detail baked into a normal map, under grazing light.</p></div>
   <div class="card"><h3>Look-dev against a real photo</h3><img src="figures/lookdev.jpg" alt="Photo vs render">
-    <p class="cap">Render from the photo's solved camera. 63% of the silhouette lies within 3 px of a photo edge (median 2 px), which checks geometry, scale and camera at once. After white balance, color is median ΔE2000 6.4; the rest is the unknown room lighting.</p></div>
+    <p class="cap">Rendered from the photo's solved camera: 63% of the silhouette lies within 3 px of the photo's edges, which checks geometry, scale and camera at once.</p></div>
 </div>
 
 <div class="chap s-bld" id="uncertainty"><div class="no">09</div><div><div class="eb">Build</div><h2>Assets that know what they don't know</h2></div></div>
@@ -305,17 +305,15 @@
 </div>
 <div class="grid g2">
   <div class="card"><h3>Uncertainty in the asset (<code>Scan2UsdUncertaintyAPI</code>)</h3><img src="figures/uncertainty.png" alt="Mass intervals vs truth">
-    <p class="cap">Every vertex is labeled <i>observed</i>, <i>inferred</i> or <i>sealed</i> (no camera could see it). Mass, scale and friction become intervals, and a <b>carved</b> geometry hypothesis assumes unseen cavities are empty (a prior, not ray-based carving, which can't clear space no camera saw): bowl F-score 0.49 → 0.95. On solid objects, carving is worse, so "filled" stays the default. The bowl's interval misses (206–400 g vs 191 g).</p></div>
+    <p class="cap">Every vertex is labeled <i>observed</i>, <i>inferred</i> or <i>sealed</i>. Mass, scale and friction are stored as intervals, plus a <b>carved</b> hypothesis that assumes unseen cavities are empty (bowl F-score 0.49 → 0.95).</p></div>
   <div class="card"><h3>Grasps in the asset (<code>Scan2UsdGraspAPI</code>)</h3><img src="figures/isaac_franka_pick.webp" alt="Franka pick in Isaac Sim">
-    <p class="cap">A codeless USD schema stores grasp poses with their tested success rate per gripper and collision variant. <code>scan2usd grasps</code> lists them. Isaac Sim reads the best stored grasp: the pick succeeds (5.5 mm placement error) with convex decomposition and fails with one hull, as in MuJoCo. Physics randomized within the asset's intervals also predicts real grasp success better than the nominal asset (Brier error 0.12 → 0.05; lower is better).</p></div>
+    <p class="cap">Grasp poses with their tested success rate per gripper and collision variant. Isaac Sim's Franka reads the best one and picks (5.5 mm). Randomizing physics within the stored intervals predicts real grasp success better than the nominal asset (Brier 0.12 → 0.05).</p></div>
   <div class="card"><h3>Hybrid asset: Gaussian splat for looks, hulls for physics</h3><img src="figures/splat_buddha.jpg" alt="Held-out photo vs mesh vs splat">
-    <p class="cap">A splat trained on the same photos (<a href="https://github.com/ArthurBrussee/brush">Brush</a>) becomes a <code>UsdVol.ParticleField3DGaussianSplat</code> under the rigid body, in an <code>appearance</code> variant set. The mesh's silhouette masks every training photo, so the splat learns only the object. On 8 real photos it never saw: ΔE2000 6.9 → 3.6, PSNR 19.7 → 27.0 dB, SSIM 0.64 → 0.78. Closest views are softer than the mesh.</p></div>
+    <p class="cap">A splat trained on the same photos, masked by the mesh's silhouettes, rides on the rigid body as a <code>UsdVol.ParticleField3DGaussianSplat</code>. On 8 real photos it never saw: PSNR 19.7 → 27.0 dB.</p></div>
   <div class="card"><h3>Splats ride on PhysX</h3><img src="figures/splat_drop.jpg" alt="Splat objects dropped onto a table">
-    <p class="cap">Isaac Sim 6, RTX real-time path tracing: splat Buddha and mugs fall on their convex hulls. An inset copy of the mesh, hidden from the camera, casts the shadows (<code>splat_proxy</code>). Gaussians receive shadows in RTX, so a proxy at the surface turned them black. The offline path tracer renders splats dark; real-time mode is fine. <a href="figures/splat_drop.mp4?v=9f439bf5">Video</a>.</p></div>
-  <div class="card"><h3>Franka picks a splat mug</h3><img src="figures/isaac_franka_pick_splat.webp" alt="Franka picks the splat mug">
-    <p class="cap">Same plan, the mug drawn by its splat: lifted 14.5 cm, placed 1.8 cm from the target. The mask ablation matters here: trained on raw photos, the cropped mug splat is see-through (PSNR 21.6); with mesh masks, 28.9 dB. <a href="figures/splat_mug.jpg">Mug comparison</a> · <a href="figures/splat_showcase.jpg">mesh vs splat vs proxy</a>.</p></div>
-  <div class="card"><h3>Capture guidance: which 8 photos next? (work in progress)</h3><img src="figures/capture_guide.png" alt="Capture guidance results">
-    <p class="cap"><code>scan2usd guide</code> lists the camera positions that would see the physics-relevant surface no photo saw twice. Tested by rendering 8 extra photos exactly where asked: it wins on the bowl, loses to a higher ring on the shoe, and is worst on the printed mug, whose white interior is visible but has no texture for stereo to match. Next step: score views by texture, not visibility alone. The test also caught a meshing bug, now fixed.</p></div>
+    <p class="cap">Splat Buddha and mugs fall on their convex hulls in Isaac Sim RTX; a hidden copy of the mesh casts their shadows. <a href="figures/splat_drop.mp4?v=9f439bf5">Video</a> · <a href="figures/isaac_franka_pick_splat.webp">Franka picks a splat mug</a>.</p></div>
+  <div class="card" style="grid-column:1/-1"><h3>Capture guidance: which 8 photos next? (work in progress)</h3><img src="figures/capture_guide.png" alt="Capture guidance results">
+    <p class="cap"><code>scan2usd guide</code> lists camera positions that would see the physics-relevant surface no photo saw twice. Tested with 8 photos rendered exactly where asked: it wins on the bowl and loses on the printed mug, whose white interior is visible but textureless. Next: score views by texture too.</p></div>
 </div>
 
 <div class="chap s-cap" id="color"><div class="no">10</div><div><div class="eb">Capture</div><h2>Color calibration</h2></div></div>
@@ -329,7 +327,7 @@
       <tr><td>18% gray card</td><td class="good">1.7</td><td>≈ $10</td></tr>
       <tr><td>ColorChecker</td><td class="good"><b>0.2</b></td><td>≈ $60–110</td></tr>
     </table>
-    <p class="cap">Below about 2 is hard to notice. In the full photo-to-USD runs, chart error drops from ~8 to ~1.3 (JPEG, uneven light).</p></div>
+    <p class="cap">ΔE2000 below about 2 is hard to notice.</p></div>
 </div>
 
 <div class="chap s-note" id="learn"><div class="no">11</div><div><div class="eb">Notes</div><h2>Learn</h2></div></div>
@@ -375,19 +373,19 @@
 <div class="chap s-note" id="lessons"><div class="no">12</div><div><div class="eb">Notes</div><h2>Lessons</h2></div></div>
 <ol class="lessons">
   <li><b>Test on real data, not just synthetic.</b> The detector scored a perfect 1.00 on held-out renders and still made 4.3 false detections per real photo. Unlabeled distractors in training cut that by 84%.</li>
-  <li><b>Read the units, don't tune by eye.</b> Depth of field was far too strong. USD camera lens values are in <i>tenths of a scene unit</i>, so on a meters stage "50" is a 5 m lens: same framing, 100&times; the aperture. Writing 0.05 gives a real 50 mm f/5.6 lens.</li>
+  <li><b>Read the units, don't tune by eye.</b> Depth of field was far too strong: USD lens values are in tenths of a scene unit, so on a meters stage &ldquo;50&rdquo; is a 5 m lens.</li>
   <li><b>Look at a cross-section before believing an explanation.</b> The bowl's +82% volume looked like thick walls; slicing the solid showed an unseen underside filled into a pedestal. No line of sight, so carving can't fix it, but a stored "carved" hypothesis can.</li>
-  <li><b>Robot models need realistic actuators.</b> The stock Panda gripper squeezed a cup wall with ~0.5 N (MuJoCo) and ~2 N (Isaac), so the mug slipped in both; a real Franka hand reaches 70 N. A realistic drive made the same pick work in both engines.</li>
+  <li><b>Robot models need realistic actuators.</b> The stock Panda gripper squeezed a cup wall with 0.5–2 N and the mug slipped; a real Franka hand reaches 70 N.</li>
   <li><b>Don't teleport a hand.</b> A mocap-driven forearm moves without velocity, and MuJoCo friction is velocity-based: 120 N of squeeze and the object stayed put. Welding a free forearm to the target fixed it.</li>
   <li><b>Visible isn't reconstructable.</b> The capture guide aimed into the printed mug's white interior: in view, but nothing for stereo to match. Measuring the guide on three objects, not one, is what showed it.</li>
   <li><b>Let the mesh help the splat.</b> Trained on raw photos, a splat spends its Gaussians on the background. Masking every photo with the mesh's silhouette raised held-out PSNR from 21.6 to 28.9 dB.</li>
-  <li><b>Control at the physics rate.</b> In Isaac Sim the hand dropped the controller at every contact stiffness I tried; the cause was the control loop. Kinematic targets set once per 60 Hz frame, with 8 PhysX substeps in between, move the hand in jolts. Setting them in a pre-step callback (every substep, as MuJoCo's loop did) took it from 0/4 to 12/12.</li>
-  <li><b>Meshes need UVs, even for flat colors.</b> In Unreal the robot hand rendered dark gray whatever color I gave it. The materials were right; the meshes, exported from the simulator, had no UVs, so Unreal's tangent frames were degenerate and even a flat normal map shaded them dark. A planar UV projection fixed it. (A first symptom, new shader permutations still compiling when Movie Render Queue started, hid this one.)</li>
-  <li><b>A wide lens makes the nearest thing look big.</b> The true-scale Shadow Hand looked oversized next to a holder I had measured by hand. The model was right; the camera was MuJoCo's default 45&deg; view, a 24 mm lens, and the hand is always closest to it. The same shots on a 57 mm lens from farther back read at natural proportions.</li>
+  <li><b>Control at the physics rate.</b> In Isaac Sim the hand kept dropping the controller: targets set once per 60 Hz frame moved it in jolts across 8 PhysX substeps. Setting them every substep took it from 0/4 to 12/12.</li>
+  <li><b>Meshes need UVs, even for flat colors.</b> In Unreal the hand rendered dark whatever its color: without UVs its tangents were degenerate, so even a flat normal map shaded it dark.</li>
+  <li><b>A wide lens makes the nearest thing look big.</b> The true-scale Shadow Hand looked oversized on MuJoCo's default 24 mm-equivalent view, because it's always nearest the camera. A 57 mm lens from farther back reads naturally.</li>
 </ol>
 
 <div class="chap s-note" id="timeline"><div class="no">13</div><div><div class="eb">Notes</div><h2>Timeline</h2></div></div>
-<p class="small muted">Pipeline core (clean, color, collide, weigh, export, validate) → photos to USD with COLMAP, scored against ground truth → articulation → Isaac Sim + MuJoCo demos, sim-to-real detector → path-traced look-dev, asset library → grasps, uncertainty and Gaussian splats inside the USD asset → own phone captures: scanned controller settles into a scanned holder, checked against a scan of the real pair, then placed there by a Franka Panda and by a Shadow Hand (MuJoCo, the same plan in Isaac Sim, rendered in Unreal) → the same USD files in Unreal Engine 5.8 with Lumen and MegaLights. <b>Next:</b> real phone captures with a ColorChecker (no-ruler scale on real photos); texture-aware capture guidance.</p>
+<p class="small muted">Pipeline core → photos to USD, scored against ground truth → robot demos in MuJoCo and Isaac Sim, sim-to-real detector → path tracing and a USD asset library → grasps, uncertainty and splats in the asset → own phone scans, checked against the real pair and placed by a Panda and a Shadow Hand → Unreal Engine 5.8. <b>Next:</b> a ColorChecker in real phone captures; texture-aware capture guidance.</p>
 
 <div class="chap s-cap" id="capture"><div class="no">14</div><div><div class="eb">Capture</div><h2>Capture your own</h2></div></div>
 <div class="grid g2">
