@@ -13,11 +13,13 @@ callback, every substep (as isaac_hand_place.py; per-frame targets move the arm 
 the controller's pose 1.5 s after release vs the pose measured in the scan of the real pair.
 Writes docs/figures/isaac_holder_place.{json,jpg,webp}.
 
-Result: the plan that holds 12/12 in MuJoCo holds about 1/12 here. The pinch closes as in MuJoCo
-(fingers stop at ~20 mm on the edge), but on the lift the controller, hanging 6 cm off the pinch,
-twists out of the two pads; pad friction 2.0, 16 velocity iterations or 960 Hz don't fix it (0-1 of 4).
-MuJoCo needed its no-slip solver for the same grip. The Shadow Hand, which grasps level with the
-center of mass, places it in both engines (isaac_hand_place.py).
+Result: 12/12 placed (median 7.2 mm / 8.7 degrees; 0/12 against one convex hull, as in MuJoCo).
+Three things made the difference from a first 1/12. (1) Torsional friction: MuJoCo's pads have
+condim 4; PhysX contacts had none, so the controller, hanging 6 cm off the pinch, slowly spun out of
+it on the way (slowing the arm made it worse). A 1 cm torsional patch radius on pads and controller
+holds it within ~2 degrees. (2) A flat start: a full-width tray, notched under the grasp corner for
+the lower finger (a narrow tray let it rock 25 degrees). (3) The pads 5 mm deeper on the edge
+(7 mm vs 13 mm); a 1 cm shift toward the middle takes away a support the controller rests on.
 """
 
 from __future__ import annotations
@@ -39,6 +41,9 @@ FPS = 60
 FINGER_PADS = [(0.0, 0.0055, 0.0445, 0.0085, 0.004, 0.0085), (0.0055, 0.002, 0.05, 0.003, 0.002, 0.003), (-0.0055, 0.002, 0.05, 0.003, 0.002, 0.003), (0.0055, 0.002, 0.0395, 0.003, 0.002, 0.0035), (-0.0055, 0.002, 0.0395, 0.003, 0.002, 0.0035)]
 PAD_MU = 1.5
 VEL_ITERS = 4
+# MuJoCo's condim-4 pads resist spin about the pinch axis; PhysX needs a torsional patch radius for
+# the same, else the off-centre weight twists the controller out of the pinch on the way.
+TORSION_PATCH = 0.01
 ARM_GAIN = 4.0  # stiffer arm servos: tracking within ~1 mm at the fingertips, as in MuJoCo
 
 parser = argparse.ArgumentParser()
@@ -48,6 +53,8 @@ parser.add_argument("--physics-hz", type=int, default=480)
 parser.add_argument("--video-trial", type=int, default=0)
 parser.add_argument("--probe", action="store_true", help="one trial, decomposed, with a per-waypoint trace")
 parser.add_argument("--no-video", action="store_true")
+parser.add_argument("--carry-scale", type=float, default=1.0,
+                    help="stretch the closed-gripper (transport) segments by this factor")
 args, _ = parser.parse_known_args()
 
 from isaacsim import SimulationApp  # noqa: E402
@@ -98,6 +105,12 @@ def static(prim):
             UsdPhysics.RigidBodyAPI(p).CreateRigidBodyEnabledAttr(False)
 
 
+def torsion(prim):
+    api = PhysxSchema.PhysxCollisionAPI.Apply(prim)
+    api.CreateTorsionalPatchRadiusAttr(TORSION_PATCH)
+    api.CreateMinTorsionalPatchRadiusAttr(TORSION_PATCH)
+
+
 def preview(stage, path, color, roughness):
     mat = UsdShade.Material.Define(stage, path)
     sh = UsdShade.Shader.Define(stage, f"{path}/PreviewSurface")
@@ -130,14 +143,14 @@ def scene(trial, collision):
     UsdPhysics.CollisionAPI.Apply(floor.GetPrim())
     floor.CreateDisplayColorAttr([Gf.Vec3f(0.86, 0.86, 0.85)])
 
-    hx, hy, hz = trial["stand_half_extents"]
-    T_tray = np.array(trial["stand"], float)
-    tray = UsdGeom.Cube.Define(stage, "/World/tray")
-    tray.CreateSizeAttr(2.0)
-    tray.AddTransformOp().Set(gf(T_tray))
-    tray.AddScaleOp().Set(Gf.Vec3f(hx, hy, hz))
-    UsdPhysics.CollisionAPI.Apply(tray.GetPrim())
-    UsdShade.MaterialBindingAPI.Apply(tray.GetPrim()).Bind(preview(stage, "/World/Looks/tray", (0.70, 0.69, 0.67), 0.32))
+    tray_look = preview(stage, "/World/Looks/tray", (0.70, 0.69, 0.67), 0.32)
+    for k, bx in enumerate(trial["tray_boxes"]):
+        tray = UsdGeom.Cube.Define(stage, f"/World/tray/box{k}")
+        tray.CreateSizeAttr(2.0)
+        tray.AddTransformOp().Set(gf(bx["pose"]))
+        tray.AddScaleOp().Set(Gf.Vec3f(*bx["half_extents"]))
+        UsdPhysics.CollisionAPI.Apply(tray.GetPrim())
+        UsdShade.MaterialBindingAPI.Apply(tray.GetPrim()).Bind(tray_look)
 
     holder = UsdGeom.Xform.Define(stage, "/World/holder")
     holder.GetPrim().GetReferences().AddReference(HOLDER)
@@ -159,6 +172,9 @@ def scene(trial, collision):
     rb = PhysxSchema.PhysxRigidBodyAPI.Apply(ctrl.GetPrim())
     rb.CreateSolverPositionIterationCountAttr(32)
     rb.CreateSolverVelocityIterationCountAttr(VEL_ITERS)
+    for p in Usd.PrimRange(ctrl.GetPrim()):
+        if p.HasAPI(UsdPhysics.CollisionAPI):
+            torsion(p)
 
     stage_utils.add_reference_to_stage(
         usd_path=get_assets_root_path() + "/Isaac/Robots/FrankaRobotics/FrankaPanda/franka.usd", path="/World/robot")
@@ -178,6 +194,7 @@ def scene(trial, collision):
             box.AddScaleOp().Set(Gf.Vec3f(hx, hy, hz))
             box.CreateDisplayColorAttr([Gf.Vec3f(0.15, 0.15, 0.16)])
             UsdPhysics.CollisionAPI.Apply(box.GetPrim())
+            torsion(box.GetPrim())
         UsdShade.MaterialBindingAPI.Apply(link).Bind(pad, UsdShade.Tokens.strongerThanDescendants, "physics")
     for p in Usd.PrimRange(stage.GetPrimAtPath("/World/robot")):
         # Gravity compensation, as MuJoCo's arm servos have: without it the stock drives sag a few cm
@@ -198,9 +215,6 @@ def scene(trial, collision):
             d.GetMaxForceAttr().Set(70.0)
             PhysxSchema.PhysxJointAPI.Apply(p).CreateMaxJointVelocityAttr(0.3)
 
-    if args.probe:
-        for prim in ("/World/robot/panda_leftfinger", "/World/robot/panda_rightfinger", "/World/robot/panda_hand"):
-            PhysxSchema.PhysxContactReportAPI.Apply(stage.GetPrimAtPath(prim)).CreateThresholdAttr(0.0)
     UsdLux.DomeLight.Define(stage, "/World/dome").CreateIntensityAttr(800)
     key = UsdLux.SphereLight.Define(stage, "/World/key")
     key.CreateRadiusAttr(0.35)
@@ -227,34 +241,50 @@ class Plan:
         self.q_from = np.array(trial["home"], float)
         self.g_from = float(trial["finger_start_m"])
         self.k, self.tm, self.t, self.wait, self.done = 0, 0.0, 0.0, settle_s, False
-        self.carried = False  # controller within 3 cm of its goal when the fingers open
+        self.carried = False  # still in the pinch (< 2 cm drift) when the fingers open
+        self.at_holder = False  # within 8 cm of its goal then
         self.set(self.q_from, self.g_from)
 
     def set(self, q, g):
         self.v.art.set_dof_position_targets(np.r_[q, g, g].astype(np.float32)[None], self.v.i0)
 
+    def drift(self):
+        """In-hand motion of the controller since the grip closed (m, deg), or None before that."""
+        if getattr(self, "rel0", None) is None:
+            return None
+        d = np.linalg.inv(self.rel0) @ np.linalg.inv(self.v.hand_pose()) @ self.v.ctrl_pose()
+        return float(np.linalg.norm(d[:3, 3])), float(np.degrees(np.arccos(np.clip((np.trace(d[:3, :3]) - 1) / 2, -1, 1))))
+
+    def slip(self):
+        dr = self.drift()
+        return "" if dr is None else f"  slip {dr[0] * 1000:5.1f} mm {dr[1]:5.1f} deg"
+
     def step(self, dt):
         self.t += dt
+        if self.trace and int(self.t / 0.25) != int((self.t - dt) / 0.25) and self.k <= 1:
+            print(f"    t {self.t:4.2f} wp {self.k}: ctrl {self.v.ctrl_pose()[:3, 3].round(3)}", flush=True)
         if self.done or self.t < self.wait:
             return
         w = self.trial["waypoints"][self.k]
         q_to, g_to, dur = np.array(w["q"], float), float(w["finger_m"]), float(w["seconds"])
+        if self.g_from < 0.005 and g_to < 0.005:
+            dur *= args.carry_scale
         self.tm += dt
         s = min(1.0, self.tm / dur)
         self.set(self.q_from + (q_to - self.q_from) * s, self.g_from + (g_to - self.g_from) * min(1.0, 2 * s))
         if s >= 1.0:
+            if self.g_from > 0.02 and g_to < 0.005:  # this segment closed the fingers: the grip
+                self.rel0 = np.linalg.inv(self.v.hand_pose()) @ self.v.ctrl_pose()
             if self.g_from < 0.005 and g_to > 0.02:  # this segment opened the fingers: the release
+                dr = self.drift()
+                self.carried = bool(dr is not None and dr[0] < 0.02)  # still in the pinch
                 goal = np.asarray(self.trial["target"])[:3, 3]
-                self.carried = bool(np.linalg.norm(self.v.ctrl_pose()[:3, 3] - goal) < 0.03)
+                self.at_holder = bool(np.linalg.norm(self.v.ctrl_pose()[:3, 3] - goal) < 0.08)
             if self.trace:
                 q = self.v.q()
                 print(f"  wp {self.k:2d} t {self.t:5.2f}: fingers {q[7] * 1000:5.1f}/{q[8] * 1000:5.1f} mm "
                       f"(target {g_to * 1000:4.1f}), arm err {np.abs(q[:7] - q_to).max():.3f} rad, "
-                      f"ctrl {self.v.ctrl_pose()[:3, 3].round(3)}", flush=True)
-            if self.trace and self.k in (4, 5, 6):
-                for name, cv in self.v.contacts.items():
-                    fm = np.asarray(cv.get_contact_force_matrix(1.0 / args.physics_hz)).reshape(-1, 3)
-                    print(f"     {name}: N vs [ctrl, tray, holder] =", np.round(np.linalg.norm(fm, axis=1), 2), flush=True)
+                      f"ctrl {self.v.ctrl_pose()[:3, 3].round(3)}{self.slip()}", flush=True)
             self.q_from, self.g_from, self.tm = q_to, g_to, 0.0
             self.k += 1
             self.done = self.k >= len(self.trial["waypoints"])
@@ -271,17 +301,19 @@ class View:
         self.art = self.sim.create_articulation_view("/World/robot")
         self.ctrl = self.sim.create_rigid_body_view("/World/ctrl")
         self.i0 = np.array([0])
-        self.contacts = {}
-        if args.probe:
-            for f in ("panda_leftfinger", "panda_rightfinger", "panda_hand"):
-                self.contacts[f] = self.sim.create_rigid_contact_view(
-                    f"/World/robot/{f}", filter_patterns=["/World/ctrl", "/World/tray", "/World/holder"])
         q0 = np.r_[trial["home"], trial["finger_start_m"], trial["finger_start_m"]].astype(np.float32)[None]
         self.art.set_dof_positions(q0, self.i0)
         self.art.set_dof_position_targets(q0, self.i0)
 
     def q(self):
         return np.asarray(self.art.get_dof_positions()).reshape(-1)
+
+    def hand_pose(self):
+        names = list(self.art.shared_metatype.link_names)
+        p = np.asarray(self.art.get_link_transforms()).reshape(len(names), 7)[names.index("panda_hand")]
+        T = np.eye(4)
+        T[:3, :3], T[:3, 3] = Rotation.from_quat(p[3:7]).as_matrix(), p[:3]
+        return T
 
     def ctrl_pose(self):
         p = np.asarray(self.ctrl.get_transforms()).reshape(-1)
@@ -342,7 +374,7 @@ def run(trial, collision, record=False, title="", trace=False, settle=1.5):
             t_end = t + settle
     del sub
     T1 = v.ctrl_pose()
-    carried = plan.carried
+    carried, at_holder = plan.carried, plan.at_holder
     T = np.asarray(trial["target"])
     true_pts = CP @ T[:3, :3].T + T[:3, 3]
     end_pts = CP @ T1[:3, :3].T + T1[:3, 3]
@@ -354,7 +386,7 @@ def run(trial, collision, record=False, title="", trace=False, settle=1.5):
         rgb.detach()
         rp.destroy()
     res = {"seed": trial["seed"], "collision": collision, "add_mm": add * 1000, "rot_deg": rot, "held": held,
-           "placed": bool(held and add < 0.02), "carried": carried}
+           "placed": bool(held and add < 0.02), "carried": carried, "at_holder": at_holder}
     print("[scan2usd] place:", json.dumps({k: (round(x, 2) if isinstance(x, float) else x) for k, x in res.items()}),
           flush=True)
     return res, frames
@@ -370,7 +402,8 @@ def video(videos):
             for tile, r in zip(tiles, (ra, rb_)):
                 ok = r["held"] and r["placed"]
                 msg = (f"held: {r['add_mm']:.1f} mm / {r['rot_deg']:.0f}\u00b0 from the real pose" if ok
-                       else "slides off the hands" if r.get("carried") else "dropped on the way")
+                       else "slides off the hands" if r.get("carried")
+                       else "pushed out of the pinch at the holder" if r.get("at_holder") else "dropped on the way")
                 d = ImageDraw.Draw(tile)
                 d.rectangle([4, tile.height - 36, 14 + d.textlength(msg, font=FONT), tile.height - 6], fill=(255, 255, 255))
                 d.text((10, tile.height - 32), msg, fill=(21, 128, 61) if ok else (185, 28, 28), font=FONT)

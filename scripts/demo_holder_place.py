@@ -7,9 +7,10 @@ The drop test (study_holder_fit.py) releases the controller 3 cm above its real 
 robot does the whole job, and the answer key is the same: where the real controller rests in the
 real holder, measured in the scan of the two together.
 
-1. The controller lies face up on a raised tray, its top edge overhanging toward the robot's side.
+1. The controller lies flat, face up, on a raised tray as wide as it is; its top edge overhangs toward
+   the robot's side, and a notch under the grasp corner leaves room for the lower finger.
 2. The Panda pinches the top edge near one corner (the closing axis through the controller's face),
-   the approach swung 20 degrees toward the middle: the figure stands right behind the middle of the
+   the pads 5 mm deeper than a fingertip grip, the approach swung 20 degrees toward the middle: the figure stands right behind the middle of the
    edge, so only the corners leave room for the back finger, and the swing keeps the palm off its head.
 3. It lifts, turns the controller upright in the air, and lowers it along its top edge's direction
    until the controller is 5 mm above the measured pose, then lets go and backs away.
@@ -51,6 +52,7 @@ HOLDER_XY = np.array([0.50, 0.17])
 STAND_XY = np.array([0.55, -0.15])
 STAND_H = 0.15  # tray height: room under the overhanging edge for the lower finger and the hand
 EDGE_DIR = np.array([0.0, -1.0])  # the controller's top edge faces -y on the tray: a comfortable side reach
+TIP_DEPTH = 0.005  # pinch this much deeper than a fingertip grip: firmer in Isaac Sim (7 vs 13 mm), still 12/12 here
 RELEASE_GAP = 0.005  # release this far above the measured pose
 GRIP_STIFFNESS = 6000.0  # N/m on the finger tendon: ~45 N per finger on the 3.6 cm edge (a real Panda: 70 N)
 
@@ -114,7 +116,9 @@ def pose(R, t) -> np.ndarray:
 
 
 def build(ctrl_asset, holder_asset, holder_pose, ctrl_pose, collision: str, work: Path, ghost=None,
-          stand_pose=None, stand_size=(0.045, 0.045, STAND_H / 2)) -> mujoco.MjModel:
+          stand_pose=None, stand_boxes=((0.0, 0.0, 0.045, 0.045),)) -> mujoco.MjModel:
+    """stand_boxes: the tray as boxes in the stand frame (x = controller right, y = its top):
+    (center x, center y, half x, half y), all STAND_H tall."""
     prepare_panda(work, GRIP_STIFFNESS)
     hold = asset_body(holder_asset, "holder", pos=holder_pose[:3, 3], quat=quat_wxyz(holder_pose[:3, :3]),
                       collision=collision, free=False, rgba=(0.30, 0.30, 0.33, 1), visual_faces=60000)
@@ -130,8 +134,9 @@ def build(ctrl_asset, holder_asset, holder_pose, ctrl_pose, collision: str, work
     sp = stand_pose
     stand = (f'<body name="stand" pos="{sp[0, 3]:.5f} {sp[1, 3]:.5f} {STAND_H / 2:.5f}" '
              f'quat="{" ".join(f"{q:.6f}" for q in quat_wxyz(sp[:3, :3]))}">'
-             f'<geom type="box" size="{stand_size[0]} {stand_size[1]} {stand_size[2]}" rgba="0.18 0.32 0.55 1" '
-             f'friction="0.8 0.005 0.0001" solref="0.005 1"/></body>')
+             + "".join(f'<geom type="box" pos="{cx:.5f} {cy:.5f} 0" size="{hx:.5f} {hy:.5f} {STAND_H / 2}" '
+                       f'rgba="0.62 0.60 0.57 1" friction="0.8 0.005 0.0001" solref="0.005 1"/>'
+                       for cx, cy, hx, hy in stand_boxes) + '</body>')
     ghost_xml = ""
     if ghost is not None:
         ghost_xml = (f'<body name="ghost" pos="{" ".join(f"{v:.6f}" for v in ghost[:3, 3])}" '
@@ -260,7 +265,7 @@ class Setup:
     """One trial's scene: holder and tray poses (jittered by seed), the model, settled data, the plan."""
 
     def __init__(self, seed, ctrl, holder_asset, R_rel, t_rel, collision, lateral, side, tilt=20.0, ghost=False,
-                 work_tag=None, tip_depth=0.0):
+                 work_tag=None, tip_depth=TIP_DEPTH, notch=0.045):
         rng = np.random.default_rng(seed)
         jitter = seed > 0
         hold_xy = HOLDER_XY + (rng.uniform(-0.02, 0.02, 2) if jitter else 0)
@@ -274,20 +279,25 @@ class Setup:
         yaw0 = np.degrees(np.arctan2(EDGE_DIR[1], EDGE_DIR[0]) - np.arctan2(ctrl.top[1], ctrl.top[0]))
         yaw0 += rng.uniform(-10, 10) if jitter else 0
         R0 = yaw_matrix(yaw0)
-        # Tray under the controller, aligned with its natural axes: 3.5 cm either side of center, from the
-        # grips to 2.5 cm short of the top edge. The grasp corner (5.5 cm out, at the edge) overhangs, so
-        # the lower finger has room under it (Isaac Sim's Franka has bulkier finger colliders than
-        # MuJoCo's, and caught a wider tray), and the center of mass is well inside.
+        # Tray under the controller, aligned with its natural axes, full width so it rests flat on both
+        # grips (a narrow tray let it rock 25 degrees), from the grips to 2.5 cm short of the top edge.
+        # Under the grasp corner a notch reaches `notch` in from the edge, so the lower finger has room
+        # (Isaac Sim's Franka has bulkier finger colliders than MuJoCo's).
         t_lo, t_hi = ctrl.up.min() + 0.005, ctrl.up.max() - 0.025
-        half = (0.035, 0.5 * (t_hi - t_lo))
-        t_local = 0.5 * (t_lo + t_hi)  # tray center along the controller's top axis
-        stand_center = stand_xy + (R0[:2, :2] @ (t_local * ctrl.top[:2]))
-        T_stand = pose(R0 @ np.c_[ctrl.right, ctrl.top, ctrl.face], [*stand_center, 0.0])
+        l_cut = abs(lateral) - 0.025  # the notch starts 2.5 cm inboard of the grasp point
+        n_hi = min(t_hi, ctrl.up.max() - notch)
+        l_lo, l_hi = (ctrl.lat.min(), ctrl.lat.max()) if lateral >= 0 else (-ctrl.lat.max(), -ctrl.lat.min())
+        boxes = [((l_lo + l_cut) / 2, (t_lo + t_hi) / 2, (l_cut - l_lo) / 2, (t_hi - t_lo) / 2),
+                 ((l_cut + l_hi) / 2, (t_lo + n_hi) / 2, (l_hi - l_cut) / 2, (n_hi - t_lo) / 2)]
+        if lateral < 0:  # grasp on the other side: mirror the notch
+            boxes = [(-cx, cy, hx, hy) for cx, cy, hx, hy in boxes]
+        self.stand_boxes = boxes
+        T_stand = pose(R0 @ np.c_[ctrl.right, ctrl.top, ctrl.face], [*stand_xy, 0.0])
         T_ctrl0 = pose(R0, [stand_xy[0], stand_xy[1], STAND_H + 0.003])
         work = ROOT / "data" / "work" / f"holder_place_{work_tag or collision}"
         self.model = build(ctrl.asset, holder_asset, T_hold, T_ctrl0, "hulls" if collision == "hulls" else "single",
                            work, ghost=self.T_target if ghost else None, stand_pose=T_stand,
-                           stand_size=(half[0], half[1], STAND_H / 2))
+                           stand_boxes=boxes)
         model = self.model
         self.arm = Arm(model)
         data = self.data = mujoco.MjData(model)
@@ -320,8 +330,9 @@ def score(ctrl, model, data, T_target) -> dict:
 
 
 def trial(seed, ctrl, holder_asset, R_rel, t_rel, collision, lateral, side, tilt=20.0, render_cam=None,
-          size=(720, 960)):
-    su = Setup(seed, ctrl, holder_asset, R_rel, t_rel, collision, lateral, side, tilt, ghost=render_cam is not None)
+          size=(720, 960), tip_depth=TIP_DEPTH, notch=0.045):
+    su = Setup(seed, ctrl, holder_asset, R_rel, t_rel, collision, lateral, side, tilt, ghost=render_cam is not None,
+               tip_depth=tip_depth, notch=notch)
     renderer = mujoco.Renderer(su.model, *size) if render_cam is not None else None
 
     def render(d):
@@ -335,7 +346,7 @@ def trial(seed, ctrl, holder_asset, R_rel, t_rel, collision, lateral, side, tilt
     return res, frames, su.model
 
 
-def video(ctrl, holder, R_rel, t_rel, lateral, side, out: Path, fps: int = 30):
+def video(ctrl, holder, R_rel, t_rel, lateral, side, out: Path, fps: int = 30, tip_depth=TIP_DEPTH, notch=0.045):
     """Side by side: decomposed holder vs one convex hull, the same plan. Each panel: the cell from
     the front-left, with a close-up of the holder from the front inset in the bottom-right corner
     (over empty floor, so it never hides the arm); the green ghost is the real resting pose."""
@@ -344,7 +355,8 @@ def video(ctrl, holder, R_rel, t_rel, lateral, side, out: Path, fps: int = 30):
     W, H, IW, IH = 560, 420, 220, 176
     panels = []
     for collision, title in (("hulls", "Holder: convex decomposition (64 pieces)"), ("single", "Holder: one convex hull")):
-        su = Setup(0, ctrl, holder, R_rel, t_rel, collision, lateral, side, ghost=True, work_tag=f"video_{collision}")
+        su = Setup(0, ctrl, holder, R_rel, t_rel, collision, lateral, side, ghost=True, work_tag=f"video_{collision}",
+                   tip_depth=tip_depth, notch=notch)
         # MuJoCo renderers share the GL context of the last one created: render both views with one.
         rend = mujoco.Renderer(su.model, H, W)
         cams = []
@@ -393,25 +405,26 @@ def video(ctrl, holder, R_rel, t_rel, lateral, side, out: Path, fps: int = 30):
     print(f"wrote {out / 'holder_place.webp'} ({len(out_frames[::3])} frames at 10 fps)")
 
 
-def export_plans(ctrl, holder, R_rel, t_rel, lateral, side, seeds, path: Path, tip_depth: float = 0.0) -> None:
+def export_plans(ctrl, holder, R_rel, t_rel, lateral, side, seeds, path: Path, tip_depth: float = TIP_DEPTH,
+                 notch: float = 0.045) -> None:
     """Joint plans and scene poses for replay in another simulator (scripts/isaac_holder_place.py)."""
     out = []
     for seed in seeds:
-        su = Setup(seed, ctrl, holder, R_rel, t_rel, "hulls", lateral, side, tip_depth=tip_depth)
+        su = Setup(seed, ctrl, holder, R_rel, t_rel, "hulls", lateral, side, tip_depth=tip_depth, notch=notch)
         m = su.model
         stand = m.body("stand").id
-        geom = next(g for g in range(m.ngeom) if m.geom_bodyid[g] == stand)
+        geoms = [g for g in range(m.ngeom) if m.geom_bodyid[g] == stand]
         hold = body_pose(m, su.data, "holder")
         out.append({
             "seed": seed, "holder": hold.tolist(), "target": su.T_target.tolist(), "controller_start": su.T_start.tolist(),
-            "stand": pose(su.data.xmat[stand].reshape(3, 3), su.data.xpos[stand]).tolist(),
-            "stand_half_extents": m.geom_size[geom].tolist(),
+            "tray_boxes": [{"pose": pose(su.data.geom_xmat[g].reshape(3, 3), su.data.geom_xpos[g]).tolist(),
+                            "half_extents": m.geom_size[g].tolist()} for g in geoms],
             "home": HOME.tolist(), "finger_start_m": 0.04,
             "waypoints": [{"q": [float(v) for v in q], "finger_m": float(g) * 0.04 / 255.0, "seconds": float(d),
                            "ik_error_mm": float(e) * 1000} for q, g, d, e in su.steps],
         })
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"grasp": {"lateral_m": lateral, "side": side, "tip_depth_m": tip_depth}, "release_gap_m": RELEASE_GAP,
+    path.write_text(json.dumps({"grasp": {"lateral_m": lateral, "side": side, "tip_depth_m": tip_depth, "tray_notch_m": notch}, "release_gap_m": RELEASE_GAP,
                                 "grip_stiffness_n_per_m": GRIP_STIFFNESS, "trials": out}, indent=1))
     print(f"wrote {path} ({len(out)} plans)")
 
@@ -433,20 +446,22 @@ def main() -> None:
     ap.add_argument("--out", type=Path, default=ROOT / "docs" / "figures")
     ap.add_argument("--no-video", action="store_true")
     ap.add_argument("--export-plans", type=Path, help="write joint plans + poses (JSON) for Isaac Sim and exit")
-    ap.add_argument("--tip-depth", type=float, default=0.0, help="push the pinch this far further in (m)")
+    ap.add_argument("--tip-depth", type=float, default=TIP_DEPTH, help="push the pinch this far further in (m)")
+    ap.add_argument("--notch", type=float, default=0.045, help="tray notch under the grasp corner, from the edge (m)")
     args = ap.parse_args()
     if not PANDA.exists():
         raise SystemExit(f"{PANDA} not found; fetch mujoco_menagerie/franka_emika_panda first (see README)")
     ctrl, holder, R_rel, t_rel = load()
     if args.export_plans:
         export_plans(ctrl, holder, R_rel, t_rel, args.lateral, args.side, range(args.trials), args.export_plans,
-                     tip_depth=args.tip_depth)
+                     tip_depth=args.tip_depth, notch=args.notch)
         return
     results = {}
     for collision in ("hulls", "single"):
         rows = []
         for seed in range(args.trials):
-            res, _, _ = trial(seed, ctrl, holder, R_rel, t_rel, collision, args.lateral, args.side)
+            res, _, _ = trial(seed, ctrl, holder, R_rel, t_rel, collision, args.lateral, args.side,
+                              tip_depth=args.tip_depth, notch=args.notch)
             rows.append(res)
             print(json.dumps({k: (round(v, 2) if isinstance(v, float) else v) for k, v in res.items()}), flush=True)
         results[collision] = rows
@@ -459,10 +474,11 @@ def main() -> None:
     print(json.dumps(summary, indent=1))
     args.out.mkdir(parents=True, exist_ok=True)
     (args.out / "holder_place.json").write_text(json.dumps({"summary": summary, "trials": results,
-                                                            "grasp": {"lateral_m": args.lateral, "side": args.side},
+                                                            "grasp": {"lateral_m": args.lateral, "side": args.side,
+                                                                      "tip_depth_m": args.tip_depth, "tray_notch_m": args.notch},
                                                             "release_gap_m": RELEASE_GAP}, indent=2))
     if not args.no_video:
-        video(ctrl, holder, R_rel, t_rel, args.lateral, args.side, args.out)
+        video(ctrl, holder, R_rel, t_rel, args.lateral, args.side, args.out, tip_depth=args.tip_depth, notch=args.notch)
 
 
 if __name__ == "__main__":

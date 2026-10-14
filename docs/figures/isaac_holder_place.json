@@ -4,17 +4,17 @@
   "summary": {
     "decomposed": {
       "trials": 12,
-      "held": 1,
-      "placed": 1,
-      "add_mm_median": 187.07079441267098,
-      "rot_deg_median": 112.80056804864086
+      "held": 12,
+      "placed": 12,
+      "add_mm_median": 7.2084275659173445,
+      "rot_deg_median": 8.714731674252386
     },
     "convex_hull": {
       "trials": 12,
       "held": 0,
       "placed": 0,
-      "add_mm_median": 167.9459910317072,
-      "rot_deg_median": 123.51206578967371
+      "add_mm_median": 170.7485889455714,
+      "rot_deg_median": 89.30823365856128
     }
   },
   "results": {
@@ -22,220 +22,244 @@
       {
         "seed": 0,
         "collision": "decomposed",
-        "add_mm": 171.6015524789991,
-        "rot_deg": 120.24391249811252,
-        "held": false,
-        "placed": false,
-        "carried": false
+        "add_mm": 7.272767077410926,
+        "rot_deg": 8.648078509555038,
+        "held": true,
+        "placed": true,
+        "carried": true,
+        "at_holder": true
       },
       {
         "seed": 1,
         "collision": "decomposed",
-        "add_mm": 191.08481643687264,
-        "rot_deg": 128.05388235428694,
-        "held": false,
-        "placed": false,
-        "carried": false
+        "add_mm": 7.6696507865381225,
+        "rot_deg": 8.624227140126795,
+        "held": true,
+        "placed": true,
+        "carried": true,
+        "at_holder": true
       },
       {
         "seed": 2,
         "collision": "decomposed",
-        "add_mm": 186.76131552323446,
-        "rot_deg": 90.81705825447565,
-        "held": false,
-        "placed": false,
-        "carried": false
+        "add_mm": 6.70350767564139,
+        "rot_deg": 7.545490013298728,
+        "held": true,
+        "placed": true,
+        "carried": true,
+        "at_holder": true
       },
       {
         "seed": 3,
         "collision": "decomposed",
-        "add_mm": 8.891877613304564,
-        "rot_deg": 15.09001782929709,
+        "add_mm": 7.154823721254689,
+        "rot_deg": 8.108158055620132,
         "held": true,
         "placed": true,
-        "carried": true
+        "carried": true,
+        "at_holder": true
       },
       {
         "seed": 4,
         "collision": "decomposed",
-        "add_mm": 206.00526341674012,
-        "rot_deg": 89.58533961609173,
-        "held": false,
-        "placed": false,
-        "carried": false
+        "add_mm": 7.046672079919981,
+        "rot_deg": 7.969985472332626,
+        "held": true,
+        "placed": true,
+        "carried": true,
+        "at_holder": true
       },
       {
         "seed": 5,
         "collision": "decomposed",
-        "add_mm": 203.08601207773202,
-        "rot_deg": 113.9949656623952,
-        "held": false,
-        "placed": false,
-        "carried": false
+        "add_mm": 8.847697785079955,
+        "rot_deg": 9.921809266130689,
+        "held": true,
+        "placed": true,
+        "carried": true,
+        "at_holder": true
       },
       {
         "seed": 6,
         "collision": "decomposed",
-        "add_mm": 169.05498422733788,
-        "rot_deg": 115.77985650273938,
-        "held": false,
-        "placed": false,
-        "carried": false
+        "add_mm": 7.162898201213194,
+        "rot_deg": 8.781384838949734,
+        "held": true,
+        "placed": true,
+        "carried": true,
+        "at_holder": true
       },
       {
         "seed": 7,
         "collision": "decomposed",
-        "add_mm": 165.29341300437045,
-        "rot_deg": 136.61330541372067,
-        "held": false,
-        "placed": false,
-        "carried": false
+        "add_mm": 7.280020722602365,
+        "rot_deg": 8.81080060734442,
+        "held": true,
+        "placed": true,
+        "carried": true,
+        "at_holder": true
       },
       {
         "seed": 8,
         "collision": "decomposed",
-        "add_mm": 163.9582663172692,
-        "rot_deg": 111.60617043488651,
-        "held": false,
-        "placed": false,
-        "carried": false
+        "add_mm": 7.187702189879981,
+        "rot_deg": 8.854321817774453,
+        "held": true,
+        "placed": true,
+        "carried": true,
+        "at_holder": true
       },
       {
         "seed": 9,
         "collision": "decomposed",
-        "add_mm": 303.2998459373308,
-        "rot_deg": 119.25655587037619,
-        "held": false,
-        "placed": false,
-        "carried": false
+        "add_mm": 7.415527849147312,
+        "rot_deg": 9.061039850354396,
+        "held": true,
+        "placed": true,
+        "carried": true,
+        "at_holder": true
       },
       {
         "seed": 10,
         "collision": "decomposed",
-        "add_mm": 187.52579586515677,
-        "rot_deg": 89.74516877147803,
-        "held": false,
-        "placed": false,
-        "carried": false
+        "add_mm": 7.229152941954708,
+        "rot_deg": 9.057247203549165,
+        "held": true,
+        "placed": true,
+        "carried": true,
+        "at_holder": true
       },
       {
         "seed": 11,
         "collision": "decomposed",
-        "add_mm": 187.38027330210753,
-        "rot_deg": 91.79954063503497,
-        "held": false,
-        "placed": false,
-        "carried": false
+        "add_mm": 6.531336921555626,
+        "rot_deg": 7.694517506438498,
+        "held": true,
+        "placed": true,
+        "carried": true,
+        "at_holder": true
       }
     ],
     "convex_hull": [
       {
         "seed": 0,
         "collision": "convex_hull",
-        "add_mm": 166.15411786298654,
-        "rot_deg": 123.42764134445756,
+        "add_mm": 178.87638086315405,
+        "rot_deg": 91.72041776140738,
         "held": false,
         "placed": false,
-        "carried": false
+        "carried": false,
+        "at_holder": true
       },
       {
         "seed": 1,
         "collision": "convex_hull",
-        "add_mm": 168.15124028121193,
-        "rot_deg": 123.55557426004096,
+        "add_mm": 170.67843357441174,
+        "rot_deg": 92.02641992109676,
         "held": false,
         "placed": false,
-        "carried": false
+        "carried": false,
+        "at_holder": true
       },
       {
         "seed": 2,
         "collision": "convex_hull",
-        "add_mm": 168.97462593993126,
-        "rot_deg": 125.0212094600406,
+        "add_mm": 165.499434026367,
+        "rot_deg": 87.32525922761923,
         "held": false,
         "placed": false,
-        "carried": false
+        "carried": false,
+        "at_holder": true
       },
       {
         "seed": 3,
         "collision": "convex_hull",
-        "add_mm": 189.05574839763275,
-        "rot_deg": 115.96494839201507,
+        "add_mm": 177.07475849094803,
+        "rot_deg": 89.29123838451453,
         "held": false,
         "placed": false,
-        "carried": false
+        "carried": false,
+        "at_holder": true
       },
       {
         "seed": 4,
         "collision": "convex_hull",
-        "add_mm": 168.02093115840665,
-        "rot_deg": 123.1117301537521,
+        "add_mm": 157.8341662674118,
+        "rot_deg": 89.00412730695396,
         "held": false,
         "placed": false,
-        "carried": false
+        "carried": false,
+        "at_holder": true
       },
       {
         "seed": 5,
         "collision": "convex_hull",
-        "add_mm": 169.70073419318004,
-        "rot_deg": 125.9102583865618,
+        "add_mm": 160.69514464520273,
+        "rot_deg": 93.16144712385083,
         "held": false,
         "placed": false,
-        "carried": false
+        "carried": false,
+        "at_holder": true
       },
       {
         "seed": 6,
         "collision": "convex_hull",
-        "add_mm": 167.36341410447778,
-        "rot_deg": 124.3442879384578,
+        "add_mm": 175.12857737906302,
+        "rot_deg": 92.27739884771832,
         "held": false,
         "placed": false,
-        "carried": false
+        "carried": false,
+        "at_holder": true
       },
       {
         "seed": 7,
         "collision": "convex_hull",
-        "add_mm": 167.14620551788258,
-        "rot_deg": 123.47217385352818,
+        "add_mm": 152.1201080802484,
+        "rot_deg": 88.8997476848347,
         "held": false,
         "placed": false,
-        "carried": false
+        "carried": false,
+        "at_holder": true
       },
       {
         "seed": 8,
         "collision": "convex_hull",
-        "add_mm": 167.77751930787105,
-        "rot_deg": 123.55195772581925,
+        "add_mm": 159.8295474123214,
+        "rot_deg": 88.53679355221884,
         "held": false,
         "placed": false,
-        "carried": false
+        "carried": false,
+        "at_holder": true
       },
       {
         "seed": 9,
         "collision": "convex_hull",
-        "add_mm": 190.86240031960733,
-        "rot_deg": 111.5638296059213,
+        "add_mm": 170.81874431673108,
+        "rot_deg": 89.32522893260803,
         "held": false,
         "placed": false,
-        "carried": false
+        "carried": false,
+        "at_holder": true
       },
       {
         "seed": 10,
         "collision": "convex_hull",
-        "add_mm": 165.42035728333443,
-        "rot_deg": 119.35554991914253,
+        "add_mm": 172.85818631428637,
+        "rot_deg": 90.65367445449938,
         "held": false,
         "placed": false,
-        "carried": false
+        "carried": false,
+        "at_holder": true
       },
       {
         "seed": 11,
         "collision": "convex_hull",
-        "add_mm": 167.87105090500776,
-        "rot_deg": 126.02767179478934,
+        "add_mm": 171.62080544316484,
+        "rot_deg": 87.13523744208722,
         "held": false,
         "placed": false,
-        "carried": false
+        "carried": false,
+        "at_holder": true
       }
     ]
   }

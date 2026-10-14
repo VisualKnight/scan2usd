@@ -52,7 +52,9 @@ def place_values() -> dict[str, str]:
     ip = ROOT / "docs" / "figures" / "isaac_holder_place.json"
     if ip.exists():
         d = json.loads(ip.read_text())["summary"]["decomposed"]
-        out["iplace_held"] = f"{d['held']}/{d['trials']}"
+        h = json.loads(ip.read_text())["summary"]["convex_hull"]
+        out.update({"iplace_held": f"{d['held']}/{d['trials']}", "iplace_add": f"{d['add_mm_median']:.1f}",
+                    "iplace_rot": f"{d['rot_deg_median']:.0f}", "iplace_hull_held": f"{h['held']}/{h['trials']}"})
     return {**out, "place_held": f"{s['hulls']['held']}/{s['hulls']['trials']}",
             "place_add": f"{s['hulls']['add_mm_median']:.1f}", "place_rot": f"{s['hulls']['rot_deg_median']:.0f}",
             "place_hull_held": f"{s['single']['held']}/{s['single']['trials']}"}
