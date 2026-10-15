@@ -35,6 +35,7 @@ FIT = os.path.join(ROOT, "output", "holder_fit")
 HOLDER = os.path.join(FIT, "assets", "cod_holder", "cod_holder.usda")
 CTRL = os.path.join(FIT, "assets", "controller", "controller.usda")
 FPS = 60
+W, H, IW, IH = 560, 420, 220, 176  # frame, and the close-up inset in its bottom-right corner (as in MuJoCo)
 # MuJoCo Menagerie's Panda finger pads (left finger frame: center xyz, half extents, m). Isaac's Franka collides
 # with a convex hull of the whole tapered finger, which wedges the controller's rounded edge out of the pinch;
 # MuJoCo grips with these flat pads. The right finger's frame is turned 180 deg about z relative to MuJoCo's.
@@ -220,15 +221,21 @@ def scene(trial, collision):
     key.CreateRadiusAttr(0.35)
     key.CreateIntensityAttr(26000)
     key.AddTranslateOp().Set(Gf.Vec3d(0.9, -1.0, 1.6))
-    cam = UsdGeom.Camera.Define(stage, "/World/cam")
+    # The MuJoCo video's two views: the cell from the front-left, and a close-up of the holder (inset).
+    orbit_cam(stage, "/World/cam", (0.49, 0.22, 0.22), 1.12, 18, 235)
+    orbit_cam(stage, "/World/pipcam", (0.495, 0.174, 0.12), 0.40, 12, 30)
+
+
+def orbit_cam(stage, path, look, dist, el_deg, az_deg, fovy_deg=45.0):
+    """A camera placed as MuJoCo's free camera (lookat, distance, elevation down, azimuth; 45 deg fovy)."""
+    cam = UsdGeom.Camera.Define(stage, path)
     cam.CreateHorizontalApertureAttr(36.0)
     cam.CreateVerticalApertureAttr(27.0)
-    cam.CreateFocalLengthAttr(28.0)
+    cam.CreateFocalLengthAttr(13.5 / math.tan(math.radians(fovy_deg / 2)))
     cam.CreateClippingRangeAttr(Gf.Vec2f(0.02, 60.0))
-    # The MuJoCo video's wide view, a little farther back.
-    look = Gf.Vec3d(0.49, 0.10, 0.20)
-    az, el = math.radians(235), math.radians(18)
-    eye = look - 1.25 * Gf.Vec3d(math.cos(el) * math.cos(az), math.cos(el) * math.sin(az), -math.sin(el))
+    look = Gf.Vec3d(*look)
+    az, el = math.radians(az_deg), math.radians(el_deg)
+    eye = look - dist * Gf.Vec3d(math.cos(el) * math.cos(az), math.cos(el) * math.sin(az), -math.sin(el))
     cam.AddTransformOp().Set(Gf.Matrix4d().SetLookAt(eye, look, Gf.Vec3d(0, 0, 1)).GetInverse())
 
 
@@ -332,9 +339,12 @@ def run(trial, collision, record=False, title="", trace=False, settle=1.5):
     if record:
         import omni.replicator.core as rep
 
-        rp = rep.create.render_product("/World/cam", (560, 420))
+        rp = rep.create.render_product("/World/cam", (W, H))
         rgb = rep.AnnotatorRegistry.get_annotator("rgb")
         rgb.attach([rp])
+        pip_rp = rep.create.render_product("/World/pipcam", (W, H))
+        pip = rep.AnnotatorRegistry.get_annotator("rgb")
+        pip.attach([pip_rp])
     snap = None
     if trace:  # close-ups of the pinch
         import omni.replicator.core as rep
@@ -357,10 +367,15 @@ def run(trial, collision, record=False, title="", trace=False, settle=1.5):
         t += 1.0 / FPS
         n += 1
         if record and n % 3 == 0 and t > 1.2:
-            data = rgb.get_data()
-            if data is not None and getattr(data, "size", 0):
+            data, close = rgb.get_data(), pip.get_data()
+            if data is not None and getattr(data, "size", 0) and close is not None and getattr(close, "size", 0):
                 img = Image.fromarray(np.asarray(data)[..., :3])
+                inset = Image.fromarray(np.asarray(close)[..., :3])
+                inset = inset.crop(((W - IW * H // IH) // 2, 0, (W + IW * H // IH) // 2, H)).resize((IW, IH))
+                ix, iy = W - IW - 8, H - IH - 8
+                img.paste(inset, (ix, iy))
                 d = ImageDraw.Draw(img)
+                d.rectangle([ix - 1, iy - 1, ix + IW, iy + IH], outline=(30, 41, 59), width=1)
                 d.rectangle([0, 0, img.width, 30], fill=(255, 255, 255))
                 d.text((10, 5), f"Isaac Sim 6 PhysX \u00b7 {title}", fill=(30, 41, 59), font=FONT)
                 frames.append(img)
@@ -385,6 +400,8 @@ def run(trial, collision, record=False, title="", trace=False, settle=1.5):
     if record:
         rgb.detach()
         rp.destroy()
+        pip.detach()
+        pip_rp.destroy()
     res = {"seed": trial["seed"], "collision": collision, "add_mm": add * 1000, "rot_deg": rot, "held": held,
            "placed": bool(held and add < 0.02), "carried": carried, "at_holder": at_holder}
     print("[scan2usd] place:", json.dumps({k: (round(x, 2) if isinstance(x, float) else x) for k, x in res.items()}),
@@ -405,8 +422,8 @@ def video(videos):
                        else "slides off the hands" if r.get("carried")
                        else "pushed out of the pinch at the holder" if r.get("at_holder") else "dropped on the way")
                 d = ImageDraw.Draw(tile)
-                d.rectangle([4, tile.height - 36, 14 + d.textlength(msg, font=FONT), tile.height - 6], fill=(255, 255, 255))
-                d.text((10, tile.height - 32), msg, fill=(21, 128, 61) if ok else (185, 28, 28), font=FONT)
+                d.rectangle([4, 34, 14 + d.textlength(msg, font=FONT), 64], fill=(255, 255, 255))
+                d.text((10, 38), msg, fill=(21, 128, 61) if ok else (185, 28, 28), font=FONT)
         s = Image.new("RGB", (2 * tiles[0].width + 10, tiles[0].height), "white")
         s.paste(tiles[0], (0, 0))
         s.paste(tiles[1], (tiles[0].width + 10, 0))

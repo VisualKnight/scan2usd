@@ -146,7 +146,181 @@
 </div>
 
 <div class="chap s-bld" id="architecture"><div class="no">01</div><div><div class="eb">Build</div><h2>Architecture</h2></div></div>
-<img class="board" src="figures/architecture.svg" alt="Whiteboard architecture diagram">
+<!--arch:start-->
+<style>
+.arch { position: relative; }
+.arch .node { cursor: pointer; outline: none; transition: opacity .15s; }
+.arch .node rect { transition: stroke-width .15s; }
+.arch.hovering .node:not(.on) { opacity: .45; }
+.arch .node.on rect { stroke-width: 3.6; }
+.arch .hint { margin: 8px 4px 0; color: var(--soft); font-size: 13px; }
+.archtip { position: absolute; z-index: 5; width: 330px; max-width: calc(100% - 16px); background: #fff; border: 1px solid var(--rule);
+  border-top: 4px solid var(--c); border-radius: 6px; box-shadow: 0 10px 28px rgba(15, 23, 42, .18); padding: 12px 14px 12px;
+  font-size: 13.5px; line-height: 1.45; pointer-events: none; }
+.archtip h4 { margin: 0 0 6px; font-size: 15px; color: var(--c); }
+.archtip p { margin: 0 0 8px; }
+.archtip ul { margin: 0 0 8px; padding-left: 18px; }
+.archtip li { margin: 2px 0; font-weight: 600; }
+.archtip code { display: inline-block; margin: 2px 4px 0 0; padding: 1px 6px; border-radius: 4px; background: #f1f5f9; font-size: 12px; }
+</style>
+<div class="board arch">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 640" style="width:100%;height:auto;display:block" font-family="'Segoe Print', 'Comic Sans MS', cursive" role="img" aria-label="Scan2USD system view">
+  <defs>
+    <filter id="arch_rough" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="3"/>
+      <feDisplacementMap in="SourceGraphic" scale="2.5"/>
+    </filter>
+    <marker id="arch_a_cap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#0e7490" stroke-width="1.8"/></marker>
+    <marker id="arch_a_bld" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#6d28d9" stroke-width="1.8"/></marker>
+    <marker id="arch_a_ver" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#047857" stroke-width="1.8"/></marker>
+    <marker id="arch_a_use" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#c2410c" stroke-width="1.8"/></marker>
+    <marker id="arch_a_ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#1e293b" stroke-width="1.8"/></marker>
+    <marker id="arch_a_soft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#64748b" stroke-width="1.8"/></marker>
+  </defs>
+  <rect width="1180" height="640" fill="#fbfbf7"/>
+  <text x="24" y="42" font-size="24" fill="#1e293b">Scan2USD · system view</text>
+  <text x="24" y="68" font-size="13" fill="#64748b">phone photos in, one physics-ready OpenUSD asset out; every simulator and renderer reads the same file</text>
+  <rect x="20" y="96" width="210" height="490" rx="14" fill="#ecfeff" opacity="0.7"/>
+  <text x="34" y="122" font-size="13" fill="#0e7490" text-anchor="start" font-weight="bold">1 · CAPTURE</text>
+  <rect x="250" y="96" width="300" height="490" rx="14" fill="#f5f3ff" opacity="0.7"/>
+  <text x="264" y="122" font-size="13" fill="#6d28d9" text-anchor="start" font-weight="bold">2 · BUILD</text>
+  <rect x="570" y="96" width="230" height="490" rx="14" fill="#ecfdf5" opacity="0.7"/>
+  <text x="584" y="122" font-size="13" fill="#047857" text-anchor="start" font-weight="bold">3 · VERIFY</text>
+  <rect x="820" y="96" width="340" height="490" rx="14" fill="#fff7ed" opacity="0.7"/>
+  <text x="834" y="122" font-size="13" fill="#c2410c" text-anchor="start" font-weight="bold">4 · USE</text>
+  <g class="node" data-k="photos" data-stage="cap" tabindex="0">
+  <rect x="36" y="150" width="178" height="100" rx="10" fill="#ffffff" stroke="#0e7490" stroke-width="2.2" filter="url(#arch_rough)"/>
+  <text x="50" y="176" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Phone photos</text>
+  <text x="50" y="198" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">60–150 shots</text>
+  <text x="50" y="217" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">of an everyday object</text>
+  </g>
+  <g class="node" data-k="refs" data-stage="cap" tabindex="0">
+  <rect x="36" y="274" width="178" height="100" rx="10" fill="#ffffff" stroke="#0e7490" stroke-width="2.2" filter="url(#arch_rough)"/>
+  <text x="50" y="300" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">References</text>
+  <text x="50" y="322" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">color chart · weight</text>
+  <text x="50" y="341" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">tape (optional)</text>
+  </g>
+  <g class="node" data-k="guide" data-stage="cap" tabindex="0">
+  <rect x="36" y="444" width="178" height="100" rx="10" fill="#ffffff" stroke="#0e7490" stroke-width="2.2" filter="url(#arch_rough)"/>
+  <text x="50" y="470" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Capture guide</text>
+  <text x="50" y="492" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">which photos</text>
+  <text x="50" y="511" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">to take next</text>
+  </g>
+  <g class="node" data-k="pipeline" data-stage="bld" tabindex="0">
+  <rect x="266" y="150" width="268" height="210" rx="10" fill="#ffffff" stroke="#6d28d9" stroke-width="2.2" filter="url(#arch_rough)"/>
+  <text x="280" y="176" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">scan2usd pipeline</text>
+  <text x="280" y="198" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">reconstruct (COLMAP → mesh)</text>
+  <text x="280" y="217" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">clean, bake textures</text>
+  <text x="280" y="236" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">calibrate color, metric scale</text>
+  <text x="280" y="255" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">convex hulls, mass, inertia</text>
+  <text x="280" y="274" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">joints for articulated objects</text>
+  </g>
+  <g class="node" data-k="asset" data-stage="bld" tabindex="0">
+  <rect x="266" y="392" width="268" height="152" rx="10" fill="#ede9fe" stroke="#6d28d9" stroke-width="2.2" filter="url(#arch_rough)"/>
+  <text x="280" y="418" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">OpenUSD asset</text>
+  <text x="280" y="440" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">look · colliders · mass</text>
+  <text x="280" y="459" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">+ tested grasps, uncertainty,</text>
+  <text x="280" y="478" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">   Gaussian-splat look</text>
+  <text x="280" y="497" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">one file every engine reads</text>
+  </g>
+  <g class="node" data-k="validator" data-stage="ver" tabindex="0">
+  <rect x="600" y="150" width="184" height="100" rx="10" fill="#ffffff" stroke="#047857" stroke-width="2.2" filter="url(#arch_rough)"/>
+  <text x="614" y="176" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Validator</text>
+  <text x="614" y="198" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">33 checks on the</text>
+  <text x="614" y="217" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">written file</text>
+  </g>
+  <g class="node" data-k="truth" data-stage="ver" tabindex="0">
+  <rect x="600" y="272" width="184" height="100" rx="10" fill="#ffffff" stroke="#047857" stroke-width="2.2" filter="url(#arch_rough)"/>
+  <text x="614" y="298" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Ground truth</text>
+  <text x="614" y="320" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">surface error vs</text>
+  <text x="614" y="339" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">true meshes</text>
+  </g>
+  <g class="node" data-k="realcheck" data-stage="ver" tabindex="0">
+  <rect x="600" y="444" width="184" height="100" rx="10" fill="#ffffff" stroke="#047857" stroke-width="2.2" filter="url(#arch_rough)"/>
+  <text x="614" y="470" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Real-world check</text>
+  <text x="614" y="492" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">scan vs the real</text>
+  <text x="614" y="511" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">objects, posed</text>
+  </g>
+  <g class="node" data-k="physics" data-stage="use" tabindex="0">
+  <rect x="836" y="150" width="308" height="118" rx="10" fill="#ffffff" stroke="#c2410c" stroke-width="2.2" filter="url(#arch_rough)"/>
+  <text x="850" y="176" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Physics + robots</text>
+  <text x="850" y="198" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">MuJoCo · Isaac Sim PhysX</text>
+  <text x="850" y="217" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">Franka Panda · Shadow Hand</text>
+  <text x="850" y="236" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">pick, place, drop tests</text>
+  </g>
+  <g class="node" data-k="perception" data-stage="use" tabindex="0">
+  <rect x="836" y="288" width="308" height="100" rx="10" fill="#ffffff" stroke="#c2410c" stroke-width="2.2" filter="url(#arch_rough)"/>
+  <text x="850" y="314" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Perception</text>
+  <text x="850" y="336" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">Replicator synthetic data →</text>
+  <text x="850" y="355" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">detector → pose → pick</text>
+  </g>
+  <g class="node" data-k="render" data-stage="use" tabindex="0">
+  <rect x="836" y="408" width="308" height="136" rx="10" fill="#ffffff" stroke="#c2410c" stroke-width="2.2" filter="url(#arch_rough)"/>
+  <text x="850" y="434" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Rendering + library</text>
+  <text x="850" y="456" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">Isaac Sim RTX path tracing</text>
+  <text x="850" y="475" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">Unreal Engine 5.8 (MegaLights)</text>
+  <text x="850" y="494" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">USD asset library, 3D gallery</text>
+  </g>
+  <path d="M214,200 C240,200 244,230 262,230" fill="none" stroke="#0e7490" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arch_a_cap)"/>
+  <path d="M214,324 C240,324 244,296 262,292" fill="none" stroke="#0e7490" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arch_a_cap)"/>
+  <path d="M400,360 L400,388" fill="none" stroke="#6d28d9" stroke-width="2.6" stroke-linecap="round" marker-end="url(#arch_a_bld)"/>
+  <path d="M534,430 L574,430 M574,200 L574,494" fill="none" stroke="#047857" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M574,200 L596,200" fill="none" stroke="#047857" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arch_a_ver)"/>
+  <path d="M574,322 L596,322" fill="none" stroke="#047857" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arch_a_ver)"/>
+  <path d="M574,494 L596,494" fill="none" stroke="#047857" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arch_a_ver)"/>
+  <path d="M400,544 L400,566 L812,566 L812,209" fill="none" stroke="#c2410c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M812,209 L832,209" fill="none" stroke="#c2410c" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arch_a_use)"/>
+  <path d="M812,338 L832,338" fill="none" stroke="#c2410c" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arch_a_use)"/>
+  <path d="M812,476 L832,476" fill="none" stroke="#c2410c" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arch_a_use)"/>
+  <text x="606" y="584" font-size="12" fill="#c2410c" text-anchor="start" font-weight="normal">same file in every engine</text>
+  <path d="M266,494 L218,494" fill="none" stroke="#0e7490" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="8 6" marker-end="url(#arch_a_cap)"/>
+  <path d="M30,494 L30,206 L32,206" fill="none" stroke="#0e7490" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="8 6" marker-end="url(#arch_a_cap)"/>
+  <path d="M36,494 L30,494" fill="none" stroke="#0e7490" stroke-width="2.2" stroke-dasharray="8 6"/>
+  <text x="222" y="482" font-size="11" fill="#0e7490" text-anchor="start" font-weight="normal">unknowns</text>
+  <text x="1156" y="622" font-size="11" fill="#64748b" text-anchor="end"></text>
+</svg>
+<div class="archtip" hidden></div>
+<div class="archd" data-k="photos" hidden><h4>Phone photos</h4><p>Orbit the object at two or three heights with lots of overlap, on a textured table. The benchmark renders the same kind of capture in Blender, so every scan has a true mesh to score against.</p><ul><li>78 photos per benchmark object, 6 objects</li><li>0.78 mm mean surface error (speckled mug)</li></ul><div><code>blender_render_capture.py</code><code>make_synthetic_capture.py</code><code>study_photo_count.py</code></div></div>
+<div class="archd" data-k="refs" hidden><h4>References</h4><p>A ColorChecker (or an 18% gray card) in some photos is found automatically. Its patch spacing also gives metric scale, no ruler needed. A kitchen scale gives mass; a tape measure is the fallback for size.</p><ul><li>chart color error ΔE2000 ~8 → 1.3</li><li>size error ≤ 1.43% from the chart alone</li></ul><div><code>color.py</code><code>chart.py</code><code>eval_chart_scale.py</code></div></div>
+<div class="archd" data-k="guide" hidden><h4>Capture guide</h4><p>Reads the asset's uncertainty and lists camera positions that would see the physics-relevant surface no photo saw twice. Work in progress.</p><ul><li>8 extra photos, rendered where asked</li><li>helps the bowl; not the printed mug (its white inside is visible but textureless)</li></ul><div><code>guide.py</code><code>study_capture_guide.py</code><code>scan2usd guide</code></div></div>
+<div class="archd" data-k="pipeline" hidden><h4>scan2usd pipeline</h4><p>COLMAP structure-from-motion and multi-view stereo → table plane to z = 0 → object isolated → Poisson surface. Then repair, meters and Z-up, decimate, bake 2K albedo + normal maps, correct color, set metric scale, split into convex hulls (CoACD) and compute mass, center of mass and inertia. Optional: carve out space the photos see through, or split a scan into parts on a revolute joint.</p><ul><li>controller holder: <!--n:holder_hulls-->64<!--/n--> convex pieces</li><li>one command: scan2usd scan photos\ -o out\</li></ul><div><code>pipeline.py</code><code>reconstruct.py</code><code>mesh_ops.py</code><code>bake.py</code><code>color.py</code><code>physics.py</code><code>carve.py</code><code>articulation.py</code></div></div>
+<div class="archd" data-k="asset" hidden><h4>OpenUSD asset</h4><p>One file: render mesh with a PBR look, convex-hull colliders with a physics material, rigid body, mass and inertia. Codeless USD schemas add tested grasps, property intervals (mass, scale, friction) and per-vertex observed / inferred / sealed labels. Optional Gaussian splat for the look. Many assets become one library with collision and friction variant sets.</p><ul><li>true mass inside the stored interval: 5/6 objects</li><li>756 grasp re-tests stored</li><li>also exported as glTF and MuJoCo MJCF</li></ul><div><code>usd_io.py</code><code>schemas.py</code><code>uncertainty.py</code><code>splat.py</code><code>library.py</code><code>mjcf.py</code></div></div>
+<div class="archd" data-k="validator" hidden><h4>Validator</h4><p>Opens the written file the way a simulator would and checks it: USD units and up axis, textures resolve; geometry watertight, consistent winding, plausible size, resting on z = 0; hulls convex, ≤ 255 vertices, matching the render mesh; mass, inertia (triangle inequality), center of mass, density; drop tests settle.</p><ul><li>33 checks on every asset</li></ul><div><code>validate.py</code><code>simulate.py</code><code>scan2usd validate</code></div></div>
+<div class="archd" data-k="truth" hidden><h4>Ground truth</h4><p>Aligns each scan to its true mesh, then measures surface accuracy, completeness, F-score and volume, and color error on the chart before and after correction.</p><ul><li>mean error 0.60–3.03 mm over 6 objects</li><li>F-score @2 mm up to 0.94</li><li>full table: docs/benchmark.md</li></ul><div><code>evaluate.py</code><code>run_benchmark.py</code><code>evaluate_synthetic.py</code></div></div>
+<div class="archd" data-k="realcheck" hidden><h4>Real-world check</h4><p>A controller holder and a controller, scanned alone and together. Registering the scans gives the real resting pose: the answer key. The scanned controller is dropped into the scanned holder, then placed by robots.</p><ul><li>drop: <!--n:sim_held-->12/12<!--/n--> held, median <!--n:sim_add-->9.1<!--/n--> mm (MuJoCo); <!--n:isaac_held-->11/12<!--/n--> in Isaac Sim</li><li>holder as one convex hull: <!--n:hull_held-->0/12<!--/n--></li><li>scans agree on scale within <!--n:scale_agree-->1.2<!--/n-->%</li></ul><div><code>study_holder_fit.py</code><code>register.py</code><code>isaac_holder_fit.py</code></div></div>
+<div class="archd" data-k="physics" hidden><h4>Physics + robots</h4><p>MuJoCo and Isaac Sim PhysX run the same assets. A Franka Panda pinches the controller and seats it in the holder (MuJoCo IK, replayed on Isaac's Franka); a Shadow Hand spans it at its center of mass; the Panda picks the scanned mug; an articulated lid opens on its joint.</p><ul><li>Panda: <!--n:place_held-->12/12<!--/n--> MuJoCo, <!--n:iplace_held-->12/12<!--/n--> Isaac Sim (<!--n:iplace_add-->7.2<!--/n--> mm)</li><li>Shadow Hand: <!--n:hand_held-->12/12<!--/n--> MuJoCo, <!--n:ihand_held-->12/12<!--/n--> Isaac Sim</li><li>holder as one convex hull: every placement fails</li></ul><div><code>demo_holder_place.py</code><code>isaac_holder_place.py</code><code>demo_hand_place.py</code><code>isaac_hand_place.py</code><code>demo_panda.py</code><code>isaac_franka_pick.py</code></div></div>
+<div class="archd" data-k="perception" hidden><h4>Perception</h4><p>Isaac Sim Replicator renders the scanned assets under random lights, poses and distractors, with labels. A detector trained only on those finds the object in real photos, then drives a see-locate-pick loop.</p><ul><li>67/67 real photos (59/67 without distractors)</li><li>10/10 picks, 0.6 mm median pose error</li></ul><div><code>isaac_synthdata.py</code><code>replicator_to_coco.py</code><code>train_detector.py</code><code>demo_perception_pick.py</code></div></div>
+<div class="archd" data-k="render" hidden><h4>Rendering + library</h4><p>Isaac Sim RTX path traces the assets with PBR look presets. Unreal Engine 5.8 imports the same USD stage as is (Lumen + MegaLights, Sequencer). The Gaussian splat gives a photo-real look. The library catalog and 3D gallery are on the web.</p><ul><li>MegaLights: <!--n:ue_on-->8.8<!--/n--> ms per frame vs <!--n:ue_off-->14.8<!--/n--> ms</li><li>splat beats the mesh on 18/18 unseen photos</li></ul><div><code>isaac_pathtrace.py</code><code>unreal_render.py</code><code>unreal_hand_render.py</code><code>make_gallery.py</code><code>make_catalog.py</code></div></div>
+<p class="hint">Hover (or tap) a box for its operations, numbers and scripts.</p>
+</div>
+<script>
+(() => {
+  const box = document.querySelector('.arch'); if (!box) return;
+  const tip = box.querySelector('.archtip'), nodes = box.querySelectorAll('.node');
+  let pinned = null;
+  const show = (g) => {
+    const d = box.querySelector('.archd[data-k="' + g.dataset.k + '"]'); if (!d) return;
+    nodes.forEach((x) => x.classList.toggle('on', x === g)); box.classList.add('hovering');
+    tip.style.setProperty('--c', g.querySelector('rect').getAttribute('stroke'));
+    tip.innerHTML = d.innerHTML; tip.hidden = false;
+    const b = box.getBoundingClientRect(), r = g.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+    let x = r.right - b.left + 10, y = r.top - b.top;
+    if (x + tw > b.width) x = r.left - b.left - tw - 10;
+    if (x < 0) { x = 8; y = b.height + 6; }  // narrow screens: under the diagram, which stays visible
+    else y = Math.max(0, Math.min(y, b.height - th));
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  };
+  const hide = () => { if (pinned) return; tip.hidden = true; box.classList.remove('hovering'); nodes.forEach((x) => x.classList.remove('on')); };
+  nodes.forEach((g) => {
+    g.addEventListener('mouseenter', () => { if (!pinned) show(g); });
+    g.addEventListener('mouseleave', hide);
+    g.addEventListener('focus', () => show(g)); g.addEventListener('blur', () => { pinned = null; hide(); });
+    g.addEventListener('click', (e) => { e.stopPropagation(); pinned = pinned === g ? null : g; show(g); if (!pinned) hide(); });
+  });
+  document.addEventListener('click', () => { pinned = null; hide(); });
+})();
+</script>
+<!--arch:end-->
 <p class="cap">Four stages around one file. Photos and references become an OpenUSD asset; it is checked three ways, and the same file goes to every simulator and renderer. What the scan couldn't see feeds back into which photos to take next. Module-level detail: the README's <a href="https://github.com/VisualKnight/scan2usd#what-it-does">stage table</a>.</p>
 
 <div class="chap s-ver" id="real"><div class="no">02</div><div><div class="eb">Verify</div><h2>Real-world check: scan, simulate, compare</h2></div></div>

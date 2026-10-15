@@ -183,7 +183,7 @@ Isaac Sim scripts (`isaac_*.py`) run with Isaac Sim 6's Python (`set OMNI_KIT_AC
 | `blender_inspect.py` | Open a build in Blender: raw input, asset, colliders |
 | `make_gallery.py` | Interactive web gallery (glTF + model-viewer) with a collision toggle → `docs/gallery/` |
 | `make_hero.py` | The README hero strip: real photo → asset → colliders → Isaac Sim frame |
-| `make_architecture.py` | The system diagram `docs/figures/architecture.svg` (four stages around the OpenUSD asset) |
+| `make_architecture.py` | The system diagram `docs/figures/architecture.svg` (four stages around the OpenUSD asset), and its interactive copy on the overview page: hover a box for operations, numbers and scripts |
 | `make_hand_hero.py` | The second hero strip: the real pair → Shadow Hand grasp, insertion, result (Isaac Sim path-traced stills from `isaac_hand_place.py --stills`) |
 | `make_sim2real_compare.py` | The sim-to-real figure: the same upright real photos through the detector trained without and with distractors |
 | `make_demo_reel.py` | The demo video, assembled from the figures (`pip install "imageio[ffmpeg]"`) |
