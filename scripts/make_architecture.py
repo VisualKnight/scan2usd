@@ -202,9 +202,10 @@ DETAILS = {
     "truth": (
         "Ground truth",
         "Aligns each scan to its true mesh, then measures surface accuracy, completeness, F-score and volume, "
-        "and color error on the chart before and after correction.",
-        ["mean error 0.60–3.03 mm over 6 objects", "F-score @2 mm up to 0.94", "full table: docs/benchmark.md"],
-        ["evaluate.py", "run_benchmark.py", "evaluate_synthetic.py"],
+        "and color error on the chart before and after correction. Image-to-3D meshes are scored the same way.",
+        ["mean error 0.60–3.03 mm over 6 objects", "F-score @2 mm up to 0.94",
+         f"one photo, Hunyuan3D 2.1: F {n('gen_f_h21')} vs {n('gen_f_pg')} (78 photos)"],
+        ["evaluate.py", "run_benchmark.py", "evaluate_synthetic.py", "study_generative.py"],
     ),
     "realcheck": (
         "Real-world check",

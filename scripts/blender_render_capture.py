@@ -53,7 +53,12 @@ def parse_args():
     p.add_argument("--samples", type=int, default=64)
     p.add_argument("--seed", type=int, default=7)
     p.add_argument("--keep-materials", action="store_true", help="use the mesh's own (scanned) materials")
-    p.add_argument("--poses", help="JSON list of {name, location, target} (world, m): render only these views "
+    p.add_argument("--no-chart", action="store_true", help="leave the color chart out of the scene")
+    p.add_argument("--keep-position", action="store_true",
+                   help="keep the mesh where its file puts it (Z-up, m) instead of centering it on the table")
+    p.add_argument("--resolution-scale", type=float, default=1.0, help="render at this fraction of width x height")
+    p.add_argument("--poses", help="JSON list of {name, location, target} or {name, camera_to_world} (world, m): "
+                                   "render only these views "
                                    "(the scene is identical to the full capture's), write poses_out.json")
     a = p.parse_args(argv)
     a.mesh, a.out = os.path.abspath(a.mesh), os.path.abspath(a.out)
@@ -217,6 +222,7 @@ def setup_scene(args):
     sc.cycles.samples = args.samples
     sc.cycles.use_denoising = True
     sc.render.resolution_x, sc.render.resolution_y = args.width, args.height
+    sc.render.resolution_percentage = int(round(100 * args.resolution_scale))
     sc.render.image_settings.file_format = "JPEG"
     sc.render.image_settings.quality = 93
     # No tone mapping: pixel values stay proportional to reflectance x light (needed for calibration).
@@ -247,6 +253,16 @@ def setup_scene(args):
 
     if args.mesh.lower().endswith(".ply"):
         bpy.ops.wm.ply_import(filepath=args.mesh)
+    elif args.mesh.lower().endswith((".glb", ".gltf")):  # glTF is Y-up: the importer converts to Blender's Z-up
+        bpy.ops.object.select_all(action="DESELECT")
+        bpy.ops.import_scene.gltf(filepath=args.mesh)
+        meshes = [o for o in bpy.context.selected_objects if o.type == "MESH"]
+        for o in bpy.context.selected_objects:
+            if o.type != "MESH":
+                o.select_set(False)
+        bpy.context.view_layer.objects.active = meshes[0]
+        bpy.ops.object.parent_clear(type="CLEAR_KEEP_TRANSFORM")
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     else:
         bpy.ops.wm.obj_import(filepath=args.mesh, forward_axis="Y", up_axis="Z")
     parts = list(bpy.context.selected_objects)
@@ -258,6 +274,9 @@ def setup_scene(args):
     if not args.keep_materials:
         obj.data.materials.clear()
         obj.data.materials.append(speckled_glaze())
+    if args.keep_position:
+        bpy.ops.object.shade_smooth()
+        return sc, obj
     # Center on the table: bounding-box center at x = y = 0, resting on z = 0.
     bpy.context.view_layer.update()
     corners = [obj.matrix_world @ Vector(c) for c in obj.bound_box]
@@ -294,7 +313,7 @@ def main():
     rng = random.Random(args.seed)
     sc, obj = setup_scene(args)
     bpy.context.view_layer.update()
-    corners_world = add_chart(obj.dimensions)
+    corners_world = None if args.no_chart else add_chart(obj.dimensions)
     os.makedirs(os.path.join(args.out, "images"), exist_ok=True)
 
     cam = bpy.data.cameras.new("phone")
@@ -312,8 +331,12 @@ def main():
             poses = json.load(f)
         out_meta = []
         for pz in poses:
-            cam_obj.location = Vector(pz["location"])
-            look_at(cam_obj, Vector(pz["target"]), 0.0)
+            if "camera_to_world" in pz:  # an exact pose (OpenCV axes, as cameras.json): reproduce a photo
+                flip = Matrix(((1, 0, 0, 0), (0, -1, 0, 0), (0, 0, -1, 0), (0, 0, 0, 1)))
+                cam_obj.matrix_world = Matrix(pz["camera_to_world"]) @ flip
+            else:
+                cam_obj.location = Vector(pz["location"])
+                look_at(cam_obj, Vector(pz["target"]), 0.0)
             bpy.context.view_layer.update()
             sc.render.filepath = os.path.join(args.out, "images", pz["name"])
             bpy.ops.render.render(write_still=True)
@@ -356,6 +379,11 @@ def main():
         meta["images"].append({"name": name, "camera_to_world": opencv_pose(cam_obj)})
         print(f"rendered {name} ({i + 1}/{len(views)})", flush=True)
 
+    if corners_world is None:
+        with open(os.path.join(args.out, "cameras.json"), "w") as f:
+            json.dump(meta, f, indent=1)
+        print(f"done: {len(views)} images in {args.out} (no chart)")
+        return
     # Close-up of the chart, like the separate reference photo you'd take.
     chart_center = sum(corners_world, Vector()) / 4
     cam_obj.location = chart_center + Vector((-0.02, -0.06, 0.16))

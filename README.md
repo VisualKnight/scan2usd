@@ -55,6 +55,10 @@ Surfaces no photo can match (a plain white interior, a bowl's underside) get sea
 
 **Robots put it there.** A [Franka Panda](docs/figures/holder_place.webp) pinches the controller, turns it upright and seats it: <!--n:place_held-->12/12<!--/n--> held, <!--n:place_add-->4.7<!--/n--> mm / <!--n:place_rot-->8<!--/n-->° from the real pose. A [Shadow Hand](docs/figures/hand_place.webp) spans it at its center of mass instead: <!--n:hand_held-->12/12<!--/n--> at <!--n:hand_add-->6.4<!--/n--> mm / <!--n:hand_rot-->6<!--/n-->°, re-aimed from the in-hand pose. The same plan [in Isaac Sim PhysX](docs/figures/isaac_hand_place.mp4): <!--n:ihand_held-->12/12<!--/n--> at <!--n:ihand_add-->6.3<!--/n--> mm / <!--n:ihand_rot-->5<!--/n-->°, also [rendered in Unreal Engine 5.8](docs/figures/unreal_hand_place.mp4). The Panda's plans [in Isaac Sim PhysX](docs/figures/isaac_holder_place.webp): <!--n:iplace_held-->12/12<!--/n--> at <!--n:iplace_add-->7.2<!--/n--> mm / <!--n:iplace_rot-->9<!--/n-->°, once PhysX got the torsional friction MuJoCo's pads have. With one convex hull for the holder, every placement fails. `scripts/demo_holder_place.py`, `isaac_holder_place.py`, `demo_hand_place.py`, `isaac_hand_place.py`
 
+![Generated vs scanned](docs/figures/genai_drop.jpg)
+
+**Generated vs scanned.** Image-to-3D models, given photos from the same captures and run through the same build and yardsticks: from four phone photos per object, a Hunyuan3D-2mv controller drops into its Hunyuan3D-2mv holder <!--n:gen_held_mv-->12/12<!--/n--> times at <!--n:gen_add_mv-->8.4<!--/n--> mm from the real pose (the scans: <!--n:gen_held_pg-->12/12<!--/n-->, <!--n:gen_add_pg-->9.1<!--/n--> mm). On the benchmark, one photo into Hunyuan3D 2.1 beats 78 into photogrammetry on <!--n:gen_wins_h21-->4/6<!--/n--> objects ([F-score <!--n:gen_f_h21-->0.804<!--/n--> vs <!--n:gen_f_pg-->0.786<!--/n-->](docs/figures/genai_geometry.jpg)), mostly by not sealing what no camera sees; it loses on fine detail. Its textures are plausible but [not measured](docs/figures/genai_look.jpg) (ΔE <!--n:gen_de_h21-->10.0<!--/n--> vs <!--n:gen_de_pg-->6.8<!--/n-->). `scripts/study_generative.py`, `genai_generate.py`
+
 ![Panda](docs/figures/panda_demo.jpg)
 
 **Why collision geometry matters** ([animation](docs/figures/panda_demo.webp)). A Franka Panda rim-grasps the scanned mug with one finger inside. With a single convex hull, that finger lands on a phantom lid and the pick fails. The [same plan in Isaac Sim](docs/figures/isaac_franka_pick.webp), from the grasp stored in the USD asset, places it within 5.5 mm, and fails the same way with one hull. `scripts/demo_panda.py`, `isaac_franka_pick.py`
@@ -89,7 +93,7 @@ Python 3.10–3.12, with [uv](https://docs.astral.sh/uv/):
 uv venv --python 3.11
 uv pip install -e ".[dev]"
 .venv\Scripts\scan2usd demo            # synthetic mug -> output\demo\ (see preview.png)
-.venv\Scripts\python -m pytest         # 107 tests
+.venv\Scripts\python -m pytest         # 109 tests
 ```
 
 Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (CUDA build): unzip it to `tools\colmap\` or set `SCAN2USD_COLMAP`.
@@ -186,6 +190,7 @@ Isaac Sim scripts (`isaac_*.py`) run with Isaac Sim 6's Python (`set OMNI_KIT_AC
 | `make_architecture.py` | The system diagram `docs/figures/architecture.svg` (four stages around the OpenUSD asset), and its interactive copy on the overview page: hover a box for operations, numbers and scripts |
 | `make_hand_hero.py` | The second hero strip: the real pair → Shadow Hand grasp, insertion, result (Isaac Sim path-traced stills from `isaac_hand_place.py --stills`) |
 | `make_sim2real_compare.py` | The sim-to-real figure: the same upright real photos through the detector trained without and with distractors |
+| `study_generative.py`, `genai_generate.py`, `genai_raster.py` | Image-to-3D (Hunyuan3D 2.1, Hunyuan3D-2mv, TripoSG; textures by Hunyuan3D-2.1 paint) vs photogrammetry: same build, ground-truth scores, the real-pair drop, and held-out looks re-rendered in the capture scene. Generation runs in its own venv (see `genai_generate.py`; no compiler: `genai_raster.py` replaces the paint model's CUDA rasterizer) |
 | `make_demo_reel.py` | The demo video, assembled from the figures (`pip install "imageio[ffmpeg]"`) |
 
 </details>
@@ -210,11 +215,12 @@ Articulated assets put one such body per part under a root with `PhysicsArticula
 - Plain, dark or glossy surfaces and deep textureless cavities don't reconstruct well (see the benchmark); a measured `--mass` corrects mass when the volume is off.
 - Already-textured meshes (e.g. RealityScan exports) aren't decimated, since their UV layout would break; vertex-colored scans can be decimated and re-baked with `--bake-texture`.
 - Part splitting for articulation is manual (plane + hinge line).
+- Image-to-3D models (the generated-vs-scanned study) give no metric scale or up direction, and their textures are plausible rather than measured; one measurement sets the scale.
 - Gaussian splats keep the lighting of the capture (they don't relight), render only in RTX real-time path tracing in Isaac Sim 6.0, and need an external trainer ([Brush](https://github.com/ArthurBrussee/brush) binary, no CUDA toolkit needed). With the shadow proxy, splats get somewhat darker where the proxy shadows them.
 
 ## Credits
 
-Ground-truth meshes: [Google Scanned Objects](https://app.gazebosim.org/GoogleResearch/fuel/collections/Scanned%20Objects%20by%20Google%20Research) (CC-BY 4.0; the model id `Great_Dinos_Triceratops_Toy` contains an Android figure). Real photos: [AliceVision Buddha dataset](https://github.com/alicevision/dataset_buddha) (CC-BY 4.0). Robots: [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie) Franka Panda and Shadow Hand (Apache-2.0). Tools: COLMAP, CoACD, OpenUSD, MuJoCo, NVIDIA Isaac Sim, Blender, Brush (Gaussian splatting), OpenCV, trimesh, pymeshlab.
+Ground-truth meshes: [Google Scanned Objects](https://app.gazebosim.org/GoogleResearch/fuel/collections/Scanned%20Objects%20by%20Google%20Research) (CC-BY 4.0; the model id `Great_Dinos_Triceratops_Toy` contains an Android figure). Real photos: [AliceVision Buddha dataset](https://github.com/alicevision/dataset_buddha) (CC-BY 4.0). Robots: [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie) Franka Panda and Shadow Hand (Apache-2.0). Image-to-3D: [Hunyuan3D 2.1 / 2mv](https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1) (Tencent Hunyuan Community License), [TripoSG](https://github.com/VAST-AI-Research/TripoSG) (MIT); weights not redistributed. Tools: COLMAP, CoACD, OpenUSD, MuJoCo, NVIDIA Isaac Sim, Blender, Brush (Gaussian splatting), OpenCV, trimesh, pymeshlab.
 
 ## License
 

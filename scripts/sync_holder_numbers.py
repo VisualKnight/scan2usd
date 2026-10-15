@@ -4,7 +4,8 @@
 
 Every synced number in the docs sits inside a marker such as <!--n:sim_add-->9.9<!--/n--> (HTML
 comments are invisible on GitHub and in the page). This script rewrites them from
-output/holder_fit/state.json and docs/figures/ (isaac_holder_fit, holder_place, hand_place, isaac_hand_place, unreal_render .json),
+output/holder_fit/state.json and docs/figures/ (isaac_holder_fit, holder_place, hand_place, isaac_hand_place, unreal_render,
+genai .json),
 so the published text always matches the published figures.
 """
 
@@ -40,7 +41,36 @@ def values() -> dict[str, str]:
         **hand_values(),
         **isaac_hand_values(),
         **reel_values(),
+        **genai_values(),
     }
+
+
+def genai_values() -> dict[str, str]:
+    """Generated vs scanned (study_generative.py -> docs/figures/genai.json)."""
+    p = ROOT / "docs" / "figures" / "genai.json"
+    if not p.exists():
+        return {}
+    src = json.loads(p.read_text())["sources"]
+    short = {"photogrammetry": "pg", "hunyuan2mv": "mv", "hunyuan21": "h21", "triposg": "tsg"}
+    out = {}
+    for k, s in src.items():
+        t = short[k]
+        out[f"gen_f_{t}"] = f"{s['fscore_2mm_mean']:.3f}"
+        out[f"gen_mass_{t}"] = f"{s['mass_abs_error_pct_median']:.0f}"
+        out[f"gen_t_{t}"] = f"{s['seconds_mean']:.0f}"
+        out[f"gen_wins_{t}"] = f"{s['wins_fscore_vs_photogrammetry']}/{s['objects']}"
+        if "real_drop" in s:
+            d = s["real_drop"]
+            out[f"gen_held_{t}"] = f"{d['held']}/{d['of']}"
+            out[f"gen_add_{t}"] = f"{d['add_mm_median']:.1f}"
+        if "real_drop_seeds" in s:
+            seeds = s["real_drop_seeds"]
+            out[f"gen_seeds_{t}"] = f"{sum(x['held'] for x in seeds)}/{sum(x['of'] for x in seeds)}"
+            out[f"gen_nseeds_{t}"] = str(len(seeds))
+        if "look" in s:
+            out[f"gen_de_{t}"] = f"{s['look']['delta_e2000_wb_median']:.1f}"
+            out[f"gen_psnr_{t}"] = f"{s['look']['psnr_db']:.1f}"
+    return out
 
 
 def place_values() -> dict[str, str]:
