@@ -65,9 +65,12 @@ class Spec:
         self.hand_q = s["hand_q"]
         self.servo = s.get("servo", {})
 
-    def scene(self, rng: np.random.Generator | None, rz: Randomization = Randomization()) -> dict:
+    def scene(self, rng: np.random.Generator | None, rz: Randomization = Randomization(),
+              layout_yaw: float = 0.0) -> dict:
         """One scene (as demo_hand_place.Setup): holder pose, target and goal, tray, controller start
-        (before settling). rng None: the nominal scene (seed 0 of the benchmark)."""
+        (before settling). rng None: the nominal scene (seed 0 of the benchmark). layout_yaw (deg) turns
+        the whole cell about the vertical through its origin (for filming: the cells' layout against
+        the env grid)."""
         if rng is None:
             def j(a, n=1):
                 return np.zeros(n) if n > 1 else 0.0
@@ -84,8 +87,9 @@ class Spec:
         center = stand_xy + R0[:2, :2] @ (self.tray_top_c * self.top[:2])
         T_tray = hand_motion.pose(R0 @ np.c_[self.right, self.top, self.face], [*center, self.tray_h / 2])
         T_ctrl0 = hand_motion.pose(R0, [*stand_xy, self.tray_h + 0.003])
-        return {"holder": T_hold, "target": T_target, "c_goal": C_goal, "approach": approach, "tray": T_tray,
-                "tray_half_extents": self.tray_half.copy(), "controller_start": T_ctrl0}
+        G = hand_motion.pose(yaw(layout_yaw), np.zeros(3))
+        return {"holder": G @ T_hold, "target": G @ T_target, "c_goal": G @ C_goal, "approach": G[:3, :3] @ approach,
+                "tray": G @ T_tray, "tray_half_extents": self.tray_half.copy(), "controller_start": G @ T_ctrl0}
 
     def plan(self, T_start: np.ndarray, sc: dict) -> list[dict]:
         """Waypoints from the settled controller pose (hand_motion.plan_path)."""

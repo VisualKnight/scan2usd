@@ -163,7 +163,7 @@ class HandPlaceEnv(DirectRLEnv):
         self.tray = RigidObject(self.cfg.tray)
         # a plain light floor, as the project's other Isaac renders (the stock ground plane is a blue grid)
         floor = sim_utils.CuboidCfg(size=(200.0, 200.0, 0.1), collision_props=sim_utils.CollisionPropertiesCfg(),
-                                    visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.74, 0.74, 0.73),
+                                    visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.55, 0.55, 0.54),
                                                                                 roughness=0.6))
         floor.func("/World/ground", floor, translation=(0.0, 0.0, -0.05))
         self._author_env0()
@@ -171,10 +171,10 @@ class HandPlaceEnv(DirectRLEnv):
         self.scene.articulations["hand"] = self.hand
         for k in ("wrist", "controller", "holder", "tray"):
             self.scene.rigid_objects[k] = getattr(self, k)
-        dome = sim_utils.DomeLightCfg(intensity=420.0, color=(1.0, 1.0, 1.0))
+        dome = sim_utils.DomeLightCfg(intensity=700.0, color=(1.0, 1.0, 1.0))
         dome.func("/World/Dome", dome)
         # a sun from the front-left, the same for every cell (a point key light only lights env 0)
-        sun = sim_utils.DistantLightCfg(intensity=1100.0, angle=1.5, color=(1.0, 0.97, 0.92))
+        sun = sim_utils.DistantLightCfg(intensity=750.0, angle=1.5, color=(1.0, 0.97, 0.92))
         from scipy.spatial.transform import Rotation
 
         d = np.array([0.35, 0.55, -0.76]) / np.linalg.norm([0.35, 0.55, -0.76])  # light travels down, to +x +y

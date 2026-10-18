@@ -40,13 +40,22 @@ parser.add_argument("--rand", type=float, nargs=4, default=None, metavar=("HOLDE
                     help="scene jitter (m, deg, m, deg); default: the benchmark's 0.02 10 0.02 10")
 parser.add_argument("--physics_hz", type=int, default=240)
 parser.add_argument("--video", action="store_true")
+parser.add_argument("--gui", type=float, default=None, metavar="T",
+                    help="open the Isaac Sim editor, frozen at T s, to pick a camera (logged to output/rl/picked_camera.json)")
+parser.add_argument("--camera", default="", help="a camera JSON from --gui (output/rl/picked_camera.json): stills from it")
+parser.add_argument("--floor", default="gun30_r25", help="floor look with --camera (FLOORS); gun30_r25 as in the editor pick")
+parser.add_argument("--stills", default="", help="comma-separated times (s): stills of every camera variant (VIEWS)")
 parser.add_argument("--name", default=None)
 parser.add_argument("--spacing", type=float, default=1.0)
+parser.add_argument("--layout_yaw", type=float, default=0.0, help="turn every cell's layout (deg), for filming")
 args, _ = parser.parse_known_args()
 
 from isaaclab.app import AppLauncher  # noqa: E402
 
-app = AppLauncher(headless=True, enable_cameras=args.video).app
+if args.gui is None:
+    app = AppLauncher(headless=True, enable_cameras=args.video or bool(args.stills)).app
+else:  # the editor window: Isaac Lab's Kit visualizer
+    app = AppLauncher(visualizer=["kit"], visualizer_explicit=True, enable_cameras=True).app
 
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
@@ -87,7 +96,7 @@ def main():
     else:
         n = args.num_envs
         rz = T.Randomization(*args.rand) if args.rand else T.Randomization()
-        scenes = [SPEC.scene(np.random.default_rng([args.seed, i]), rz) for i in range(n)]
+        scenes = [SPEC.scene(np.random.default_rng([args.seed, i]), rz, args.layout_yaw) for i in range(n)]
 
     cfg = HandPlaceEnvCfg()
     cfg.scene.num_envs = n
@@ -99,13 +108,25 @@ def main():
     dev, dt = env.device, env.physics_dt
     env.reset()
     zero = torch.zeros((n, env.cfg.action_space), device=dev)
-    rec = Recorder(env, scenes, duration=19.4) if args.video else None
+    rec = Recorder(env, scenes, duration=19.4, layout_yaw=args.layout_yaw,
+                   frame_dir=os.path.join(OUT, f"frames_{name}")) if (args.video or args.stills) else None
+    if args.gui is not None:
+        rec = Recorder(env, scenes, layout_yaw=args.layout_yaw, render=False)
+    still_steps = {int(round(float(t) * 30)): float(t) for t in args.stills.split(",") if t}
+    count = [0]
 
     def step(k=1):
         for _ in range(k):
             env.step(zero)
-            if rec:
+            count[0] += 1
+            if rec and args.video:
                 rec.frame()
+            if rec and count[0] in still_steps:
+                rec.stills(os.path.join(OUT, f"stills_{name}"), still_steps[count[0]])
+            if args.gui is not None and count[0] == int(round(args.gui * 30)):
+                rec.pick_camera(os.path.join(OUT, "picked_camera.json"))
+                app.close()
+                sys.exit(0)
 
     # The hand waits 25 cm above where its plan will start (planned from the unsettled controller: within
     # millimetres of the real start), then glides down into the plan: no teleport into the scene.
@@ -200,58 +221,338 @@ def main():
     with open(os.path.join(OUT, f"rollout_{name}.json"), "w") as f:
         json.dump({"summary": summary, "results": res, "replay": args.replay, "seed": args.seed,
                    "rand": args.rand}, f, indent=1)
-    if rec:
+    if rec and args.video:
         rec.finish(os.path.join(OUT, f"{name}.mp4"), res)
     env.close()
 
 
-class Recorder:
-    """Frames from a moving USD camera via a Replicator render product: a wide shot of the whole grid
-    that pushes in slowly on one cell of the front row, the others carrying on behind it."""
+GRADE = {"exposure": 0.55, "lift": 0.75, "shoulder": 0.85}
 
-    def __init__(self, env, scenes, duration=17.0, size=(1920, 1080)):
-        import omni.replicator.core as rep
+
+def grade(img: np.ndarray, exposure=GRADE["exposure"], lift=GRADE["lift"], shoulder=GRADE["shoulder"]):
+    """A lower-contrast grade in linear light: exposure down (the render is ~1.5 stops bright), the toe
+    lifted (a gamma below 1 on luminance) so the near-black holder keeps its detail, and a soft shoulder
+    so the white hands don't clip. Hue and saturation are kept (the luminance ratio scales RGB)."""
+    x = img.astype(np.float32) / 255.0
+    L = np.where(x <= 0.04045, x / 12.92, ((x + 0.055) / 1.055) ** 2.4) * exposure
+    y = 0.2126 * L[..., 0] + 0.7152 * L[..., 1] + 0.0722 * L[..., 2]
+    y2 = np.power(np.clip(y, 1e-6, None), lift)
+    y2 = np.where(y2 > shoulder, shoulder + (1 - shoulder) * np.tanh((y2 - shoulder) / (1 - shoulder)), y2)
+    L = np.clip(L * (y2 / np.maximum(y, 1e-6))[..., None], 0, 1)
+    out = np.where(L <= 0.0031308, 12.92 * L, 1.055 * np.power(L, 1 / 2.4) - 0.055)
+    return (np.clip(out, 0, 1) * 255 + 0.5).astype(np.uint8)
+
+
+def encode(frame_dir: str, path: str, n_envs: int, placed: int, size=(1920, 1080), fps=30, **g):
+    """Raw frames (frame_dir/*.png) -> graded, captioned H.264 MP4 + stills. Separate from rendering so the
+    grade can be tuned without re-simulating."""
+    import glob
+    import subprocess
+    import tempfile
+
+    from PIL import Image, ImageDraw, ImageFont
+
+    exe = os.path.join(T.ROOT, ".venv", "Lib", "site-packages", "imageio_ffmpeg", "binaries")
+    exe = next(os.path.join(exe, f) for f in os.listdir(exe) if f.startswith("ffmpeg"))
+    files = sorted(glob.glob(os.path.join(frame_dir, "*.png")))
+    n = len(files)
+    if n == 0:
+        raise RuntimeError("no frames were rendered")
+
+    def font(sz):
+        for f in ("C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/arial.ttf"):
+            if os.path.exists(f):
+                return ImageFont.truetype(f, sz)
+        return ImageFont.load_default()
+
+    W, H = size
+    f1, f2 = font(int(H * 0.034)), font(int(H * 0.024))
+    x0, yb = int(W * 0.035), int(H * 0.955)  # bottom margin
+    tmp = tempfile.mkdtemp(prefix="rl_video_")
+    for i, fn in enumerate(files):
+        im = Image.fromarray(grade(np.asarray(Image.open(fn).convert("RGB")), **g)).convert("RGBA")
+        ov = Image.new("RGBA", im.size, (0, 0, 0, 0))
+        d = ImageDraw.Draw(ov)
+        t = i / fps
+        a = max(0.0, min(1.0, (4.0 - t) / 0.7))  # the title, fading out
+        if a > 0:
+            l1 = f"{n_envs} scenes at once \u00b7 Isaac Sim 6 \u00b7 GPU PhysX"
+            l2 = "the scripted teacher: each scene randomized, the plan made from where the controller settled"
+            w = max(d.textlength(l1, font=f1), d.textlength(l2, font=f2))
+            y0 = yb - int(H * 0.088)
+            d.rounded_rectangle([x0 - 18, y0 - 12, x0 + w + 18, yb], 10, fill=(255, 255, 255, int(205 * a)))
+            d.text((x0, y0), l1, fill=(30, 41, 59, int(255 * a)), font=f1)
+            d.text((x0, y0 + int(H * 0.048)), l2, fill=(71, 85, 105, int(255 * a)), font=f2)
+        b = max(0.0, min(1.0, (t - (n / fps - 2.6)) / 0.5))  # the result, fading in
+        if b > 0:
+            msg = f"{placed}/{n_envs} placed in the holder"
+            w = d.textlength(msg, font=f1)
+            xr, y0 = W - x0 - w, yb - int(H * 0.05)
+            d.rounded_rectangle([xr - 18, y0 - 12, xr + w + 18, yb], 10, fill=(255, 255, 255, int(215 * b)))
+            d.text((xr, y0), msg, fill=(21, 128, 61, int(255 * b)), font=f1)
+        Image.alpha_composite(im, ov).convert("RGB").save(os.path.join(tmp, f"{i:05d}.jpg"), quality=93)
+    subprocess.run([exe, "-y", "-loglevel", "error", "-framerate", str(fps), "-i", os.path.join(tmp, "%05d.jpg"),
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19", path], check=True)
+    for k, t in (("start", 0.15), ("mid", 0.5), ("place", 0.68), ("end", 0.93)):
+        Image.open(os.path.join(tmp, f"{int(t * (n - 1)):05d}.jpg")).save(path.replace(".mp4", f"_{k}.jpg"), quality=90)
+    print(f"[rollout] wrote {path} ({n} frames)", flush=True)
+
+
+# Camera variants for --stills, placed by eye: (eye height m, ground distance back from the near cell m,
+# pitch deg, azimuth offset deg, focal length mm on a 36 mm wide 16:9 back). A quarter view from the grid's
+# nearest corner, low; wider lenses get a steeper pitch so the frame's top edge stays below the horizon
+# (top edge = pitch + half the vertical field of view).
+VIEWS = {
+    # round 3 (kept for reference)
+    "f18_h0.80_g0.65_p-34": (0.80, 0.65, -34, 0, 18.0),
+    # round 6: 18-24 mm, eye lowered to 0.70 m, looking down more; g keeps the near cell in the lower third
+    # (the view's centre ray meets the floor ~0.4-0.45 m beyond it)
+    "f24_h0.70_g0.52_p-36": (0.70, 0.52, -36, 0, 24.0),
+    "f22_h0.70_g0.49_p-37": (0.70, 0.49, -37, 0, 22.0),
+    "f20_h0.70_g0.46_p-38": (0.70, 0.46, -38, 0, 20.0),
+    "f18_h0.70_g0.42_p-40": (0.70, 0.42, -40, 0, 18.0),
+    "f18_h0.65_g0.36_p-42": (0.65, 0.36, -42, 0, 18.0),
+}
+# Floor looks (base color, metallic, roughness): gunmetal (base 0.30) from smooth to rough.
+FLOORS = {
+    "gun30_r25": ((0.30, 0.31, 0.33), 1.0, 0.25),
+    "gun30_r50": ((0.30, 0.31, 0.33), 1.0, 0.50),
+    "gun30_r60": ((0.30, 0.31, 0.33), 1.0, 0.60),
+    "gun30_r70": ((0.30, 0.31, 0.33), 1.0, 0.70),
+    "gun30_r75": ((0.30, 0.31, 0.33), 1.0, 0.75),
+    "gun30_r80": ((0.30, 0.31, 0.33), 1.0, 0.80),
+}
+# Sky domes: (HDRI under NVIDIA's asset root or None for a plain white dome, intensity). The camera never sees
+# the sky: the HDRI only lights the cells and gives the metal floor something to reflect.
+DOMES = {
+    "white": (None, 700.0),
+    "studio": ("/Assets/Skies/Studio/photo_studio_01_4k.hdr", 900.0),
+    "hall": ("/Assets/Skies/Indoor/ZetoCGcom_ExhibitionHall_Interior1.hdr", 900.0),
+}
+V = "f20_h0.70_g0.46_p-38"
+STILL_PLAN = ([(v, "gun30_r60", "studio", "PathTracing") for v in VIEWS if v != "f18_h0.80_g0.65_p-34"]
+              + [(V, f, "studio", "PathTracing") for f in ("gun30_r25", "gun30_r50", "gun30_r70", "gun30_r80")])
+
+
+class Recorder:
+    """A quarter view from just outside the grid's nearest corner, low and close with a wide lens: the
+    nearest cell large in front, the rest of the grid receding on both sides (foreshortening). The camera
+    only drifts. Raw frames are kept (output/rl/frames_<name>/) for encode()."""
+
+    def __init__(self, env, scenes, duration=17.0, size=(1920, 1080), layout_yaw=0.0, frame_dir=None, render=True):
         from pxr import Gf, UsdGeom
 
+        if render:
+            import omni.replicator.core as rep
         sys.path.insert(0, os.path.join(T.ROOT, "scripts"))
         import hand_motion
 
-        self.env, self.frames, self.size = env, [], size
+        self.env, self.size, self.k, self.n = env, size, 0, 0
+        self.frame_dir = frame_dir
+        if frame_dir:
+            os.makedirs(frame_dir, exist_ok=True)
+            for f in os.listdir(frame_dir):
+                os.remove(os.path.join(frame_dir, f))
         stage = env.scene.stage
         cam = UsdGeom.Camera.Define(stage, "/World/FilmCam")
         cam.CreateHorizontalApertureAttr(36.0)
         cam.CreateVerticalApertureAttr(20.25)
-        cam.CreateFocalLengthAttr(32.0)
-        cam.CreateClippingRangeAttr(Gf.Vec2f(0.05, 200.0))
+        cam.CreateFocalLengthAttr(24.0)
+        self.cam = cam
+        cam.CreateClippingRangeAttr(Gf.Vec2f(0.02, 200.0))
         self.xf = cam.AddTransformOp()
-        self.rp = rep.create.render_product("/World/FilmCam", size)
-        self.rgb = rep.AnnotatorRegistry.get_annotator("rgb")
-        self.rgb.attach([self.rp])
+        if render:
+            self.rp = rep.create.render_product("/World/FilmCam", size)
+            self.rgb = rep.AnnotatorRegistry.get_annotator("rgb")
+            self.rgb.attach([self.rp])
         o = env.scene.env_origins.cpu().numpy()
-        lo, hi = o.min(0), o.max(0)
-        center = 0.5 * (lo + hi) + [0.12, 0.12, 0.0]
-        W = float(max(hi[0] - lo[0], hi[1] - lo[1])) + 1.0
-        # The hero cell: the front row's rightmost (nothing between it and the camera). The hand comes in from
-        # its front-left and backs away there, the tray stands front-right: the close-up is from the front.
-        front = o[np.isclose(o[:, 1], lo[1])]
-        hero = front[np.argmax(front[:, 0])]
-        cell = hero + [0.02, 0.18, 0.15]
-        keys = [(0.0, center + [0, 0, 0.0], 1.05 * W, 122, -40),
-                (0.3 * duration, 0.55 * center + 0.45 * cell, 0.6 * W, 126, -33),
-                (0.62 * duration, cell, 2.0, 114, -30),
-                (duration, cell + [-0.03, 0.04, -0.03], 1.3, 102, -26)]  # the tray off to the right of the holder
+        # Looking diagonally across the grid from its (+x, -y) corner: azimuth 135 deg in the world. The
+        # cells are turned by layout_yaw, so in a cell's own frame the view is from 135 - layout_yaw:
+        # with ~33 deg, its front (the holder's face, the tray off to its right).
+        az = 135.0
+        d = np.array([np.cos(np.radians(az)), np.sin(np.radians(az))])
+        hero = o[np.argmin(o[:, :2] @ d)]  # the corner cell nearest the camera
+        G = T.yaw(layout_yaw)
+        look = hero + G @ np.array([0.10, 0.16, 0.0]) + [0, 0, 0.17]  # between the tray and the holder
+        self.look, self.az = look, az
+        keys = [(0.0, look + [0, 0, 0.01], 1.30, az - 4, -26),  # ~25 deg down: the grid fills the frame
+                (duration, look, 1.16, az + 4, -24)]
         self.track = hand_motion.camera_track(keys)
         self.eye = hand_motion.orbit_eye
-        self.k = 0
+        self.picked = None
+        if args.camera:  # the camera picked in the editor, static; its floor and studio lighting
+            pc = json.load(open(args.camera))
+            self.picked = Gf.Matrix4d(*np.array(pc["camera_to_world"], float).T.flatten().tolist())
+            cam.GetFocalLengthAttr().Set(float(pc["focal_mm"]))
+            self.set_floor(*FLOORS[args.floor])
+            self.set_dome(*DOMES["studio"])
         self.place(0.0)
 
-    def place(self, t):
+    def set_view(self, x):
+        """x: (lookat xyz, distance, azimuth, elevation) as hand_motion.camera_track samples."""
         from pxr import Gf
 
-        eye, look = self.eye(self.track(t))
+        eye, look = self.eye(x)
         self.xf.Set(Gf.Matrix4d().SetLookAt(Gf.Vec3d(*eye), Gf.Vec3d(*look), Gf.Vec3d(0, 0, 1)).GetInverse())
 
+    def set_eye(self, h, g, pitch, az):
+        """Eye h above the floor, g back (horizontally) from the near cell's center, looking along azimuth az
+        and pitch (deg, negative: down)."""
+        from pxr import Gf
+
+        a, e = np.radians(az), np.radians(pitch)
+        fwd = np.array([np.cos(e) * np.cos(a), np.cos(e) * np.sin(a), np.sin(e)])
+        c = self.look.copy()
+        eye = np.array([c[0] - g * np.cos(a), c[1] - g * np.sin(a), h])
+        self.xf.Set(Gf.Matrix4d().SetLookAt(Gf.Vec3d(*eye), Gf.Vec3d(*(eye + fwd)), Gf.Vec3d(0, 0, 1)).GetInverse())
+
+    def place(self, t):
+        if self.picked is not None:
+            self.xf.Set(self.picked)
+            return
+        self.set_view(self.track(t))
+
+    def _grab(self, pumps=1):
+        self.env.sim.render()
+        try:
+            from isaaclab_physx.renderers.isaac_rtx_renderer_utils import ensure_isaac_rtx_render_update
+
+            ensure_isaac_rtx_render_update()
+        except Exception:
+            pass
+        import omni.kit.app
+
+        for _ in range(pumps):
+            omni.kit.app.get_app().update()
+        data = self.rgb.get_data()
+        return np.asarray(data)[..., :3] if data is not None and getattr(data, "size", 0) else None
+
+    def stills(self, out_dir, t):
+        """The scene as it is now, from the camera/floor/render-mode combinations of STILL_PLAN (graded JPEGs)."""
+        import carb
+        from PIL import Image
+
+        os.makedirs(out_dir, exist_ok=True)
+        st = carb.settings.get_settings()
+        plan = [("picked", args.floor, "studio", "PathTracing")] if args.camera else STILL_PLAN
+        for view, floor, dome, mode in plan:
+            if view == "picked":  # the exact camera picked in the editor
+                from pxr import Gf
+
+                pc = json.load(open(args.camera))
+                self.cam.GetFocalLengthAttr().Set(float(pc["focal_mm"]))
+                self.xf.Set(Gf.Matrix4d(*np.array(pc["camera_to_world"], float).T.flatten().tolist()))
+            else:
+                h, g, pitch, az_off, focal = VIEWS[view]
+                self.cam.GetFocalLengthAttr().Set(focal)
+                self.set_eye(h, g, pitch, self.az + az_off)
+            self.set_floor(*FLOORS[floor])
+            self.set_dome(*DOMES[dome])
+            st.set("/rtx/rendermode", mode)
+            if mode == "PathTracing":
+                st.set("/rtx/pathtracing/spp", 16)
+                st.set("/rtx/pathtracing/totalSpp", 512)
+                st.set("/rtx/pathtracing/maxBounces", 6)
+                st.set("/rtx/pathtracing/optixDenoiser/enabled", True)
+            img = self._grab(pumps=40 if mode == "PathTracing" else 8)
+            if img is not None:
+                # one exposure for every still of a time step (set on the first, from its highlights), so the
+                # floors compare as they are; raw frames kept for regrading
+                if getattr(self, "_ex_t", None) != t:
+                    x = img.astype(np.float32) / 255.0
+                    lin = np.where(x <= 0.04045, x / 12.92, ((x + 0.055) / 1.055) ** 2.4)
+                    y = np.percentile(0.2126 * lin[..., 0] + 0.7152 * lin[..., 1] + 0.0722 * lin[..., 2], 99)
+                    self._ex, self._ex_t = float(np.clip(0.75 / max(y, 1e-4), 0.1, 4.0)), t
+                ex = self._ex
+                tag = f"{view}__{floor}__{dome}__{'pt' if mode == 'PathTracing' else 'rt'}"
+                Image.fromarray(grade(img, exposure=ex)).save(os.path.join(out_dir, f"t{t:04.1f}_{tag}.jpg"), quality=90)
+                os.makedirs(os.path.join(out_dir, "raw"), exist_ok=True)
+                Image.fromarray(img).save(os.path.join(out_dir, "raw", f"t{t:04.1f}_{tag}.png"))
+        st.set("/rtx/rendermode", "RaytracedLighting")
+        self.cam.GetFocalLengthAttr().Set(24.0)
+        print(f"[rollout] stills at {t:.1f} s -> {out_dir}", flush=True)
+
+    def pick_camera(self, path, view="f18_h0.80_g0.65_p-34", floor="gun30_r25", dome="studio"):
+        """Freeze the simulation and hand the editor over: the viewport looks through /World/FilmCam (start:
+        `view`), which you fly with the usual viewport navigation (right mouse + WASD, Alt + mouse to
+        orbit), its focal length in the Property panel. Its pose is written to `path` whenever it changes,
+        also as (eye height, distance back from the near cell, pitch, azimuth, focal). Close the window
+        when done."""
+        import json as _json
+
+        import omni.kit.app
+        import omni.timeline
+        from pxr import Usd, UsdGeom
+
+        omni.timeline.get_timeline_interface().pause()
+        h, g, pitch, az_off, focal = VIEWS[view]
+        self.cam.GetFocalLengthAttr().Set(focal)
+        self.set_eye(h, g, pitch, self.az + az_off)
+        self.set_floor(*FLOORS[floor])
+        self.set_dome(*DOMES[dome])
+        try:
+            from omni.kit.viewport.utility import get_active_viewport
+
+            get_active_viewport().camera_path = "/World/FilmCam"
+        except Exception as e:  # noqa: BLE001
+            print("[pick] could not set the viewport camera:", e, flush=True)
+        print("[pick] ready: fly the camera in the viewport, close the window when done", flush=True)
+        kit = omni.kit.app.get_app()
+        prim, last, k = self.cam.GetPrim(), None, 0
+        while kit.is_running():
+            kit.update()
+            k += 1
+            if k % 20:
+                continue
+            M = np.array(UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default()), float).T
+            f = float(self.cam.GetFocalLengthAttr().Get())
+            key = (np.round(M, 5).tobytes(), round(f, 3))
+            if key == last:
+                continue
+            last = key
+            eye, fwd = M[:3, 3], -M[:3, 2]  # USD cameras look down their -z
+            pitch = float(np.degrees(np.arcsin(np.clip(fwd[2], -1, 1))))
+            az = float(np.degrees(np.arctan2(fwd[1], fwd[0])))
+            g = float(np.linalg.norm(eye[:2] - self.look[:2]))
+            vfov = float(np.degrees(2 * np.arctan(10.125 / f)))
+            out = {"camera_to_world": M.tolist(), "focal_mm": f, "aperture_mm": [36.0, 20.25],
+                   "eye_height_m": float(eye[2]), "ground_distance_from_near_cell_m": g, "pitch_deg": pitch,
+                   "azimuth_deg": az, "azimuth_offset_deg": az - self.az, "top_edge_deg": pitch + vfov / 2,
+                   "near_cell_look": self.look.tolist(), "num_envs": self.env.num_envs, "time_s": args.gui}
+            with open(path, "w") as fh:
+                _json.dump(out, fh, indent=1)
+            print(f"[pick] focal {f:.1f} mm, eye height {eye[2]:.2f} m, back {g:.2f} m, pitch {pitch:+.1f}, "
+                  f"azimuth {az:.1f} (top edge {pitch + vfov / 2:+.1f} deg)", flush=True)
+
+    def set_dome(self, hdri, intensity):
+        from isaaclab.utils.assets import NVIDIA_NUCLEUS_DIR
+        from pxr import UsdLux
+
+        d = UsdLux.DomeLight(self.env.scene.stage.GetPrimAtPath("/World/Dome"))
+        d.GetIntensityAttr().Set(float(intensity))
+        d.CreateTextureFileAttr().Set(f"{NVIDIA_NUCLEUS_DIR}{hdri}" if hdri else "")
+
+    def set_floor(self, color, metallic, roughness):
+        from pxr import Gf, Usd, UsdShade
+
+        stage = self.env.scene.stage
+        for prim in Usd.PrimRange(stage.GetPrimAtPath("/World/ground")):
+            if prim.IsA(UsdShade.Shader):
+                sh = UsdShade.Shader(prim)
+                for name, val in (("diffuseColor", Gf.Vec3f(*color)), ("metallic", float(metallic)),
+                                  ("roughness", float(roughness))):
+                    inp = sh.GetInput(name)
+                    if inp:
+                        inp.Set(val)
+                    else:
+                        from pxr import Sdf
+
+                        sh.CreateInput(name, Sdf.ValueTypeNames.Color3f if name == "diffuseColor"
+                                       else Sdf.ValueTypeNames.Float).Set(val)
+
     def frame(self):
+        from PIL import Image
+
         self.k += 1
         self.place(self.k / 30.0)
         # Headless with no visualizer nothing pumps Kit's loop, which renders the RTX render product; Isaac
@@ -270,59 +571,12 @@ class Recorder:
             omni.kit.app.get_app().update()
             data = self.rgb.get_data()
         if data is not None and getattr(data, "size", 0):
-            self.frames.append(np.asarray(data)[..., :3].copy())
+            Image.fromarray(np.asarray(data)[..., :3]).save(os.path.join(self.frame_dir, f"{self.n:05d}.png"),
+                                                             compress_level=1)
+            self.n += 1
 
     def finish(self, path, res):
-        import subprocess
-        import tempfile
-
-        from PIL import Image, ImageDraw, ImageFont
-
-        exe = os.path.join(T.ROOT, ".venv", "Lib", "site-packages", "imageio_ffmpeg", "binaries")
-        exe = next(os.path.join(exe, f) for f in os.listdir(exe) if f.startswith("ffmpeg"))
-        tmp = tempfile.mkdtemp(prefix="rl_video_")
-        n = len(self.frames)
-        if n == 0:
-            raise RuntimeError("no frames were rendered")
-        placed = sum(r["placed"] for r in res)
-
-        def font(sz):
-            for f in ("C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/arial.ttf"):
-                if os.path.exists(f):
-                    return ImageFont.truetype(f, sz)
-            return ImageFont.load_default()
-
-        f1, f2 = font(int(self.size[1] * 0.034)), font(int(self.size[1] * 0.024))
-        W, H = self.size
-        x0, y0 = int(W * 0.035), int(H * 0.045)
-        for i, f in enumerate(self.frames):
-            im = Image.fromarray(f).convert("RGBA")
-            ov = Image.new("RGBA", im.size, (0, 0, 0, 0))
-            d = ImageDraw.Draw(ov)
-            t = i / 30.0
-            a = max(0.0, min(1.0, (4.0 - t) / 0.7))  # the title, fading out
-            if a > 0:
-                l1 = f"{len(res)} scenes at once \u00b7 Isaac Sim 6 \u00b7 GPU PhysX"
-                l2 = "the scripted teacher: each scene randomized, the plan made from where the controller settled"
-                w = max(d.textlength(l1, font=f1), d.textlength(l2, font=f2))
-                d.rounded_rectangle([x0 - 18, y0 - 12, x0 + w + 18, y0 + int(H * 0.088)], 10,
-                                    fill=(255, 255, 255, int(205 * a)))
-                d.text((x0, y0), l1, fill=(30, 41, 59, int(255 * a)), font=f1)
-                d.text((x0, y0 + int(H * 0.048)), l2, fill=(71, 85, 105, int(255 * a)), font=f2)
-            b = max(0.0, min(1.0, (t - (n / 30.0 - 2.6)) / 0.5))  # the result, fading in
-            if b > 0:
-                msg = f"{placed}/{len(res)} placed in the holder"
-                w = d.textlength(msg, font=f1)
-                d.rounded_rectangle([x0 - 18, y0 - 12, x0 + w + 18, y0 + int(H * 0.05)], 10,
-                                    fill=(255, 255, 255, int(215 * b)))
-                d.text((x0, y0), msg, fill=(21, 128, 61, int(255 * b)), font=f1)
-            Image.alpha_composite(im, ov).convert("RGB").save(os.path.join(tmp, f"{i:05d}.jpg"), quality=92)
-        subprocess.run([exe, "-y", "-loglevel", "error", "-framerate", "30", "-i", os.path.join(tmp, "%05d.jpg"),
-                        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", path], check=True)
-        for k, t in (("wide", 0.5), ("mid", 0.45), ("close", 0.9)):
-            Image.open(os.path.join(tmp, f"{int(t * (n - 1)) if k != 'wide' else 15:05d}.jpg")).save(
-                path.replace(".mp4", f"_{k}.jpg"), quality=90)
-        print(f"[rollout] wrote {path} ({n} frames)", flush=True)
+        encode(self.frame_dir, path, len(res), sum(r["placed"] for r in res), self.size)
 
 
 if __name__ == "__main__":
