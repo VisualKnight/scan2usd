@@ -110,6 +110,32 @@ def pick_waypoints(A0, approach, C_mid_H, open_key, grip_key="grip"):
     ]
 
 
+def plan_path(T_start, C_goal, approach_place, H, F, face, open_key, transport, grip_key="grip"):
+    """Waypoints for the whole placement from the settled controller pose T_start (world).
+
+    H: the forearm pose in the controller frame at the grasp; F: the grasp frame in the forearm frame
+    (its z is the approach, palm toward the face); face: the controller's face normal (controller
+    frame); C_goal: the controller pose to release at; approach_place: the approach at the holder.
+
+    Come down over the face with the fingers open around the sides, close, lift, then turn in two
+    stages blended into one move: a yaw with the palm still down (gravity stays along the approach,
+    which the grip holds best), then the 90-degree tilt upright, a turn about the grasp axis itself
+    (from face up on the tray to face forward on the holder there is no way around that) and the one
+    move the grip resists only by friction. The tilt is about the controller's center, so it doesn't
+    swing. The hand stops in front of the holder (where the re-aimed variant re-measures the
+    controller), slides in, sets it down, opens and backs away.
+    """
+    A0 = T_start @ H
+    ap = (A0 @ F)[:3, 2]  # approach direction in the world (palm toward the face), at the pick
+    C = C_goal
+    # The goal pose tipped face-up about a horizontal axis: the same yaw as the goal, palm down.
+    f = C[:3, :3] @ face
+    tip = Rotation.align_vectors([[0, 0, 1.0]], [f])[0].as_matrix()
+    C_mid = pose(tip @ C[:3, :3], C[:3, 3] - 0.12 * np.asarray(approach_place) + [0, 0, 0.10])
+    return (pick_waypoints(A0, ap, C_mid @ H, open_key, grip_key)
+            + place_waypoints(C_goal, approach_place, H, open_key, transport, grip_key))
+
+
 def event_times(wps: list[dict]) -> dict[str, float]:
     """Time at which each tagged waypoint is reached (the first waypoint is the start, t = 0)."""
     t, out = 0.0, {}

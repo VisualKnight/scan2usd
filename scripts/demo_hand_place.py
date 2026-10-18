@@ -41,7 +41,6 @@ from pathlib import Path
 import mujoco
 import numpy as np
 from scipy.optimize import minimize
-from scipy.spatial.transform import Rotation
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import hand_motion  # noqa: E402
@@ -330,25 +329,9 @@ def place_waypoints(su, H_rel):
 
 
 def path(su):
-    """Waypoints (hand_motion.wp dicts) for the whole placement.
-
-    Come down over the face with the fingers open around the sides, close, lift, then turn in two
-    stages blended into one move: a yaw with the palm still down (gravity stays along the approach,
-    which the grip holds best), then the 90-degree tilt upright, a turn about the grasp axis itself
-    (from face up on the tray to face forward on the holder there is no way around that) and the one
-    move the grip resists only by friction. The tilt is about the controller's center, so it doesn't
-    swing. The hand stops in front of the holder (where the re-aimed variant re-measures the
-    controller), slides in, sets it down, opens and backs away.
-    """
-    A0 = su.T_start @ su.H
-    F = span_frame(su.poses[su.g_contact])
-    ap = (A0 @ F)[:3, 2]  # approach direction in the world (palm toward the face), at the pick
-    C = su.C_goal
-    # The goal pose tipped face-up about a horizontal axis: the same yaw as the goal, palm down.
-    face = C[:3, :3] @ su.ctrl.face
-    tip = Rotation.align_vectors([[0, 0, 1.0]], [face])[0].as_matrix()
-    C_mid = pose(tip @ C[:3, :3], C[:3, 3] - 0.12 * su.al + [0, 0, 0.10])
-    return hand_motion.pick_waypoints(A0, ap, C_mid @ su.H, su.g_open) + place_waypoints(su, su.H)
+    """Waypoints (hand_motion.wp dicts) for the whole placement (hand_motion.plan_path)."""
+    return hand_motion.plan_path(su.T_start, su.C_goal, su.al, su.H, span_frame(su.poses[su.g_contact]),
+                                 su.ctrl.face, su.g_open, su.transport)
 
 
 def execute(su, wps, render=None, fps=30, settle=1.5, on_waypoint=None):
@@ -413,12 +396,8 @@ def score(ctrl, m, d, T_target):
             "placed": bool(held and add < 0.02)}
 
 
-def export_plans(ctrl, holder, R_rel, t_rel, poses, seeds, path_out: Path) -> None:
-    """Everything another engine needs to run the same placement (scripts/isaac_hand_place.py): per
-    seed the holder, tray and settled controller poses, the goal, the open-loop waypoints and the
-    re-aim inputs; the hand pose targets per key; the finger servos as simulated here."""
-    su = Setup(0, ctrl, holder, R_rel, t_rel, "hulls", poses)
-    m = su.model
+def servo_table(m) -> dict:
+    """The finger servos as simulated here, per joint (a tendon actuator's gain on each of its joints)."""
     servo = {}
     for a in range(m.nu):
         kp, frc = float(m.actuator_gainprm[a, 0]), [float(v) for v in m.actuator_forcerange[a]]
@@ -432,6 +411,16 @@ def export_plans(ctrl, holder, R_rel, t_rel, poses, seeds, path_out: Path) -> No
             servo[j] = {"kp": kp, "force_range": frc, "damping": float(m.dof_damping[m.jnt_dofadr[jid]]),
                         "armature": float(m.dof_armature[m.jnt_dofadr[jid]]),
                         "frictionloss": float(m.dof_frictionloss[m.jnt_dofadr[jid]]), "tendon": len(joints) > 1}
+    return servo
+
+
+def export_plans(ctrl, holder, R_rel, t_rel, poses, seeds, path_out: Path) -> None:
+    """Everything another engine needs to run the same placement (scripts/isaac_hand_place.py): per
+    seed the holder, tray and settled controller poses, the goal, the open-loop waypoints and the
+    re-aim inputs; the hand pose targets per key; the finger servos as simulated here."""
+    su = Setup(0, ctrl, holder, R_rel, t_rel, "hulls", poses)
+    m = su.model
+    servo = servo_table(m)
     trials = []
     for seed in seeds:
         su = Setup(seed, ctrl, holder, R_rel, t_rel, "hulls", poses)
@@ -451,6 +440,30 @@ def export_plans(ctrl, holder, R_rel, t_rel, poses, seeds, path_out: Path) -> No
                                     "servo": servo, "timestep": float(m.opt.timestep),
                                     "release_gap_m": RELEASE_GAP, "trials": trials}, indent=1))
     print(f"wrote {path_out} ({len(trials)} plans)")
+
+
+def export_task(ctrl, holder, R_rel, t_rel, poses, path_out: Path) -> None:
+    """The scene layout and the scripted plan's inputs for a scene-randomizing engine (the Isaac Lab
+    task, scripts/rl/): unlike export_plans, no per-seed plans; the engine settles the controller,
+    then calls hand_motion.plan_path itself. Poses in the world frame of Setup (z up, table z = 0)."""
+    su = Setup(0, ctrl, holder, R_rel, t_rel, "hulls", poses)
+    t_lo, t_hi = ctrl.up.min() + 0.005, ctrl.up.max() - 0.005
+    yaw0 = float(np.degrees(np.arctan2(EDGE_DIR[1], EDGE_DIR[0]) - np.arctan2(ctrl.top[1], ctrl.top[0])))
+    spec = {
+        "controller_in_holder": pose(R_rel, t_rel).tolist(), "release_gap_m": RELEASE_GAP,
+        "holder_xy": HOLDER_XY.tolist(), "holder_yaw_deg": 0.0,
+        "tray_xy": STAND_XY.tolist(), "tray_height_m": STAND_H, "controller_yaw_deg": yaw0,
+        # tray box in the controller frame (lying face up on it): center along "top", half extents
+        "tray_center_top_m": 0.5 * (t_lo + t_hi), "tray_half_extents": [0.03, 0.5 * (t_hi - t_lo), STAND_H / 2],
+        "ctrl_axes": {"right": ctrl.right.tolist(), "top": ctrl.top.tolist(), "face": ctrl.face.tolist()},
+        "H": su.H.tolist(), "F": span_frame(su.poses[su.g_contact]).tolist(),
+        "open_key": str(su.g_open), "transport": su.transport,
+        "hand_q": {str(k): hand_q(v) for k, v in su.poses.items()},
+        "servo": servo_table(su.model),
+    }
+    path_out.parent.mkdir(parents=True, exist_ok=True)
+    path_out.write_text(json.dumps(spec, indent=1))
+    print(f"wrote {path_out}")
 
 
 VARIANTS = (("hulls", False), ("hulls", True), ("single", True))
@@ -598,11 +611,15 @@ def main() -> None:
     ap.add_argument("--out", type=Path, default=ROOT / "docs" / "figures")
     ap.add_argument("--no-video", action="store_true")
     ap.add_argument("--export-plans", type=Path, help="write the plans + hand targets (JSON) for Isaac Sim and exit")
+    ap.add_argument("--export-task", type=Path, help="write the scene layout + plan inputs (JSON) for the Isaac Lab task")
     args = ap.parse_args()
     if not HAND.exists():
         raise SystemExit(f"{HAND} not found; fetch mujoco_menagerie/shadow_hand first (see README)")
     poses = span_poses()
     ctrl, holder, R_rel, t_rel = load()
+    if args.export_task:
+        export_task(ctrl, holder, R_rel, t_rel, poses, args.export_task)
+        return
     if args.export_plans:
         export_plans(ctrl, holder, R_rel, t_rel, poses, range(args.trials), args.export_plans)
         return
