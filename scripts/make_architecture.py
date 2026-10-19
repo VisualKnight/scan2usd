@@ -219,12 +219,15 @@ DETAILS = {
     "physics": (
         "Physics + robots",
         "MuJoCo and Isaac Sim PhysX run the same assets. A Franka Panda pinches the controller and seats it in the "
-        "holder (MuJoCo IK, replayed on Isaac's Franka); a Shadow Hand pinches it top to bottom as a person does; the Panda "
-        "picks the scanned mug; an articulated lid opens on its joint.",
+        "holder (MuJoCo IK, replayed on Isaac's Franka); a Shadow Hand pinches it top to bottom as a person does, and a "
+        "small network learns that from the script in Isaac Lab; the Panda picks the scanned mug; an articulated lid "
+        "opens on its joint.",
         [f"Panda: {n('place_held')} MuJoCo, {n('iplace_held')} Isaac Sim ({n('iplace_add')} mm)",
          f"Shadow Hand: {n('hand_held')} MuJoCo, {n('ihand_held')} Isaac Sim",
+         f"learned policy (Isaac Lab): {n('learn_placed')} fresh scenes",
          "holder as one convex hull: every placement fails"],
-        ["demo_holder_place.py", "isaac_holder_place.py", "demo_hand_pinch.py", "isaac_hand_place.py", "demo_panda.py", "isaac_franka_pick.py"],
+        ["demo_holder_place.py", "isaac_holder_place.py", "demo_hand_pinch.py", "isaac_hand_place.py", "rl/train_policy.py",
+         "demo_panda.py", "isaac_franka_pick.py"],
     ),
     "perception": (
         "Perception",

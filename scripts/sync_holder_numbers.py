@@ -41,6 +41,7 @@ def values() -> dict[str, str]:
         **hand_values(),
         **isaac_hand_values(),
         **reel_values(),
+        **learned_values(),
         **genai_values(),
     }
 
@@ -112,6 +113,20 @@ def isaac_hand_values() -> dict[str, str]:
             "ihand_rot": f"{ok['rot_deg_median']:.0f}", "ihand_open_held": f"{op['held']}/{op['trials']}",
             "ihand_open_add": f"{op['add_mm_median']:.1f}", "ihand_open_rot": f"{op['rot_deg_median']:.0f}",
             "ihand_hull_held": f"{hull['held']}/{hull['trials']}"}
+
+
+def learned_values() -> dict[str, str]:
+    """The learned hand-place policy (scripts/rl/train_policy.py -> docs/figures/learned_hand_place.json)."""
+    p = ROOT / "docs" / "figures" / "learned_hand_place.json"
+    if not p.exists():
+        return {}
+    s = json.loads(p.read_text())
+    ev, film = s["eval"], s["film"]
+    return {"learn_placed": f"{ev['placed']}/{ev['envs']}", "learn_add": f"{ev['add_mm_median']:.1f}",
+            "learn_rot": f"{ev['rot_deg_median']:.0f}", "learn_demos": f"{s['demos']:,}", "learn_rounds": str(s["rounds"]),
+            "learn_min": f"{s['train_minutes']:.0f}", "learn_film": f"{film['placed']}/{film['envs']}",
+            "learn_power": f"{s['power_max_w']:.0f}", "teach_add": f"{s['teacher']['add_mm_median']:.1f}",
+            "teach_rot": f"{s['teacher']['rot_deg_median']:.0f}"}
 
 
 def reel_values() -> dict[str, str]:
