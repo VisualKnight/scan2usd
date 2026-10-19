@@ -1,13 +1,15 @@
 """Isaac Sim 6 (PhysX): the Shadow Hand places the scanned controller into the scanned holder.
 
-    python scripts/demo_hand_place.py --export-plans output/hand_place_plans.json   # main venv
+    python scripts/demo_hand_pinch.py --export-plans output/hand_pinch_plans.json   # main venv
     set OMNI_KIT_ACCEPT_EULA=YES
-    <isaac-sim>\\python.exe scripts\\isaac_hand_place.py [--trials 12] [--video]
+    <isaac-sim>\\python.exe scripts\\isaac_hand_place.py --plans output/hand_pinch_plans.json [--trials 12] [--video]
 
-The MuJoCo run (demo_hand_place.py) replayed as a plan, not as a recording: the same Menagerie hand
+The MuJoCo run (demo_hand_pinch.py, the overview's; or demo_hand_place.py's span grasp, the default
+--plans) replayed as a plan, not as a recording: the same Menagerie hand
 (imported with Isaac Sim's MJCF importer), the same scanned USD assets, the same per-seed scene poses
 and waypoints, and the same motion code (hand_motion.py). PhysX simulates every contact; the
-re-aimed variant measures the controller in the hand in PhysX and re-plans the insertion from it.
+re-aimed variant measures the controller in the hand in PhysX and re-plans the insertion from it (on the
+fly when the plan passes through its pre-place pose; from the plan's place_template when it has one).
 
 Mapping of the hand: the floating forearm is welded (fixed joint) to a kinematic body that follows
 the planned path, as the mocap weld does in MuJoCo. Finger servos get MuJoCo's stiffness, damping,
@@ -44,6 +46,7 @@ parser.add_argument("--video-only", action="store_true", help="only the video (k
 parser.add_argument("--stills", action="store_true",
                     help="path-traced stills of the re-aimed run (grasp, place, result) for make_hand_hero.py")
 parser.add_argument("--probe", action="store_true", help="one open-loop trial with a per-waypoint trace")
+parser.add_argument("--probe-reaimed", action="store_true", help="probe: the re-aimed variant")
 parser.add_argument("--skin", type=float, nargs=2, default=None, metavar=("STIFFNESS", "DAMPING"),
                     help="compliant contact on the hand (N/m, N s/m), as MuJoCo's soft contacts")
 parser.add_argument("--sweep", type=str, default="", help="probe: semicolon-separated 'stiffness,damping' pairs")
@@ -341,10 +344,20 @@ class Plan:
         sim.set(self.T_prev, sim.q(HAND_Q[str(self.g_prev)]))
 
     def _start(self):
-        a, self.b = hand_motion.moves(self.wps, self.k)[0]
-        self.mv = hand_motion.Move(self.T_prev, self.g_prev, self.wps[a:self.b + 1])
+        self.a, self.b = hand_motion.moves(self.wps, self.k)[0]
+        self.mv = hand_motion.Move(self.T_prev, self.g_prev, self.wps[self.a:self.b + 1])
         self.qs = [self.sim.q(HAND_Q[str(g)]) for g in self.mv.g]
         self.tm = 0.0
+        # A pre-place waypoint passed through (via) instead of stopped at: re-aim on the fly as the hand passes.
+        self.reaim = (next((j for j, w in enumerate(self.mv.legs[:-1]) if w["tag"] == "preplace"), None)
+                      if self.correct else None)
+
+    def replan(self, H_rel):
+        """The placement waypoints (pre-place on) re-aimed at the forearm pose H_rel in the controller frame."""
+        if "place_template" in self.trial:  # each waypoint a controller pose C: the hand at C @ H_rel
+            return [{**w, "T": np.array(w["C"]) @ H_rel} for w in self.trial["place_template"]]
+        return hand_motion.place_waypoints(np.array(self.trial["c_goal"]), self.trial["approach"], H_rel,
+                                           float(plans["open_key"]), plans["transport"])
 
     def _finish(self):
         w = self.wps[self.b]
@@ -363,9 +376,7 @@ class Plan:
             self.rel0 = np.linalg.inv(sim.ctrl_pose()) @ sim.forearm_pose()
         if self.correct and w["tag"] == "preplace":
             H_rel = np.linalg.inv(sim.ctrl_pose()) @ sim.forearm_pose()
-            self.wps[self.b + 1:] = hand_motion.place_waypoints(
-                np.array(self.trial["c_goal"]), self.trial["approach"], H_rel, float(plans["open_key"]),
-                plans["transport"])[1:]
+            self.wps[self.b + 1:] = self.replan(H_rel)[1:]
         self.k = self.b + 1
         self.mv = None
         if self.k >= len(self.wps):
@@ -379,7 +390,19 @@ class Plan:
             self._start()
         self.tm += dt
         T, leg, u = self.mv.at(min(self.tm, self.mv.duration))
+        if self.reaim is not None and leg > self.reaim:
+            H_rel = np.linalg.inv(self.sim.ctrl_pose()) @ self.sim.forearm_pose()
+            j = self.a + self.reaim + 1
+            self.wps[j:] = self.replan(H_rel)[1:]
+            self.mv.retarget(self.reaim + 1, self.wps[j:self.b + 1])
+            self.reaim = None
+            T, leg, u = self.mv.at(min(self.tm, self.mv.duration))
         self.sim.set(T, self.qs[leg] + (self.qs[leg + 1] - self.qs[leg]) * u)
+        if self.trace and self.rel0 is not None and int(self.t / 0.25) != int((self.t - dt) / 0.25):
+            C, F = self.sim.ctrl_pose(), self.sim.forearm_pose()
+            dd = np.linalg.inv(self.rel0) @ (np.linalg.inv(C) @ F)
+            print(f"    t {self.t:5.2f} leg {self.mv.legs[leg]['tag']:8s} ctrl z {C[2, 3] * 100:5.1f} cm  in-hand slip "
+                  f"{np.linalg.norm(dd[:3, 3]) * 1000:5.1f} mm", flush=True)
         if self.tm >= self.mv.duration - 1e-9:
             self._finish()
 
@@ -441,7 +464,10 @@ def video(trial, path_mp4):
     def record(t, wps):
         if "shots" not in state:
             c0, g = np.array(trial["controller_start"])[:3, 3], np.array(trial["target"])[:3, 3]
-            state["shots"] = [(t0, hand_motion.camera_track(k)) for t0, k in hand_motion.shot_keys(c0, g, wps)]
+            keys = hand_motion.shot_keys(c0, g, wps)
+            if plans.get("camera") == "continuous":  # the two shots as one move (demo_hand_pinch.shot_keys)
+                keys = [(0.0, keys[0][1][:-1] + keys[1][1])]
+            state["shots"] = [(t0, hand_motion.camera_track(k)) for t0, k in keys]
             state["ev"] = hand_motion.event_times(wps)
             stage = omni.usd.get_context().get_stage()
             state["cam"] = UsdGeom.Xformable(stage.GetPrimAtPath("/World/cam")).GetOrderedXformOps()[0]
@@ -549,7 +575,7 @@ if args.probe and args.sweep:
             print(f"SWEEP skin {pair} {'reaimed' if correct else 'open'}: held {sum(r['held'] for r in rows)}/"
                   f"{len(rows)}", " ".join(f"{r['add_mm']:.0f}/{r['rot_deg']:.0f}" for r in rows), flush=True)
 elif args.probe:
-    res, n_drive = run(trials[0], "decomposed", False, trace=True)
+    res, n_drive = run(trials[0], "decomposed", args.probe_reaimed, trace=True)
     print("drives set:", n_drive, "result:", res, flush=True)
 elif args.video_only:
     video(trials[0], os.path.join(OUT, "isaac_hand_place.mp4"))

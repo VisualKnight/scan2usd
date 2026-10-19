@@ -374,9 +374,19 @@ def execute(su, wps, render=None, fps=30, settle=1.5, on_waypoint=None):
         a, b = hand_motion.moves(wps, k)[0]
         mv = hand_motion.Move(T_prev, g_prev, wps[a:b + 1])
         c = [ctrl_of(g) for g in mv.g]
+        # A pre-place waypoint passed through (via) instead of stopped at: re-aim on the fly, as the hand passes it.
+        reaim = (next((j for j, w in enumerate(mv.legs[:-1]) if w["tag"] == "preplace"), None)
+                 if su.correct else None)
         n = max(1, int(round(mv.duration / m.opt.timestep)))
         for i in range(n):
             T, leg, u = mv.at((i + 1) * m.opt.timestep)
+            if reaim is not None and leg > reaim:
+                H_rel = np.linalg.inv(body_pose(m, d, "ctrl")) @ body_pose(m, d, "rh_forearm")
+                new = su.place_waypoints(H_rel) if hasattr(su, "place_waypoints") else place_waypoints(su, H_rel)
+                wps[a + reaim + 1:] = new[1:]
+                mv.retarget(reaim + 1, wps[a + reaim + 1:b + 1])
+                reaim = None
+                T, leg, u = mv.at((i + 1) * m.opt.timestep)
             d.mocap_pos[0] = T[:3, 3]
             d.mocap_quat[0] = quat_wxyz(T[:3, :3])
             d.ctrl[:] = c[leg] + (c[leg + 1] - c[leg]) * u
@@ -501,24 +511,45 @@ CAPTIONS = [  # (from event, text)
 def video(ctrl, holder, R_rel, t_rel, poses, out: Path, summary=None, fps: int = 30, size=(1280, 720)):
     """The hero shot (re-aimed run, seed 0) as MP4 (30 fps), a lighter animated WebP for the README, a
     poster frame, and a still comparing where open loop and re-aimed leave the controller."""
+    # No ghost of the real pose: a few mm from the placed scan it pokes through it in patches and reads
+    # as broken geometry. The end card gives the distance instead.
+    su = Setup(0, ctrl, holder, R_rel, t_rel, "hulls", poses, correct=True, work_tag="video")
+
+    def end_lines(res):
+        lines = [f"Placed: {res['add_mm']:.1f} mm / {res['rot_deg']:.0f}\u00b0 from the real pose"]
+        if summary:
+            o, r, h = summary["hulls_open_loop"], summary["hulls_reaimed"], summary["single_reaimed"]
+            lines += [f"12 jittered trials \u2014 re-aimed {r['held']}/{r['trials']} held, median "
+                      f"{r['add_mm_median']:.1f} mm / {r['rot_deg_median']:.0f}\u00b0",
+                      f"open loop {o['held']}/{o['trials']}, {o['add_mm_median']:.1f} mm / "
+                      f"{o['rot_deg_median']:.0f}\u00b0  \u00b7  one convex hull for the holder: "
+                      f"{h['held']}/{h['trials']}"]
+        return lines
+
+    film(su, path(su), out, "hand_place", CAPTIONS, end_lines, fps=fps, size=size)
+    compare_still(ctrl, holder, R_rel, t_rel, poses, out / "hand_place_compare.jpg")
+
+
+def film(su, wps, out: Path, name: str, captions, end_lines, fps: int = 30, size=(1280, 720),
+         title="Shadow Hand places the scanned controller into the scanned holder  \u2014  MuJoCo", tail=3.5,
+         shots=None):
+    """Run the waypoints on a scene (Setup-like: model, data, T_start, T_target, ctrl) under the two-shot
+    camera (hand_motion.shot_keys, or `shots` [(start time, keys)]) with the phase captions [(event, text)]
+    and an end card (end_lines(score) -> lines, the first in green); write <name>.mp4, a lighter
+    <name>.webp and a poster <name>.jpg. Returns the score."""
     import imageio.v2 as iio
     from PIL import Image, ImageDraw
 
     from scan2usd.preview import _font
 
     W, Hh = size
-    # No ghost of the real pose: a few mm from the placed scan it pokes through it in patches and reads
-    # as broken geometry. The end card gives the distance instead.
-    su = Setup(0, ctrl, holder, R_rel, t_rel, "hulls", poses, correct=True, work_tag="video")
-    wps = path(su)
     shots = [(t0, hand_motion.camera_track(k))
-             for t0, k in hand_motion.shot_keys(su.T_start[:3, 3], su.T_target[:3, 3], wps)]
+             for t0, k in (shots or hand_motion.shot_keys(su.T_start[:3, 3], su.T_target[:3, 3], wps))]
     ev = hand_motion.event_times(wps)
-    caps = sorted((ev[k], txt) for k, txt in CAPTIONS)
+    caps = sorted((ev[k], txt) for k, txt in captions)
     rend = mujoco.Renderer(su.model, Hh, W)
     cam = mujoco.MjvCamera()
     opt = mujoco.MjvOption()
-
 
     def render(d):
         track = [tr for t0, tr in shots if d.time >= t0][-1]
@@ -527,9 +558,8 @@ def video(ctrl, holder, R_rel, t_rel, poses, out: Path, summary=None, fps: int =
         rend.update_scene(d, camera=cam, scene_option=opt)
         return d.time, rend.render().copy()
 
-    tail = 3.5
     raw = execute(su, wps, render=render, fps=fps, settle=tail)
-    res = score(ctrl, su.model, su.data, su.T_target)
+    res = score(su.ctrl, su.model, su.data, su.T_target)
     rend.close()
     f_title, f_cap, f_small = _font(17), _font(25), _font(19)
     t_end = raw[-1][0]
@@ -538,8 +568,7 @@ def video(ctrl, holder, R_rel, t_rel, poses, out: Path, summary=None, fps: int =
         im = Image.fromarray(img).convert("RGBA")
         ov = Image.new("RGBA", im.size, (0, 0, 0, 0))
         d = ImageDraw.Draw(ov)
-        d.text((28, 22), "Shadow Hand places the scanned controller into the scanned holder  \u2014  MuJoCo",
-               fill=(30, 41, 59, 200), font=f_title)
+        d.text((28, 22), title, fill=(30, 41, 59, 200), font=f_title)
         # Caption: the latest phase, faded in over 0.3 s and out before the end card.
         k = max([i for i, (t0, _) in enumerate(caps) if t >= t0 - 1e-6], default=0)
         a = min(1.0, (t - caps[k][0]) / 0.3) if k > 0 else min(1.0, t / 0.3 + 0.01)
@@ -552,14 +581,7 @@ def video(ctrl, holder, R_rel, t_rel, poses, out: Path, summary=None, fps: int =
             d.text((x0 + 18, y0 + 8), txt, fill=(255, 255, 255, int(255 * a)), font=f_cap)
         if t > t_end - 1.6:  # end card
             b = min(1.0, (t - (t_end - 1.6)) / 0.4)
-            lines = [f"Placed: {res['add_mm']:.1f} mm / {res['rot_deg']:.0f}\u00b0 from the real pose"]
-            if summary:
-                o, r, h = summary["hulls_open_loop"], summary["hulls_reaimed"], summary["single_reaimed"]
-                lines += [f"12 jittered trials \u2014 re-aimed {r['held']}/{r['trials']} held, median "
-                          f"{r['add_mm_median']:.1f} mm / {r['rot_deg_median']:.0f}\u00b0",
-                          f"open loop {o['held']}/{o['trials']}, {o['add_mm_median']:.1f} mm / "
-                          f"{o['rot_deg_median']:.0f}\u00b0  \u00b7  one convex hull for the holder: "
-                          f"{h['held']}/{h['trials']}"]
+            lines = end_lines(res)
             fonts = [f_cap] + [f_small] * (len(lines) - 1)
             wmax = max(d.textlength(L, font=f) for L, f in zip(lines, fonts))
             x0, y0 = 28, Hh - 40 - 36 * len(lines)
@@ -569,21 +591,22 @@ def video(ctrl, holder, R_rel, t_rel, poses, out: Path, summary=None, fps: int =
                        (30, 41, 59, int(255 * b)), font=f)
         frames.append(Image.alpha_composite(im, ov).convert("RGB"))
     out.mkdir(parents=True, exist_ok=True)
-    with iio.get_writer(out / "hand_place.mp4", fps=fps, codec="libx264", quality=None, pixelformat="yuv420p",
+    with iio.get_writer(out / f"{name}.mp4", fps=fps, codec="libx264", quality=None, pixelformat="yuv420p",
                         macro_block_size=8, output_params=["-crf", "23", "-preset", "slow"]) as w:
         for f in frames:
             w.append_data(np.asarray(f))
     small = [f.resize((800, 450), Image.LANCZOS) for f in frames[::3]]
-    small[0].save(out / "hand_place.webp", save_all=True, append_images=small[1:], duration=100, loop=0,
+    small[0].save(out / f"{name}.webp", save_all=True, append_images=small[1:], duration=100, loop=0,
                   quality=50, method=6)
     poster = frames[min(len(frames) - 1, int((ev["away"] + 0.8) * fps))]
-    poster.save(out / "hand_place.jpg", quality=90)
-    print(f"wrote {out / 'hand_place.mp4'} ({len(frames)} frames, {len(frames) / fps:.1f} s), webp, poster")
-    compare_still(ctrl, holder, R_rel, t_rel, poses, out / "hand_place_compare.jpg")
+    poster.save(out / f"{name}.jpg", quality=90)
+    print(f"wrote {out / f'{name}.mp4'} ({len(frames)} frames, {len(frames) / fps:.1f} s), webp, poster")
+    return res
 
 
-def compare_still(ctrl, holder, R_rel, t_rel, poses, path_out: Path, size=(640, 480)):
-    """Where the controller ends up, open loop vs re-aimed (seed 0), with the distance to the real pose."""
+def compare_still(ctrl, holder, R_rel, t_rel, poses, path_out: Path, size=(640, 480), make=None):
+    """Where the controller ends up, open loop vs re-aimed (seed 0), with the distance to the real pose.
+    make(correct) -> (setup, waypoints) for another grasp (default: this one)."""
     from PIL import Image, ImageDraw
 
     from scan2usd.preview import _font
@@ -591,9 +614,13 @@ def compare_still(ctrl, holder, R_rel, t_rel, poses, path_out: Path, size=(640, 
     W, Hh = size
     tiles = []
     for correct, title in ((False, "Open loop"), (True, "Re-aimed from the in-hand pose")):
-        su = Setup(0, ctrl, holder, R_rel, t_rel, "hulls", poses, correct=correct,
-                   work_tag=f"still_{int(correct)}")
-        execute(su, path(su), settle=2.0)
+        if make is None:
+            su = Setup(0, ctrl, holder, R_rel, t_rel, "hulls", poses, correct=correct,
+                       work_tag=f"still_{int(correct)}")
+            wps = path(su)
+        else:
+            su, wps = make(correct)
+        execute(su, wps, settle=2.0)
         res = score(ctrl, su.model, su.data, su.T_target)
         rend = mujoco.Renderer(su.model, Hh, W)
         cam = mujoco.MjvCamera()
@@ -619,7 +646,8 @@ def compare_still(ctrl, holder, R_rel, t_rel, poses, path_out: Path, size=(640, 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--trials", type=int, default=12)
-    ap.add_argument("--out", type=Path, default=ROOT / "docs" / "figures")
+    ap.add_argument("--out", type=Path, default=ROOT / "output" / "hand_span",
+                    help="the overview's figures now come from demo_hand_pinch.py (docs/figures/hand_place.*)")
     ap.add_argument("--no-video", action="store_true")
     ap.add_argument("--export-plans", type=Path, help="write the plans + hand targets (JSON) for Isaac Sim and exit")
     ap.add_argument("--export-task", type=Path, help="write the scene layout + plan inputs (JSON) for the Isaac Lab task")

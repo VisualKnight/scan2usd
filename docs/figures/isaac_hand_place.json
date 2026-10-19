@@ -2,195 +2,195 @@
   "summary": {
     "decomposed_open_loop": {
       "trials": 12,
-      "held": 12,
-      "placed": 12,
-      "add_mm_median": 19.456141927604182,
-      "rot_deg_median": 27.17026166501032
+      "held": 5,
+      "placed": 5,
+      "add_mm_median": 154.83588372232623,
+      "rot_deg_median": 84.64568303517206
     },
     "decomposed_reaimed": {
       "trials": 12,
       "held": 12,
       "placed": 12,
-      "add_mm_median": 6.2951760182984575,
-      "rot_deg_median": 5.30199904714676
+      "add_mm_median": 10.518052450562507,
+      "rot_deg_median": 16.278282767993208
     },
     "convex_hull_reaimed": {
       "trials": 12,
       "held": 0,
       "placed": 0,
-      "add_mm_median": 152.93335469818035,
-      "rot_deg_median": 86.44960370383865
+      "add_mm_median": 228.88138781630403,
+      "rot_deg_median": 174.3159597917198
     }
   },
   "trials": {
     "decomposed_open_loop": [
       {
         "seed": 0,
-        "add_mm": 19.47587112100692,
-        "rot_deg": 27.14437789487595,
-        "held": true,
-        "placed": true
+        "add_mm": 223.85806500801414,
+        "rot_deg": 176.88966980779384,
+        "held": false,
+        "placed": false
       },
       {
         "seed": 1,
-        "add_mm": 19.461084882896866,
-        "rot_deg": 27.15372309222994,
+        "add_mm": 14.662138988610122,
+        "rot_deg": 16.69012805246582,
         "held": true,
         "placed": true
       },
       {
         "seed": 2,
-        "add_mm": 19.50692402230758,
-        "rot_deg": 27.216932234503922,
+        "add_mm": 14.329332323518688,
+        "rot_deg": 16.679873908977886,
         "held": true,
         "placed": true
       },
       {
         "seed": 3,
-        "add_mm": 19.436455052308947,
-        "rot_deg": 27.180805261371816,
-        "held": true,
-        "placed": true
+        "add_mm": 211.25983763254658,
+        "rot_deg": 177.59039728864735,
+        "held": false,
+        "placed": false
       },
       {
         "seed": 4,
-        "add_mm": 19.505259499149133,
-        "rot_deg": 27.152081374182337,
-        "held": true,
-        "placed": true
+        "add_mm": 234.35168629386126,
+        "rot_deg": 130.40479750739135,
+        "held": false,
+        "placed": false
       },
       {
         "seed": 5,
-        "add_mm": 19.438033048497804,
-        "rot_deg": 27.165067554462958,
-        "held": true,
-        "placed": true
+        "add_mm": 160.4355795545525,
+        "rot_deg": 82.93305407898393,
+        "held": false,
+        "placed": false
       },
       {
         "seed": 6,
-        "add_mm": 19.4511989723115,
-        "rot_deg": 27.17186334208613,
+        "add_mm": 17.979643340877484,
+        "rot_deg": 23.416706079056436,
         "held": true,
         "placed": true
       },
       {
         "seed": 7,
-        "add_mm": 19.462965206784368,
-        "rot_deg": 27.138679014670135,
+        "add_mm": 9.953575064431046,
+        "rot_deg": 13.271460269347044,
         "held": true,
         "placed": true
       },
       {
         "seed": 8,
-        "add_mm": 19.441710209092868,
-        "rot_deg": 27.343135163353633,
+        "add_mm": 12.933227667423703,
+        "rot_deg": 14.444809369539346,
         "held": true,
         "placed": true
       },
       {
         "seed": 9,
-        "add_mm": 19.42362907231798,
-        "rot_deg": 27.23876145420642,
-        "held": true,
-        "placed": true
+        "add_mm": 162.8622732383935,
+        "rot_deg": 86.3583119913602,
+        "held": false,
+        "placed": false
       },
       {
         "seed": 10,
-        "add_mm": 19.73249639843162,
-        "rot_deg": 27.250056639415703,
-        "held": true,
-        "placed": true
+        "add_mm": 149.23618789009993,
+        "rot_deg": 87.07070704355819,
+        "held": false,
+        "placed": false
       },
       {
         "seed": 11,
-        "add_mm": 19.43976417580538,
-        "rot_deg": 27.168659987934507,
-        "held": true,
-        "placed": true
+        "add_mm": 254.56082398767393,
+        "rot_deg": 160.58173646460085,
+        "held": false,
+        "placed": false
       }
     ],
     "decomposed_reaimed": [
       {
         "seed": 0,
-        "add_mm": 6.330178400961044,
-        "rot_deg": 5.368336521135548,
+        "add_mm": 12.275491954665767,
+        "rot_deg": 19.52971041598781,
         "held": true,
         "placed": true
       },
       {
         "seed": 1,
-        "add_mm": 6.266158112396318,
-        "rot_deg": 5.242550115213908,
+        "add_mm": 10.330637120400285,
+        "rot_deg": 15.616088608451141,
         "held": true,
         "placed": true
       },
       {
         "seed": 2,
-        "add_mm": 6.299178570929714,
-        "rot_deg": 5.26139756992502,
+        "add_mm": 10.260738971956178,
+        "rot_deg": 16.137671230672744,
         "held": true,
         "placed": true
       },
       {
         "seed": 3,
-        "add_mm": 6.3465212314370065,
-        "rot_deg": 5.462518263076068,
+        "add_mm": 10.91256419279468,
+        "rot_deg": 18.070947975448586,
         "held": true,
         "placed": true
       },
       {
         "seed": 4,
-        "add_mm": 7.701009370429293,
-        "rot_deg": 8.797263963793455,
+        "add_mm": 8.934663134126811,
+        "rot_deg": 15.080406944744812,
         "held": true,
         "placed": true
       },
       {
         "seed": 5,
-        "add_mm": 6.304592547390683,
-        "rot_deg": 5.342016023425174,
+        "add_mm": 8.347596764605438,
+        "rot_deg": 14.256976212468407,
         "held": true,
         "placed": true
       },
       {
         "seed": 6,
-        "add_mm": 6.291173465667201,
-        "rot_deg": 5.280454327373521,
+        "add_mm": 12.503696326120467,
+        "rot_deg": 20.35683012929283,
         "held": true,
         "placed": true
       },
       {
         "seed": 7,
-        "add_mm": 6.3593018056231845,
-        "rot_deg": 5.44706386885122,
+        "add_mm": 11.049418572139336,
+        "rot_deg": 16.74578334422428,
         "held": true,
         "placed": true
       },
       {
         "seed": 8,
-        "add_mm": 6.217969580654504,
-        "rot_deg": 5.153803919508815,
+        "add_mm": 10.705467780724728,
+        "rot_deg": 17.471517947121676,
         "held": true,
         "placed": true
       },
       {
         "seed": 9,
-        "add_mm": 6.2886471189022926,
-        "rot_deg": 5.323543766919998,
+        "add_mm": 9.536839800466378,
+        "rot_deg": 15.33357364476341,
         "held": true,
         "placed": true
       },
       {
         "seed": 10,
-        "add_mm": 6.2524189427254955,
-        "rot_deg": 5.24585258240599,
+        "add_mm": 8.182239189938938,
+        "rot_deg": 13.961105884706939,
         "held": true,
         "placed": true
       },
       {
         "seed": 11,
-        "add_mm": 6.265929837578793,
-        "rot_deg": 5.1787564414726415,
+        "add_mm": 10.77999178138071,
+        "rot_deg": 16.41889430531367,
         "held": true,
         "placed": true
       }
@@ -198,85 +198,85 @@
     "convex_hull_reaimed": [
       {
         "seed": 0,
-        "add_mm": 158.68207072478708,
-        "rot_deg": 87.13461551398616,
+        "add_mm": 184.0725816644059,
+        "rot_deg": 175.37517734420055,
         "held": false,
         "placed": false
       },
       {
         "seed": 1,
-        "add_mm": 153.04471345399537,
-        "rot_deg": 86.20348228044553,
+        "add_mm": 221.9627555126761,
+        "rot_deg": 168.1758199644974,
         "held": false,
         "placed": false
       },
       {
         "seed": 2,
-        "add_mm": 157.7776073517041,
-        "rot_deg": 87.12884006307209,
+        "add_mm": 219.79049240719692,
+        "rot_deg": 176.69707229439172,
         "held": false,
         "placed": false
       },
       {
         "seed": 3,
-        "add_mm": 155.1524686617702,
-        "rot_deg": 87.28796838192177,
+        "add_mm": 225.84551262631146,
+        "rot_deg": 164.56403306031675,
         "held": false,
         "placed": false
       },
       {
         "seed": 4,
-        "add_mm": 157.70285629669857,
-        "rot_deg": 86.13922389046748,
+        "add_mm": 244.12546115252644,
+        "rot_deg": 176.72945775373492,
         "held": false,
         "placed": false
       },
       {
         "seed": 5,
-        "add_mm": 145.7986261813979,
-        "rot_deg": 86.69572512723175,
+        "add_mm": 247.96369645827318,
+        "rot_deg": 128.7441717611107,
         "held": false,
         "placed": false
       },
       {
         "seed": 6,
-        "add_mm": 151.71093633318173,
-        "rot_deg": 86.17230442791187,
+        "add_mm": 217.3051900602818,
+        "rot_deg": 174.1926998271215,
         "held": false,
         "placed": false
       },
       {
         "seed": 7,
-        "add_mm": 152.82199594236533,
-        "rot_deg": 86.11823047262826,
+        "add_mm": 231.91726300629657,
+        "rot_deg": 174.4392197563181,
         "held": false,
         "placed": false
       },
       {
         "seed": 8,
-        "add_mm": 152.44219057765383,
-        "rot_deg": 86.11907269853636,
+        "add_mm": 215.12313707815673,
+        "rot_deg": 175.64440465362276,
         "held": false,
         "placed": false
       },
       {
         "seed": 9,
-        "add_mm": 157.8496744412802,
-        "rot_deg": 87.11194603901002,
+        "add_mm": 234.00671600308465,
+        "rot_deg": 178.94720066390917,
         "held": false,
         "placed": false
       },
       {
         "seed": 10,
-        "add_mm": 151.49858605469558,
-        "rot_deg": 86.13727942630915,
+        "add_mm": 243.86286392592754,
+        "rot_deg": 168.90640605682222,
         "held": false,
         "placed": false
       },
       {
         "seed": 11,
-        "add_mm": 141.9961699512884,
-        "rot_deg": 87.63274366167053,
+        "add_mm": 232.5990544503472,
+        "rot_deg": 172.70934896878225,
         "held": false,
         "placed": false
       }

@@ -44,6 +44,7 @@ import hand_motion  # noqa: E402
 from demo_holder_place import body_pose, load, pose, yaw_matrix  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
+FIG = ROOT / "docs" / "figures"
 HAND = HP.HAND
 GRASP = ROOT / "output" / "hand_pinch_grasp.json"
 JOINTS = ["rh_THJ5", "rh_THJ4", "rh_THJ3", "rh_THJ2", "rh_THJ1", "rh_FFJ4", "rh_FFJ3", "rh_FFJ2", "rh_MFJ4", "rh_MFJ3",
@@ -65,7 +66,11 @@ RELEASE_LEAN = 0.005  # set down this far further in than the seat, the controll
 LETGO_THUMB, LETGO_LIFT, LETGO_BACK = 0.6, 0.012, 0.03  # let go: the fingers lift off the rim (they sit under its
 # widest: backing off with them on it would pull the top forward) and the thumb drops away (this fraction of the
 # way to open) as the hand backs off toward the robot, sliding it out from under the bottom edge
-NUDGE = (0.02, -0.015)  # then the open hand pushes the top back onto the holder: this far in (past the seat), lower
+NUDGE = (0.0, 0.0)  # optional: the open hand pushes the top back onto the holder (this far in past the seat, lower)
+PLACE_RIGHT = 0.003  # set down this far right of the seat and rolled this much about the face normal (about the
+PLACE_ROLL_DEG = -3.0  # grasp center): sliding out to the left, the thumb drags the controller left and rolls it
+MOVE_RAMP = 0.8  # s: the lift-to-seat move eases in and out over this (hand_motion.time_scale)
+INSERT_DUR, SEAT_DUR = 1.5, 1.5  # s: the slide in and the set-down (demo_hand_place: 1.1, 1.0)
 SQUEEZE, OPENING = 0.008, 0.020  # grip: pads this far into the surfaces; open: this far out
 HOOK_GAP = 0.003  # first step of the close: the finger pads this close to the rim, the thumb still open
 FOREARM_MIN_UP = -0.20  # forearm origin vs the grasp along "top": at most this far below it, upright on the holder
@@ -331,7 +336,13 @@ class PinchSetup:
         self.ctrl, self.correct, self.transport = ctrl, correct, transport
         self.C_goal = self.T_target.copy()
         self.al = -(self.C_goal[:3, :3] @ ctrl.face)  # the approach at the holder: into the face
-        self.C_goal[:3, 3] += RELEASE_LEAN * self.al  # set down leaning toward the holder's chest
+        self.C_goal[:3, 3] += RELEASE_LEAN * self.al  # set down leaning toward the holder's chest ...
+        self.C_goal[:3, 3] += PLACE_RIGHT * (self.C_goal[:3, :3] @ ctrl.right)  # ... and a little to its right
+        if PLACE_ROLL_DEG:  # pre-rolled about the face normal against the roll the thumb's slide-out gives it
+            c = self.C_goal[:3, :3] @ (np.asarray(grasp["center"]) if "center" in grasp else np.zeros(3)) + self.C_goal[:3, 3]
+            R = Rotation.from_rotvec(np.radians(PLACE_ROLL_DEG) * (self.C_goal[:3, :3] @ ctrl.face)).as_matrix()
+            self.C_goal[:3, :3] = R @ self.C_goal[:3, :3]
+            self.C_goal[:3, 3] = c + R @ (self.C_goal[:3, 3] - c)
         stand_xy = HP.STAND_XY + (rng.uniform(-0.02, 0.02, 2) if jit else 0)
         yaw0 = np.degrees(np.arctan2(HP.EDGE_DIR[1], HP.EDGE_DIR[0]) - np.arctan2(ctrl.top[1], ctrl.top[0]))
         yaw0 += rng.uniform(-10, 10) if jit else 0
@@ -387,6 +398,12 @@ def place_waypoints(C_goal, approach, H_rel, transport):
     (sliding it out from under the bottom edge), the fingers open, and the open hand nudges the top back onto
     the holder before leaving."""
     wps = hand_motion.place_waypoints(C_goal, approach, H_rel, "open", transport)
+    # No stop in front of the holder: the hand carries straight on into the insertion (re-aiming as it passes,
+    # demo_hand_place.execute), the move from the lift to the seat eased in and out over MOVE_RAMP; the
+    # insertion itself slower than demo_hand_place's.
+    durs = {"insert": INSERT_DUR, "seat": SEAT_DUR}
+    wps = [dict(w, via=True, ramp=MOVE_RAMP) if w["tag"] == "preplace" else
+           dict(w, dur=durs[w["tag"]]) if w["tag"] in durs else w for w in wps]
     k = next(i for i, w in enumerate(wps) if w["tag"] == "release")
     a = np.asarray(approach, float)
     T = wps[k]["T"].copy()
@@ -461,41 +478,136 @@ def probe_contacts(su, key="grip"):
     return hits
 
 
-def trial(seed, ctrl, holder, R_rel, t_rel, grasp, correct):
-    su = PinchSetup(seed, ctrl, holder, R_rel, t_rel, "hulls", grasp, correct=correct, work_tag=f"trial_{int(correct)}")
+CAPTIONS = [  # (from event, text)
+    ("start", "Approach: palm over the face, fingers spread past the edges"),
+    ("hook", "Pinch along the height: fingers on the top rim, then the thumb under the bottom"),
+    ("lift", "Lift and turn upright: the controller's weight comes onto the thumb"),
+    ("preplace", "Re-aim: measure the controller in the hand, re-plan the insertion"),
+    ("insert", "Set it down in the holder's hands"),
+    ("release", "Let go: fingers lift off, the thumb slides out from under it"),
+    ("back", "Back away"),
+    ("away", "Seated where the real controller rests in a scan of the real pair"),
+]
+
+
+def shot_keys(su, wps):
+    """demo_hand_place's camera keys (hand_motion.shot_keys) as one continuous move: instead of cutting at
+    the pause in front of the holder, the camera eases from the turn into the holder shot."""
+    (_, a), (_, b) = hand_motion.shot_keys(su.T_start[:3, 3], su.T_target[:3, 3], wps)
+    return [(0.0, a[:-1] + b)]
+
+
+def video(ctrl, holder, R_rel, t_rel, grasp, out: Path, summary=None, name="hand_place"):
+    """The hero shot (re-aimed run, seed 0) with demo_hand_place's camera keys (one continuous move, see
+    shot_keys): MP4, WebP and poster."""
+    su = PinchSetup(0, ctrl, holder, R_rel, t_rel, "hulls", grasp, correct=True, work_tag="video")
+
+    def end_lines(res):
+        lines = [f"Placed: {res['add_mm']:.1f} mm / {res['rot_deg']:.0f}\u00b0 from the real pose"]
+        if summary:
+            r, o, h = summary["hulls_reaimed"], summary["hulls_open_loop"], summary["single_reaimed"]
+            lines.append(f"12 jittered trials \u2014 re-aimed {r['placed']}/{r['trials']} placed, median "
+                         f"{r['add_mm_median']:.1f} mm / {r['rot_deg_median']:.0f}\u00b0  \u00b7  open loop "
+                         f"{o['placed']}/{o['trials']}  \u00b7  one convex hull for the holder: {h['placed']}/{h['trials']}")
+        return lines
+
+    wps = path(su)
+    res = HP.film(su, wps, out, name, CAPTIONS, end_lines, shots=shot_keys(su, wps))
+
+    def make(correct):
+        s = PinchSetup(0, ctrl, holder, R_rel, t_rel, "hulls", grasp, correct=correct, work_tag=f"still_{int(correct)}")
+        return s, path(s)
+
+    HP.compare_still(ctrl, holder, R_rel, t_rel, None, out / f"{name}_compare.jpg", make=make)
+    return res
+
+
+def place_template(su) -> list[dict]:
+    """The placement waypoints (pre-place on) as controller poses C: for a forearm pose H_rel in the
+    controller frame each waypoint is C @ H_rel (place_waypoints only offsets the goal in the world), so
+    another engine re-aims without this module: [dict(w, T=w["C"] @ H_rel)]."""
+    return [{**w, "C": w["T"]} for w in place_waypoints(su.C_goal, su.al, np.eye(4), su.transport)]
+
+
+def export_plans(ctrl, holder, R_rel, t_rel, grasp, seeds, path_out: Path) -> None:
+    """What scripts/isaac_hand_place.py needs to run this placement (demo_hand_place.export_plans' format,
+    plus each trial's place_template): per seed the holder, tray and settled controller poses, the goal
+    and the waypoints; the hand poses per key; the finger servos as simulated here."""
+    def js(w):
+        return {k: (v.tolist() if isinstance(v, np.ndarray) else v) for k, v in w.items()}
+
+    trials = []
+    for seed in seeds:
+        su = PinchSetup(seed, ctrl, holder, R_rel, t_rel, "hulls", grasp, work_tag="export")
+        m, d = su.model, su.data
+        stand = m.body("stand").id
+        geom = next(g for g in range(m.ngeom) if m.geom_bodyid[g] == stand)
+        trials.append({
+            "seed": seed, "holder": body_pose(m, d, "holder").tolist(), "target": su.T_target.tolist(),
+            "controller_start": su.T_start.tolist(), "c_goal": su.C_goal.tolist(), "approach": su.al.tolist(),
+            "tray": pose(d.xmat[stand].reshape(3, 3), d.xpos[stand]).tolist(),
+            "tray_half_extents": m.geom_size[geom].tolist(),
+            "waypoints": [js(w) for w in path(su)], "place_template": [js(w) for w in place_template(su)],
+        })
+    path_out.parent.mkdir(parents=True, exist_ok=True)
+    path_out.write_text(json.dumps({"grasp": "pinch", "camera": "continuous", "hand_q": su.q, "open_key": "open",
+                                    "transport": su.transport, "servo": HP.servo_table(su.model),
+                                    "timestep": float(su.model.opt.timestep), "trials": trials}, indent=1))
+    print(f"wrote {path_out} ({len(trials)} plans)")
+
+
+def trial(seed, ctrl, holder, R_rel, t_rel, grasp, correct, collision="hulls"):
+    su = PinchSetup(seed, ctrl, holder, R_rel, t_rel, collision, grasp, correct=correct,
+                    work_tag=f"trial_{collision}_{int(correct)}")
     HP.execute(su, path(su))
-    return {"seed": seed, "reaimed": correct, **HP.score(ctrl, su.model, su.data, su.T_target)}
+    return {"seed": seed, "collision": collision, "reaimed": correct, **HP.score(ctrl, su.model, su.data, su.T_target)}
+
+
+VARIANTS = HP.VARIANTS  # (holder collision, re-aimed): hulls open loop, hulls re-aimed, one convex hull re-aimed
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--probe", action="store_true", help="solve the grasp and list the contacts at the pick")
     ap.add_argument("--trials", type=int, default=12)
+    ap.add_argument("--video", type=Path, help="render the hero video into this folder (uses the saved trial summary)")
+    ap.add_argument("--export-plans", type=Path, help="write the plans + hand targets (JSON) for Isaac Sim and exit")
     args = ap.parse_args()
     if not HAND.exists():
         raise SystemExit(f"{HAND} not found; fetch mujoco_menagerie/shadow_hand first (see README)")
     ctrl, holder, R_rel, t_rel = load()
     grasp = solve_grasp(ctrl, holder, R_rel, t_rel)
+    if args.export_plans:
+        export_plans(ctrl, holder, R_rel, t_rel, grasp, range(args.trials), args.export_plans)
+        return
+    if args.video:
+        trials = FIG / "hand_place.json"
+        video(ctrl, holder, R_rel, t_rel, grasp, args.video,
+              summary=json.loads(trials.read_text())["summary"] if trials.exists() else None)
+        return
     if args.probe:
         su = PinchSetup(0, ctrl, holder, R_rel, t_rel, "hulls", grasp, work_tag="probe")
         for k in KEYS:
             print(k, probe_contacts(su, k))
         return
-    summary = {}
-    for correct in (False, True):
-        rows = [trial(s, ctrl, holder, R_rel, t_rel, grasp, correct) for s in range(args.trials)]
+    summary, results = {}, {}
+    for collision, correct in VARIANTS:
+        key = f"{collision}_{'reaimed' if correct else 'open_loop'}"
+        rows = [trial(s, ctrl, holder, R_rel, t_rel, grasp, correct, collision) for s in range(args.trials)]
         for r in rows:
-            print(f"seed {r['seed']:2d} {'re-aimed' if correct else 'open loop'}: placed {r['placed']} held {r['held']} "
-                  f"{r['add_mm']:.1f} mm {r['rot_deg']:.1f} deg", flush=True)
-        ok = [r for r in rows if r["held"]]
-        key = "reaimed" if correct else "open_loop"
-        summary[key] = {"trials": len(rows), "held": len(ok), "placed": sum(r["placed"] for r in rows),
-                        "add_mm_median": float(np.median([r["add_mm"] for r in ok])) if ok else None,
-                        "rot_deg_median": float(np.median([r["rot_deg"] for r in ok])) if ok else None}
+            print(f"{key} seed {r['seed']:2d}: placed {r['placed']} held {r['held']} {r['add_mm']:.1f} mm "
+                  f"{r['rot_deg']:.1f} deg", flush=True)
+        results[key] = rows
+        # medians over all trials, as demo_hand_place.py and isaac_hand_place.py
+        summary[key] = {"trials": len(rows), "held": sum(r["held"] for r in rows),
+                        "placed": sum(r["placed"] for r in rows),
+                        "add_mm_median": float(np.median([r["add_mm"] for r in rows])),
+                        "rot_deg_median": float(np.median([r["rot_deg"] for r in rows]))}
         print(key, summary[key], flush=True)
-    out = ROOT / "output" / "hand_pinch_trials.json"
-    out.write_text(json.dumps(summary, indent=1))
-    print("wrote", out)
+    for out in (ROOT / "output" / "hand_pinch_trials.json", FIG / "hand_place.json"):
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({"grasp": "pinch", "summary": summary, "trials": results}, indent=1))
+        print("wrote", out)
 
 
 if __name__ == "__main__":

@@ -31,6 +31,44 @@ def min_jerk(s: float) -> float:
     return s * s * s * (10 - 15 * s + 6 * s * s)
 
 
+def _ramp_area(u: float) -> float:
+    """Integral of min_jerk from 0 to u (0.5 at u = 1)."""
+    return u**6 - 3 * u**5 + 2.5 * u**4
+
+
+def move_duration(D: float, ramp=None) -> float:
+    """Real duration of a move of nominal (summed leg) duration D: D under min-jerk, D + ramp with eased ends."""
+    return D + min(ramp, D) if ramp else D
+
+
+def time_scale(t: float, D: float, ramp=None) -> float:
+    """Path parameter (nominal seconds, 0..D) at time t into a move. Default: one minimum-jerk profile over the
+    whole move. With `ramp` (s): eased ends, the speed rising smoothly (min-jerk shaped) to the nominal over
+    `ramp`, constant, then falling the same way, so the legs inside keep their own durations."""
+    if not ramp:
+        return min_jerk(t / D) * D if D > 0 else 0.0
+    r = min(ramp, D)
+    T = D + r
+    t = min(max(t, 0.0), T)
+    if t < r:
+        return r * _ramp_area(t / r)
+    if t > T - r:
+        return D - r * _ramp_area((T - t) / r)
+    return 0.5 * r + (t - r)
+
+
+def time_of(p: float, D: float, ramp=None) -> float:
+    """Inverse of time_scale for eased-end moves (the time path parameter p is reached); without a ramp,
+    p itself (event times have always been the summed durations)."""
+    if not ramp:
+        return p
+    lo, hi = 0.0, move_duration(D, ramp)
+    for _ in range(50):
+        mid = 0.5 * (lo + hi)
+        lo, hi = (mid, hi) if time_scale(mid, D, ramp) < p else (lo, mid)
+    return 0.5 * (lo + hi)
+
+
 def moves(wps: list[dict], start: int = 0) -> list[tuple[int, int]]:
     """[first, last] index pairs of the moves from waypoint `start` on (each ends at a stop)."""
     out, k = [], start
@@ -53,7 +91,8 @@ class Move:
         self.g = [g_prev] + [w["g"] for w in legs]
         self.d = np.array([w["dur"] for w in legs])
         self.cum = np.r_[0.0, np.cumsum(self.d)]
-        self.duration = float(self.cum[-1])
+        self.ramp = next((w["ramp"] for w in legs if w.get("ramp")), None)  # eased ends (time_scale)
+        self.duration = move_duration(float(self.cum[-1]), self.ramp)
         n = len(legs)
         # Tangents (per second of path parameter): centered differences inside, one-sided at the ends.
         self.m = np.zeros_like(self.P)
@@ -62,9 +101,22 @@ class Move:
             self.m[i] = (self.P[hi] - self.P[lo]) / max(self.cum[hi] - self.cum[lo], 1e-9)
         self.slerps = [Slerp([0, 1], Rotation.from_matrix([self.R[i], self.R[i + 1]])) for i in range(n)]
 
+    def retarget(self, k: int, new_legs: list[dict]):
+        """Replace legs k.. (same durations) mid-move, e.g. re-aimed after passing waypoint k-1. The tangent at
+        the start of leg k is kept, so position and velocity stay continuous."""
+        self.legs = self.legs[:k] + list(new_legs)
+        for j, w in enumerate(new_legs, start=k):
+            self.P[j + 1], self.R[j + 1], self.g[j + 1] = w["T"][:3, 3], w["T"][:3, :3], w["g"]
+        n = len(self.legs)
+        for i in range(k + 1, n + 1):
+            lo, hi = max(i - 1, 0), min(i + 1, n)
+            self.m[i] = (self.P[hi] - self.P[lo]) / max(self.cum[hi] - self.cum[lo], 1e-9)
+        for i in range(k, n):
+            self.slerps[i] = Slerp([0, 1], Rotation.from_matrix([self.R[i], self.R[i + 1]]))
+
     def at(self, t: float):
         """(4x4 pose, leg index, leg fraction) at time t in [0, duration]."""
-        p = min_jerk(t / self.duration) * self.duration if self.duration > 0 else 0.0
+        p = time_scale(t, float(self.cum[-1]), self.ramp)
         i = int(np.clip(np.searchsorted(self.cum, p, side="right") - 1, 0, len(self.legs) - 1))
         h = self.d[i]
         u = float(np.clip((p - self.cum[i]) / h, 0, 1)) if h > 0 else 1.0
@@ -138,10 +190,16 @@ def plan_path(T_start, C_goal, approach_place, H, F, face, open_key, transport, 
 
 def event_times(wps: list[dict]) -> dict[str, float]:
     """Time at which each tagged waypoint is reached (the first waypoint is the start, t = 0)."""
-    t, out = 0.0, {}
-    for w in wps:
-        t += w["dur"]
-        out.setdefault(w["tag"], t)
+    t, out = wps[0]["dur"], {wps[0]["tag"]: wps[0]["dur"]}
+    for a, b in moves(wps, 1):
+        legs = wps[a:b + 1]
+        D = float(sum(w["dur"] for w in legs))
+        ramp = next((w["ramp"] for w in legs if w.get("ramp")), None)
+        cum = 0.0
+        for w in legs:
+            cum += w["dur"]
+            out.setdefault(w["tag"], t + time_of(cum, D, ramp))
+        t += move_duration(D, ramp)
     return out
 
 

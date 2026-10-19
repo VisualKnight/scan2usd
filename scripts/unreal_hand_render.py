@@ -4,7 +4,8 @@
     python scripts/unreal_hand_render.py [--stages layout,build,preview,video] [--ue ...] [--project ...]
 
 Stages:
-  layout   runs the re-aimed MuJoCo placement (demo_hand_place.py, seed 0) and records, at 30 fps, the
+  layout   runs the re-aimed MuJoCo placement (demo_hand_pinch.py, seed 0; --grasp span: demo_hand_place.py)
+           and records, at 30 fps, the
            pose of every hand link and of the controller, and the camera of the MuJoCo cut
            (hand_motion.shot_keys). Writes output/unreal/hand_layout.usda: the hand's visual meshes (from
            the compiled Menagerie model, exact normals), the scanned holder and controller (the same USD
@@ -56,14 +57,24 @@ CAMERA_LOOK = {"focal_mm": round(hand_motion.focal_mm(20.25), 2), "fstop": 4.0} 
 HAND_SETTINGS = dict(SETTINGS, exposure_ev=-4.1, key_lumens=600.0, hdri_intensity=1.1)
 
 
-def record():
-    """Re-aimed run, seed 0: per frame, every hand link and the controller (world 4x4) and the camera."""
+def record(grasp="pinch"):
+    """Re-aimed run, seed 0: per frame, every hand link and the controller (world 4x4) and the camera.
+    grasp: "pinch" (demo_hand_pinch.py, the overview's) or "span" (demo_hand_place.py)."""
     ctrl, holder, R_rel, t_rel = H.load()
-    su = H.Setup(0, ctrl, holder, R_rel, t_rel, "hulls", H.span_poses(), correct=True, work_tag="unreal")
+    if grasp == "pinch":  # the top-bottom pinch (demo_hand_pinch.py) and its continuous camera
+        import demo_hand_pinch as P
+
+        su = P.PinchSetup(0, ctrl, holder, R_rel, t_rel, "hulls", P.solve_grasp(ctrl, holder, R_rel, t_rel),
+                          correct=True, work_tag="unreal")
+        wps = P.path(su)
+        keys = P.shot_keys(su, wps)
+    else:
+        su = H.Setup(0, ctrl, holder, R_rel, t_rel, "hulls", H.span_poses(), correct=True, work_tag="unreal")
+        wps = H.path(su)
+        keys = hand_motion.shot_keys(su.T_start[:3, 3], su.T_target[:3, 3], wps)
     m = su.model
-    wps = H.path(su)
-    shots = [(t0, hand_motion.camera_track(k))
-             for t0, k in hand_motion.shot_keys(su.T_start[:3, 3], su.T_target[:3, 3], wps)]
+    shots = [(t0, hand_motion.camera_track(k)) for t0, k in keys]
+    events = hand_motion.event_times(wps)
     bodies = [m.body(b).name for b in range(m.nbody) if m.body(b).name.startswith("rh_")] + ["ctrl"]
     frames = []
 
@@ -74,7 +85,7 @@ def record():
 
     frames = H.execute(su, wps, render=rec, fps=FPS, settle=3.5)
     res = H.score(ctrl, m, su.data, su.T_target)
-    return su, frames, res, [t0 for t0, _ in shots[1:]]
+    return su, frames, res, [t0 for t0, _ in shots[1:]], events
 
 
 def solid_material(stage, path: str, color, roughness: float, metallic: float = 0.0):
@@ -190,8 +201,8 @@ def ue_pose(T) -> list[float]:
     return [*p.tolist(), *q.tolist()]
 
 
-def stage_layout() -> dict:
-    su, frames, res, cuts = record()
+def stage_layout(grasp="pinch") -> dict:
+    su, frames, res, cuts, ev = record(grasp)
     m, d = su.model, su.data
     print(f"recorded {len(frames)} frames ({len(frames) / FPS:.1f} s); placed {res['add_mm']:.1f} mm / "
           f"{res['rot_deg']:.0f} deg from the real pose", flush=True)
@@ -266,7 +277,6 @@ def stage_layout() -> dict:
     anim = {"fps": FPS, "frames": len(frames), "tracks": tracks, "cuts": [int(round(t * FPS)) for t in cuts],
             "camera": {"eye": [f[2].tolist() for f in frames], "target": [f[3].tolist() for f in frames]}}
     (OUT / "hand_anim.json").write_text(json.dumps(anim))
-    ev = hand_motion.event_times(H.path(su))
     meta = {"frames": len(frames), "fps": FPS, "events_s": ev, "result": res, "hand_meshes": n_geoms,
             "bulbs": {k: len(v) for k, v in bulbs.items()},
             "camera": {"eye": eye0.tolist(), "target": look0.tolist(), **CAMERA_LOOK}}
@@ -293,6 +303,8 @@ def main() -> None:
     ap.add_argument("--ue", type=Path, default=Path("C:/Program Files/Epic Games/UE_5.8"))
     ap.add_argument("--project", type=Path, default=Path("D:/UE/Scan2USD_UE"))
     ap.add_argument("--stages", default="layout,build,preview")
+    ap.add_argument("--grasp", choices=("pinch", "span"), default="pinch",
+                    help="pinch: demo_hand_pinch.py (the overview's); span: demo_hand_place.py")
     args = ap.parse_args()
     stages = args.stages.split(",")
     ue = HandUE(args.ue, args.project)
@@ -301,7 +313,7 @@ def main() -> None:
     for f in ("ue_build.py", "ue_render.py"):
         shutil.copy(HERE / f, ue.scripts / f)
     if "layout" in stages:
-        stage_layout()
+        stage_layout(args.grasp)
     if "build" in stages:
         ue.settings()
         ue.build()
