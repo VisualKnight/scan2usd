@@ -12,8 +12,12 @@
   "envs": 400,
   "held": 400,
   "placed": 400,
-  "add_mm_median": 8.798961639404297,
-  "rot_deg_median": 14.434544563293457
+  "add_mm_median": 8.715723037719727,
+  "rot_deg_median": 14.489892959594727,
+  "camera": "scripts/rl/camera_v2.json",
+  "spacing_m": 0.65,
+  "dome": "gradient",
+  "forearm_hidden": true
  },
  "teacher": {
   "envs": 2048,

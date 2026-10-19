@@ -61,6 +61,8 @@ parser.add_argument("--playback", action="store_true",
 parser.add_argument("--hide_forearm", action="store_true",
                     help="render without the forearm's housing (its visual meshes only: physics unchanged), so it "
                          "hides less of the grid behind it")
+parser.add_argument("--exposure", type=float, default=None,
+                    help="the video grade's exposure (default GRADE's, set for the studio sky; ~0.93 for gradient)")
 args, _ = parser.parse_known_args()
 
 from isaaclab.app import AppLauncher  # noqa: E402
@@ -308,6 +310,8 @@ def encode(frame_dir: str, path: str, n_envs: int, placed: int, size=(1920, 1080
         return ImageFont.load_default()
 
     W, H = size
+    if args.exposure is not None:
+        g.setdefault("exposure", args.exposure)
     f1, f2 = font(int(H * 0.034)), font(int(H * 0.024))
     x0, yb = int(W * 0.035), int(H * 0.955)  # bottom margin
     tmp = tempfile.mkdtemp(prefix="rl_video_")
