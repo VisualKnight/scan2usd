@@ -66,6 +66,8 @@
   .grid { display: grid; gap: 16px; }
   .g2 { grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); }
   .g4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 700px) { .g3 { grid-template-columns: minmax(0, 1fr); } }
   @media (max-width: 900px) { .g2 { grid-template-columns: 1fr; } }
   img { max-width: 100%; display: block; border-radius: 2px; }
   .board { background: var(--plate); border: 1px solid var(--rule); padding: 10px; border-radius: 4px; }
@@ -379,6 +381,17 @@
 <div class="card" style="margin-top:12px"><h3>Learned: a small neural network does it, 400 scenes at once (Isaac Lab)</h3>
   <video controls muted loop playsinline preload="none" data-inview poster="figures/learned_hand_place.jpg" style="width:100%;border-radius:8px;display:block"><source src="figures/learned_hand_place.mp4?v=f813c0d1" type="video/mp4"></video>
   <p class="cap">The scripted pinch, taught to a network (an MLP, 3 &times; 512) that drives the hand 30 times a second: the wrist pose and 24 finger targets. It sees the simulator's exact state: the clock, where the controller started, where it belongs and, once the script would re-aim, the controller itself. Isaac Lab on GPU PhysX: <!--n:learn_demos-->2,048<!--/n--> demonstrations by the scripted hand, behavior cloning, then <!--n:learn_rounds-->10<!--/n--> rounds of DAgger (the network drives, the script labels what it should have done). On 400 fresh random scenes it places <b><!--n:learn_placed-->400/400<!--/n-->, <!--n:learn_add-->8.7<!--/n--> mm / <!--n:learn_rot-->14<!--/n-->°</b> (the script: <!--n:teach_add-->9.3<!--/n--> mm / <!--n:teach_rot-->15<!--/n-->°); in the video, <!--n:learn_film-->400/400<!--/n-->. What it took: no hand state in its input (with it, cloning learns to copy the hand's own pose and drifts off), targets in the controller's start and goal frames, and Fourier features of the clock (grasp-time error 0.24 mm instead of 2 mm). <!--n:learn_min-->22<!--/n--> minutes of training on one RTX 4090, peaking at <!--n:learn_power-->246<!--/n--> W. Trial-and-error fine-tuning (RL) comes next. <code>scripts/rl/train_policy.py</code> · <code>policy.py</code> · <code>scripts/rl/checkpoints/</code></p></div>
+<div class="card" style="margin-top:12px"><h3>Before it was perfect, and where it breaks</h3>
+  <img src="figures/learned_progress.png" alt="Placed out of 400 per training stage, and versus scene jitter">
+  <div class="grid g3" style="margin-top:10px">
+    <div><video controls muted loop playsinline preload="none" data-inview poster="figures/learned_bc3000.jpg" style="width:100%;border-radius:8px;display:block"><source src="figures/learned_bc3000.mp4?v=f1f3ef6c" type="video/mp4"></video>
+      <p class="cap"><b>Part-way: 3,000 of 40,000 steps.</b> It knows roughly where to go, not how to hold: <!--n:film_bc3000-->0/400<!--/n-->.</p></div>
+    <div><video controls muted loop playsinline preload="none" data-inview poster="figures/learned_bc_only.jpg" style="width:100%;border-radius:8px;display:block"><source src="figures/learned_bc_only.mp4?v=05115c5e" type="video/mp4"></video>
+      <p class="cap"><b>Imitation only, before DAgger.</b> It drops the controller where the demonstrations never went: <!--n:film_bc_only-->232/400<!--/n-->.</p></div>
+    <div><video controls muted loop playsinline preload="none" data-inview poster="figures/learned_jitter3.jpg" style="width:100%;border-radius:8px;display:block"><source src="figures/learned_jitter3.mp4?v=151818b9" type="video/mp4"></video>
+      <p class="cap"><b>The final network, 3&times; wider scenes</b> than it trained on (±6 cm, ±30°): <!--n:film_jitter3-->204/400<!--/n-->.</p></div>
+  </div>
+  <p class="cap">Every stage on the same 400 fresh scenes. Imitation alone places <!--n:prog_bc10k-->0/400<!--/n--> until it has trained long enough, then <!--n:prog_bc-->236/400<!--/n--> in a re-run from the same demonstrations; the network in use got lucky with <!--n:prog_r0-->397/400<!--/n-->. One DAgger round makes it <!--n:prog_r1-->400/400<!--/n-->, and it stays there. Beyond its training range, the script (it re-plans every scene) degrades gently, <!--n:jit4_teach-->299/400<!--/n--> at 4&times;; the network drops faster, <!--n:jit2_net-->356/400<!--/n--> at 2&times; and <!--n:jit4_net-->122/400<!--/n--> at 4&times;, having only seen 1&times;. Wider training scenes or RL are the fix. <code>scripts/rl/eval_sweep.py</code> · <code>plot_learning.py</code></p></div>
 
 <div class="chap s-use" id="perception"><div class="no">05</div><div><div class="eb">Use</div><h2>Sim-to-real perception</h2></div></div>
 <div class="card" style="margin-bottom:12px">

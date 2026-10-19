@@ -1,0 +1,266 @@
+{
+ "curve": [
+  {
+   "label": "bc100",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 77,
+   "placed": 0,
+   "add_mm_median": 663.9900512695312,
+   "rot_deg_median": 113.41407012939453
+  },
+  {
+   "label": "bc300",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 5,
+   "placed": 0,
+   "add_mm_median": 325.7521057128906,
+   "rot_deg_median": 113.96665954589844
+  },
+  {
+   "label": "bc1000",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 2,
+   "placed": 0,
+   "add_mm_median": 267.7095947265625,
+   "rot_deg_median": 119.50653839111328
+  },
+  {
+   "label": "bc3000",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 1,
+   "placed": 0,
+   "add_mm_median": 190.77362060546875,
+   "rot_deg_median": 105.18136596679688
+  },
+  {
+   "label": "bc10000",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 0,
+   "placed": 0,
+   "add_mm_median": 181.0475616455078,
+   "rot_deg_median": 105.0866928100586
+  },
+  {
+   "label": "bc40000",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 236,
+   "placed": 236,
+   "add_mm_median": 10.41321086883545,
+   "rot_deg_median": 16.8131160736084
+  },
+  {
+   "label": "r0",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 397,
+   "placed": 397,
+   "add_mm_median": 9.949687004089355,
+   "rot_deg_median": 15.653183937072754
+  },
+  {
+   "label": "r1",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 400,
+   "placed": 400,
+   "add_mm_median": 9.118075370788574,
+   "rot_deg_median": 14.598565101623535
+  },
+  {
+   "label": "r2",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 400,
+   "placed": 400,
+   "add_mm_median": 8.939650535583496,
+   "rot_deg_median": 14.495524406433105
+  },
+  {
+   "label": "r3",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 400,
+   "placed": 400,
+   "add_mm_median": 8.902632713317871,
+   "rot_deg_median": 14.549725532531738
+  },
+  {
+   "label": "r4",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 400,
+   "placed": 400,
+   "add_mm_median": 8.839333534240723,
+   "rot_deg_median": 14.574300765991211
+  },
+  {
+   "label": "r5",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 400,
+   "placed": 400,
+   "add_mm_median": 8.921411514282227,
+   "rot_deg_median": 14.711454391479492
+  },
+  {
+   "label": "r6",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 400,
+   "placed": 400,
+   "add_mm_median": 8.807330131530762,
+   "rot_deg_median": 14.626171112060547
+  },
+  {
+   "label": "r7",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 400,
+   "placed": 400,
+   "add_mm_median": 8.808831214904785,
+   "rot_deg_median": 14.531429290771484
+  },
+  {
+   "label": "r8",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 400,
+   "placed": 400,
+   "add_mm_median": 8.937233924865723,
+   "rot_deg_median": 14.726598739624023
+  },
+  {
+   "label": "r9",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 400,
+   "placed": 400,
+   "add_mm_median": 8.839472770690918,
+   "rot_deg_median": 14.652118682861328
+  },
+  {
+   "label": "r10",
+   "scale": 1.0,
+   "envs": 400,
+   "held": 400,
+   "placed": 400,
+   "add_mm_median": 8.645395278930664,
+   "rot_deg_median": 14.37559986114502
+  }
+ ],
+ "jitter": [
+  {
+   "label": "teacher",
+   "scale": 1.5,
+   "envs": 400,
+   "held": 400,
+   "placed": 400,
+   "add_mm_median": 9.363870620727539,
+   "rot_deg_median": 15.188127517700195
+  },
+  {
+   "label": "final",
+   "scale": 1.5,
+   "envs": 400,
+   "held": 399,
+   "placed": 397,
+   "add_mm_median": 8.621706008911133,
+   "rot_deg_median": 14.1212739944458
+  },
+  {
+   "label": "teacher",
+   "scale": 2.0,
+   "envs": 400,
+   "held": 390,
+   "placed": 383,
+   "add_mm_median": 9.153219223022461,
+   "rot_deg_median": 15.06462287902832
+  },
+  {
+   "label": "final",
+   "scale": 2.0,
+   "envs": 400,
+   "held": 368,
+   "placed": 356,
+   "add_mm_median": 8.667981147766113,
+   "rot_deg_median": 14.162720680236816
+  },
+  {
+   "label": "teacher",
+   "scale": 3.0,
+   "envs": 400,
+   "held": 340,
+   "placed": 334,
+   "add_mm_median": 9.756278991699219,
+   "rot_deg_median": 15.592576026916504
+  },
+  {
+   "label": "final",
+   "scale": 3.0,
+   "envs": 400,
+   "held": 286,
+   "placed": 216,
+   "add_mm_median": 13.331443786621094,
+   "rot_deg_median": 17.66875648498535
+  },
+  {
+   "label": "teacher",
+   "scale": 4.0,
+   "envs": 400,
+   "held": 307,
+   "placed": 299,
+   "add_mm_median": 9.905294418334961,
+   "rot_deg_median": 15.732332229614258
+  },
+  {
+   "label": "final",
+   "scale": 4.0,
+   "envs": 400,
+   "held": 217,
+   "placed": 122,
+   "add_mm_median": 211.06629943847656,
+   "rot_deg_median": 96.68781280517578
+  }
+ ],
+ "rerun_bc_steps": {
+  "bc100": 100,
+  "bc300": 300,
+  "bc1000": 1000,
+  "bc3000": 3000,
+  "bc10000": 10000,
+  "bc40000": 40000
+ },
+ "note": "eval_sweep.py: 400 fresh scenes per job (seed 7000), the same scenes per jitter",
+ "films": {
+  "stage_bc3000": {
+   "envs": 400,
+   "held": 1,
+   "placed": 0,
+   "add_mm_median": 188.87002563476562,
+   "rot_deg_median": 105.97491455078125,
+   "policy": "output/rl/curve/bc_3000.pt"
+  },
+  "stage_bc_only": {
+   "envs": 400,
+   "held": 232,
+   "placed": 232,
+   "add_mm_median": 10.670209884643555,
+   "rot_deg_median": 16.986907958984375,
+   "policy": "output/rl/curve/policy.pt"
+  },
+  "stage_jitter3": {
+   "envs": 400,
+   "held": 290,
+   "placed": 204,
+   "add_mm_median": 17.575429916381836,
+   "rot_deg_median": 20.60976791381836,
+   "policy": "scripts/rl/checkpoints/hand_place_policy.pt"
+  }
+ }
+}

@@ -50,6 +50,9 @@ parser.add_argument("--spacing", type=float, default=1.0)
 parser.add_argument("--layout_yaw", type=float, default=0.0, help="turn every cell's layout (deg), for filming")
 parser.add_argument("--policy", default="", help="a learned policy checkpoint (train_policy.py): it drives every cell")
 parser.add_argument("--power_w", type=float, default=400.0, help="GPU power budget with --policy (policy.PowerGovernor)")
+parser.add_argument("--subtitle", default="", help="the video title's second line (default: says who drives)")
+parser.add_argument("--encode", action="store_true",
+                    help="no simulation: re-encode output/rl/frames_<name>/ with rollout_<name>.json's results")
 args, _ = parser.parse_known_args()
 
 from isaaclab.app import AppLauncher  # noqa: E402
@@ -85,6 +88,11 @@ def to4(p: torch.Tensor) -> np.ndarray:
 
 
 def main():
+    if args.encode:
+        res = json.load(open(os.path.join(OUT, f"rollout_{name}.json")))["results"]
+        encode(os.path.join(OUT, f"frames_{name}"), os.path.join(OUT, f"{name}.mp4"), len(res),
+               sum(r["placed"] for r in res), learned=bool(args.policy), subtitle=args.subtitle or None)
+        return
     if args.replay:
         plans = json.load(open(os.path.join(T.ROOT, "output", "hand_place_plans.json")))["trials"]
         n = len(plans) if args.num_envs <= 0 else args.num_envs
@@ -262,7 +270,8 @@ def grade(img: np.ndarray, exposure=GRADE["exposure"], lift=GRADE["lift"], shoul
     return (np.clip(out, 0, 1) * 255 + 0.5).astype(np.uint8)
 
 
-def encode(frame_dir: str, path: str, n_envs: int, placed: int, size=(1920, 1080), fps=30, learned=False, **g):
+def encode(frame_dir: str, path: str, n_envs: int, placed: int, size=(1920, 1080), fps=30, learned=False,
+           subtitle: str | None = None, **g):
     """Raw frames (frame_dir/*.png) -> graded, captioned H.264 MP4 + stills. Separate from rendering so the
     grade can be tuned without re-simulating."""
     import glob
@@ -296,9 +305,9 @@ def encode(frame_dir: str, path: str, n_envs: int, placed: int, size=(1920, 1080
         a = max(0.0, min(1.0, (4.0 - t) / 0.7))  # the title, fading out
         if a > 0:
             l1 = f"{n_envs} scenes at once \u00b7 Isaac Sim 6 \u00b7 GPU PhysX"
-            l2 = ("a learned policy: a small neural network on the simulator state, trained by imitating the scripted hand"
-                  if learned else
-                  "the scripted teacher: each scene randomized, the plan made from where the controller settled")
+            l2 = subtitle or ("a learned policy: a small neural network on the simulator state, trained by imitating the scripted hand"
+                              if learned else
+                              "the scripted teacher: each scene randomized, the plan made from where the controller settled")
             w = max(d.textlength(l1, font=f1), d.textlength(l2, font=f2))
             y0 = yb - int(H * 0.088)
             d.rounded_rectangle([x0 - 18, y0 - 12, x0 + w + 18, yb], 10, fill=(255, 255, 255, int(205 * a)))
@@ -310,7 +319,8 @@ def encode(frame_dir: str, path: str, n_envs: int, placed: int, size=(1920, 1080
             w = d.textlength(msg, font=f1)
             xr, y0 = W - x0 - w, yb - int(H * 0.05)
             d.rounded_rectangle([xr - 18, y0 - 12, xr + w + 18, yb], 10, fill=(255, 255, 255, int(215 * b)))
-            d.text((xr, y0), msg, fill=(21, 128, 61, int(255 * b)), font=f1)
+            ok = placed >= 0.9 * n_envs
+            d.text((xr, y0), msg, fill=(21, 128, 61, int(255 * b)) if ok else (185, 28, 28, int(255 * b)), font=f1)
         Image.alpha_composite(im, ov).convert("RGB").save(os.path.join(tmp, f"{i:05d}.jpg"), quality=93)
     subprocess.run([exe, "-y", "-loglevel", "error", "-framerate", str(fps), "-i", os.path.join(tmp, "%05d.jpg"),
                     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19", path], check=True)
@@ -597,7 +607,8 @@ class Recorder:
             self.n += 1
 
     def finish(self, path, res, learned=False):
-        encode(self.frame_dir, path, len(res), sum(r["placed"] for r in res), self.size, learned=learned)
+        encode(self.frame_dir, path, len(res), sum(r["placed"] for r in res), self.size, learned=learned,
+               subtitle=args.subtitle or None)
 
 
 if __name__ == "__main__":

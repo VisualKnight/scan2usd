@@ -37,6 +37,7 @@ parser.add_argument("--obs_noise", type=float, default=0.05, help="input noise i
 parser.add_argument("--resume", default="", help="a checkpoint to start from (skips the demos' BC)")
 parser.add_argument("--demos_file", default="", help="demonstrations saved by an earlier run (demos.pt): no re-simulation")
 parser.add_argument("--max_hours", type=float, default=5.0, help="stop starting new rounds after this")
+parser.add_argument("--snapshots", default="", help="comma-separated BC steps: save the network part-way (bc_<steps>.pt)")
 args, _ = parser.parse_known_args()
 
 from isaaclab.app import AppLauncher  # noqa: E402
@@ -90,7 +91,7 @@ class Data:
         return sum(len(o) for o in self.obs)
 
 
-def fit(policy, data: Data, steps: int, dev, lr: float, log: dict):
+def fit(policy, data: Data, steps: int, dev, lr: float, log: dict, snapshots=()):
     obs, act = data.tensors()
     n = len(obs)
     opt = torch.optim.Adam(policy.parameters(), lr=lr)
@@ -112,6 +113,10 @@ def fit(policy, data: Data, steps: int, dev, lr: float, log: dict):
         losses.append(float(loss))
         if s % 500 == 0:
             gov.tick()
+        if s + 1 in snapshots:
+            policy.eval()
+            PL.save(policy, os.path.join(OUT, f"bc_{s + 1}.pt"), {"round": 0, "bc_steps": s + 1, "loss": losses[-1]})
+            policy.train()
     policy.eval()
     log.update({"samples": n, "loss_first": float(np.mean(losses[:100])), "loss_last": float(np.mean(losses[-200:])),
                 "fit_s": time.time() - t0})
@@ -153,7 +158,7 @@ def main():
         if not args.demos_file:
             torch.save((o, a), os.path.join(OUT, "demos.pt"))
         policy.set_stats(o, a)
-        fit(policy, data, args.steps0, dev, args.lr, r0)
+        fit(policy, data, args.steps0, dev, args.lr, r0, {int(s) for s in args.snapshots.split(",") if s})
         PL.save(policy, os.path.join(OUT, "round_0.pt"), {"round": 0})
         log["rounds"].append(r0)
         PL.write_json(LOG, log)

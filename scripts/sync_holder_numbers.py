@@ -42,6 +42,7 @@ def values() -> dict[str, str]:
         **isaac_hand_values(),
         **reel_values(),
         **learned_values(),
+        **progress_values(),
         **genai_values(),
     }
 
@@ -127,6 +128,27 @@ def learned_values() -> dict[str, str]:
             "learn_min": f"{s['train_minutes']:.0f}", "learn_film": f"{film['placed']}/{film['envs']}",
             "learn_power": f"{s['power_max_w']:.0f}", "teach_add": f"{s['teacher']['add_mm_median']:.1f}",
             "teach_rot": f"{s['teacher']['rot_deg_median']:.0f}"}
+
+
+def progress_values() -> dict[str, str]:
+    """The learned policy before and beyond (scripts/rl/eval_sweep.py + plot_learning.py)."""
+    p = ROOT / "docs" / "figures" / "learned_progress.json"
+    if not p.exists():
+        return {}
+    s = json.loads(p.read_text())
+    cur = {j["label"]: j for j in s["curve"]}
+    jit = {(j["label"], j["scale"]): j for j in s["jitter"]}
+
+    def frac(j):
+        return f"{j['placed']}/{j['envs']}"
+
+    out = {"prog_bc10k": frac(cur["bc10000"]), "prog_bc": frac(cur["bc40000"]), "prog_r0": frac(cur["r0"]),
+           "prog_r1": frac(cur["r1"])}
+    for sc in (2.0, 3.0, 4.0):
+        out[f"jit{sc:g}_net"], out[f"jit{sc:g}_teach"] = frac(jit[("final", sc)]), frac(jit[("teacher", sc)])
+    for k, f in s.get("films", {}).items():
+        out[f"film_{k.removeprefix('stage_')}"] = frac(f)
+    return out
 
 
 def reel_values() -> dict[str, str]:
