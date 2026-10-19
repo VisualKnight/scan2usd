@@ -392,7 +392,7 @@ def place_waypoints(C_goal, approach, H_rel, transport):
     uncurl = dict(wps[k], T=T, g="open", dur=0.5, tag="uncurl")
     nudge = dict(wps[k], T=Tn, g="open", dur=0.6, tag="nudge")
     off = dict(wps[k], T=T, g="open", dur=0.5, tag="unnudge")
-    return wps[:k] + [letgo, uncurl, nudge, off] + wps[k + 1:]
+    return wps[:k] + [letgo, uncurl] + ([nudge, off] if NUDGE[0] else []) + wps[k + 1:]
 
 
 def pick_waypoints(A0, approach, C_mid_H):
