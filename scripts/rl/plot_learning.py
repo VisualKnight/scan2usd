@@ -124,7 +124,9 @@ def main():
            "rerun_bc_steps": BC_STEPS, "note": "eval_sweep.py: 400 fresh scenes per job (seed 7000), the same scenes per jitter"}
     films = {}
     for k in ("stage_bc3000", "stage_bc_only", "stage_jitter3"):
-        p = os.path.join(RL, f"rollout_{k}.json")
+        p = os.path.join(RL, f"rollout_{k}_v2.json")  # the v2 look (camera_v2, 0.65 m, no forearm)
+        if not os.path.exists(p):
+            p = os.path.join(RL, f"rollout_{k}.json")
         if os.path.exists(p):
             s = json.load(open(p))["summary"]
             films[k] = {key: s[key] for key in ("envs", "held", "placed", "add_mm_median", "rot_deg_median", "policy")}

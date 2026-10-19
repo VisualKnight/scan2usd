@@ -449,10 +449,12 @@ def shot_keys(su, wps):
     return [(0.0, a[:-1] + b)]
 
 
-def video(ctrl, holder, R_rel, t_rel, grasp, out: Path, summary=None, name="hand_place"):
+def video(ctrl, holder, R_rel, t_rel, grasp, out: Path, summary=None, name="hand_place", no_forearm=False):
     """The hero shot (re-aimed run, seed 0) with demo_hand_place's camera keys (one continuous move, see
-    shot_keys): MP4, WebP and poster."""
+    shot_keys): MP4, WebP and poster. no_forearm: render without the forearm housing (physics unchanged)."""
     su = PinchSetup(0, ctrl, holder, R_rel, t_rel, "hulls", grasp, correct=True, work_tag="video")
+    if no_forearm:
+        print(f"forearm hidden: {HP.hide_forearm(su.model)} visual geoms")
 
     def end_lines(res):
         lines = [f"Placed: {res['add_mm']:.1f} mm / {res['rot_deg']:.0f}\u00b0 from the real pose"]
@@ -468,6 +470,8 @@ def video(ctrl, holder, R_rel, t_rel, grasp, out: Path, summary=None, name="hand
 
     def make(correct):
         s = PinchSetup(0, ctrl, holder, R_rel, t_rel, "hulls", grasp, correct=correct, work_tag=f"still_{int(correct)}")
+        if no_forearm:
+            HP.hide_forearm(s.model)
         return s, path(s)
 
     HP.compare_still(ctrl, holder, R_rel, t_rel, None, out / f"{name}_compare.jpg", make=make)
@@ -548,6 +552,7 @@ def main() -> None:
     ap.add_argument("--probe", action="store_true", help="solve the grasp and list the contacts at the pick")
     ap.add_argument("--trials", type=int, default=12)
     ap.add_argument("--video", type=Path, help="render the hero video into this folder (uses the saved trial summary)")
+    ap.add_argument("--no-forearm", action="store_true", help="with --video: render without the forearm housing")
     ap.add_argument("--export-plans", type=Path, help="write the plans + hand targets (JSON) for Isaac Sim and exit")
     ap.add_argument("--export-task", type=Path, help="write the scene layout + plan inputs (JSON) for the Isaac Lab task")
     args = ap.parse_args()
@@ -564,7 +569,8 @@ def main() -> None:
     if args.video:
         trials = FIG / "hand_place.json"
         video(ctrl, holder, R_rel, t_rel, grasp, args.video,
-              summary=json.loads(trials.read_text())["summary"] if trials.exists() else None)
+              summary=json.loads(trials.read_text())["summary"] if trials.exists() else None,
+              no_forearm=args.no_forearm)
         return
     if args.probe:
         su = PinchSetup(0, ctrl, holder, R_rel, t_rel, "hulls", grasp, work_tag="probe")

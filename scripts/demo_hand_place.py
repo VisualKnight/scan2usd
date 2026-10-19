@@ -530,6 +530,18 @@ def video(ctrl, holder, R_rel, t_rel, poses, out: Path, summary=None, fps: int =
     compare_still(ctrl, holder, R_rel, t_rel, poses, out / "hand_place_compare.jpg")
 
 
+def hide_forearm(model) -> int:
+    """Move the forearm housing's visual geoms (no contacts) to geom group 5, which MuJoCo's default render
+    options leave out: the forearm still collides, weighs and is welded as before. Returns the count."""
+    fb = model.body("rh_forearm").id
+    k = 0
+    for g in range(model.ngeom):
+        if model.geom_bodyid[g] == fb and model.geom_contype[g] == 0 and model.geom_conaffinity[g] == 0:
+            model.geom_group[g] = 5
+            k += 1
+    return k
+
+
 def film(su, wps, out: Path, name: str, captions, end_lines, fps: int = 30, size=(1280, 720),
          title="Shadow Hand places the scanned controller into the scanned holder  \u2014  MuJoCo", tail=3.5,
          shots=None):

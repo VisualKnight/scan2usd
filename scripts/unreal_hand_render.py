@@ -150,8 +150,9 @@ def box_mesh(stage, path: str, T, half) -> UsdGeom.Mesh:
     return mesh
 
 
-def hand_meshes(stage, m, frame0):
-    """One Xform per hand link (posed at frame 0) with its visual meshes in link coordinates."""
+def hand_meshes(stage, m, frame0, skip=()):
+    """One Xform per hand link (posed at frame 0) with its visual meshes in link coordinates; links in
+    `skip` get none (--no-forearm: the forearm housing)."""
     looks = {k: solid_material(stage, f"/World/Looks/hand_{k}", *v) for k, v in HAND_LOOKS.items()}
     Usd.ModelAPI(UsdGeom.Xform.Define(stage, "/World/hand").GetPrim()).SetKind(Kind.Tokens.group)
     n = 0
@@ -159,7 +160,7 @@ def hand_meshes(stage, m, frame0):
         if m.geom_contype[g] or m.geom_conaffinity[g] or m.geom_type[g] != mujoco.mjtGeom.mjGEOM_MESH:
             continue
         body = m.body(m.geom_bodyid[g]).name
-        if not body.startswith("rh_"):
+        if not body.startswith("rh_") or body in skip:
             continue
         xf = f"/World/hand/{body}"
         if not stage.GetPrimAtPath(xf):
@@ -201,7 +202,7 @@ def ue_pose(T) -> list[float]:
     return [*p.tolist(), *q.tolist()]
 
 
-def stage_layout(grasp="pinch") -> dict:
+def stage_layout(grasp="pinch", no_forearm=False) -> dict:
     su, frames, res, cuts, ev = record(grasp)
     m, d = su.model, su.data
     print(f"recorded {len(frames)} frames ({len(frames) / FPS:.1f} s); placed {res['add_mm']:.1f} mm / "
@@ -221,7 +222,7 @@ def stage_layout(grasp="pinch") -> dict:
     L.TABLE, L.TABLE_CENTER = (2.6, 1.8, 0.035), (0.10, 0.15)  # edges out of every shot
     L.table(stage)
     frame0 = frames[0][1]
-    n_geoms = hand_meshes(stage, m, frame0)
+    n_geoms = hand_meshes(stage, m, frame0, skip=("rh_forearm",) if no_forearm else ())
 
     hold = UsdGeom.Xform.Define(stage, "/World/cod_holder")
     hold.GetPrim().GetReferences().AddReference(str(L.asset("cod_holder")).replace("\\", "/"))
@@ -305,6 +306,7 @@ def main() -> None:
     ap.add_argument("--stages", default="layout,build,preview")
     ap.add_argument("--grasp", choices=("pinch", "span"), default="pinch",
                     help="pinch: demo_hand_pinch.py (the overview's); span: demo_hand_place.py")
+    ap.add_argument("--no-forearm", action="store_true", help="layout without the forearm housing's meshes")
     args = ap.parse_args()
     stages = args.stages.split(",")
     ue = HandUE(args.ue, args.project)
@@ -313,7 +315,7 @@ def main() -> None:
     for f in ("ue_build.py", "ue_render.py"):
         shutil.copy(HERE / f, ue.scripts / f)
     if "layout" in stages:
-        stage_layout(args.grasp)
+        stage_layout(args.grasp, args.no_forearm)
     if "build" in stages:
         ue.settings()
         ue.build()

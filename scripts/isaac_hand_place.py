@@ -43,6 +43,7 @@ parser.add_argument("--trials", type=int, default=12)
 parser.add_argument("--physics-hz", type=int, default=480)
 parser.add_argument("--video", action="store_true", help="also render the re-aimed run of seed 0 (RTX)")
 parser.add_argument("--video-only", action="store_true", help="only the video (keeps the benchmark JSON)")
+parser.add_argument("--no-forearm", action="store_true", help="render without the forearm housing (physics unchanged)")
 parser.add_argument("--stills", action="store_true",
                     help="path-traced stills of the re-aimed run (grasp, place, result) for make_hand_hero.py")
 parser.add_argument("--probe", action="store_true", help="one open-loop trial with a per-waypoint trace")
@@ -226,6 +227,10 @@ def scene(trial, collision, ghost=False):
             name = p.GetName()
             look = looks["metal"] if "knuckle" in name else looks["forearm"] if "forearm" in name else looks["shell"]
             UsdShade.MaterialBindingAPI.Apply(p).Bind(look, UsdShade.Tokens.strongerThanDescendants)
+    if args.no_forearm:  # the forearm housing's visual meshes only: its collider, mass and weld stay
+        for c in forearm.GetChildren():
+            if c.GetName().startswith("forearm_") and "collision" not in c.GetName():
+                UsdGeom.Imageable(c).MakeInvisible()
 
     # Kinematic body the forearm is welded to (MuJoCo: the mocap body and its weld).
     target = UsdGeom.Xform.Define(stage, "/World/target")

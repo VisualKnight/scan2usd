@@ -240,26 +240,26 @@
  "films": {
   "stage_bc3000": {
    "envs": 400,
-   "held": 1,
+   "held": 0,
    "placed": 0,
-   "add_mm_median": 188.87002563476562,
-   "rot_deg_median": 105.97491455078125,
+   "add_mm_median": 191.85543823242188,
+   "rot_deg_median": 107.4854736328125,
    "policy": "output/rl/curve/bc_3000.pt"
   },
   "stage_bc_only": {
    "envs": 400,
-   "held": 232,
-   "placed": 232,
-   "add_mm_median": 10.670209884643555,
-   "rot_deg_median": 16.986907958984375,
+   "held": 226,
+   "placed": 226,
+   "add_mm_median": 10.660394668579102,
+   "rot_deg_median": 17.10938835144043,
    "policy": "output/rl/curve/policy.pt"
   },
   "stage_jitter3": {
    "envs": 400,
-   "held": 290,
-   "placed": 204,
-   "add_mm_median": 17.575429916381836,
-   "rot_deg_median": 20.60976791381836,
+   "held": 289,
+   "placed": 202,
+   "add_mm_median": 18.022886276245117,
+   "rot_deg_median": 19.234556198120117,
    "policy": "scripts/rl/checkpoints/hand_place_policy.pt"
   }
  }
