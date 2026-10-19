@@ -124,6 +124,24 @@ class Move:
         pos = h00 * self.P[i] + h10 * h * self.m[i] + h01 * self.P[i + 1] + h11 * h * self.m[i + 1]
         return pose(self.slerps[i]([u]).as_matrix()[0], pos), i, u
 
+    def at_many(self, ts):
+        """Vectorized at() for an array of times: positions (m, 3), quaternions (m, 4; x, y, z, w), leg
+        indices (m,) and leg fractions (m,). The same math as at(), one scipy call per leg."""
+        ts = np.asarray(ts, float)
+        D = float(self.cum[-1])
+        p = np.array([time_scale(t, D, self.ramp) for t in ts])
+        i = np.clip(np.searchsorted(self.cum, p, side="right") - 1, 0, len(self.legs) - 1)
+        h = self.d[i]
+        u = np.where(h > 0, np.clip((p - self.cum[i]) / np.where(h > 0, h, 1.0), 0, 1), 1.0)
+        h00, h10, h01, h11 = 2 * u**3 - 3 * u**2 + 1, u**3 - 2 * u**2 + u, -2 * u**3 + 3 * u**2, u**3 - u**2
+        pos = (h00[:, None] * self.P[i] + (h10 * h)[:, None] * self.m[i] + h01[:, None] * self.P[i + 1]
+               + (h11 * h)[:, None] * self.m[i + 1])
+        quat = np.zeros((len(ts), 4))
+        for j in np.unique(i):
+            sel = i == j
+            quat[sel] = self.slerps[j](u[sel]).as_quat()
+        return pos, quat, i, u
+
 
 def place_waypoints(C_goal, approach, H_rel, open_key, transport, grip_key="grip"):
     """From the pre-place pose on, for a forearm pose H_rel in the controller frame: in front of the
@@ -186,6 +204,80 @@ def plan_path(T_start, C_goal, approach_place, H, F, face, open_key, transport, 
     C_mid = pose(tip @ C[:3, :3], C[:3, 3] - 0.12 * np.asarray(approach_place) + [0, 0, 0.10])
     return (pick_waypoints(A0, ap, C_mid @ H, open_key, grip_key)
             + place_waypoints(C_goal, approach_place, H, open_key, transport, grip_key))
+
+
+# --- the top-bottom pinch (demo_hand_pinch.py): goal, pick and place waypoints ------------------------------------
+# Release and timing settings; demo_hand_pinch.py documents each (RELEASE_LEAN, PLACE_RIGHT, ...).
+PINCH = {"lean": 0.005, "place_right": 0.003, "place_roll_deg": -3.0, "letgo_back": 0.03, "nudge": (0.0, 0.0),
+         "ramp": 0.8, "insert_dur": 1.5, "seat_dur": 1.5}
+
+
+def pinch_goal(T_target, face, right, center, p=PINCH):
+    """The pose to set the controller down at (T_target: its pose seated in the holder) and the approach
+    (into the face): leaning toward the holder's chest, a little to its right and pre-rolled about the face
+    normal (about the grasp center, controller frame) against the drag of the thumb's slide-out."""
+    C = np.array(T_target, float).copy()
+    al = -(C[:3, :3] @ np.asarray(face, float))
+    C[:3, 3] += p["lean"] * al + p["place_right"] * (C[:3, :3] @ np.asarray(right, float))
+    if p["place_roll_deg"]:
+        c = C[:3, :3] @ np.asarray(center, float) + C[:3, 3]
+        R = Rotation.from_rotvec(np.radians(p["place_roll_deg"]) * (C[:3, :3] @ np.asarray(face, float))).as_matrix()
+        C[:3, :3] = R @ C[:3, :3]
+        C[:3, 3] = c + R @ (C[:3, 3] - c)
+    return C, al
+
+
+def pinch_place_waypoints(C_goal, approach, H_rel, transport, p=PINCH):
+    """From the pre-place pose on: no stop in front of the holder (the pre-place pose is passed through, the
+    move from the lift to the seat eased in and out over p["ramp"]; a re-aim happens as the hand passes it),
+    a slow insertion, then the release: the fingers lift off the rim and the thumb drops away as the hand
+    backs off p["letgo_back"] (sliding the thumb out from under the bottom edge), the fingers open,
+    optionally an open-hand nudge, and away."""
+    wps = place_waypoints(C_goal, approach, H_rel, "open", transport)
+    durs = {"insert": p["insert_dur"], "seat": p["seat_dur"]}
+    wps = [dict(w, via=True, ramp=p["ramp"]) if w["tag"] == "preplace" else
+           dict(w, dur=durs[w["tag"]]) if w["tag"] in durs else w for w in wps]
+    k = next(i for i, w in enumerate(wps) if w["tag"] == "release")
+    a = np.asarray(approach, float)
+    T = wps[k]["T"].copy()
+    T[:3, 3] -= p["letgo_back"] * a
+    nudge = p["nudge"]
+    Tn = T.copy()
+    Tn[:3, 3] += (p["letgo_back"] + nudge[0]) * a + [0, 0, nudge[1]]
+    letgo = dict(wps[k], T=T, g="letgo", dur=0.5, tag="release")
+    uncurl = dict(wps[k], T=T, g="open", dur=0.5, tag="uncurl")
+    extra = [dict(wps[k], T=Tn, g="open", dur=0.6, tag="nudge"), dict(wps[k], T=T, g="open", dur=0.5, tag="unnudge")]
+    return wps[:k] + [letgo, uncurl] + (extra if nudge[0] else []) + wps[k + 1:]
+
+
+def pinch_pick_waypoints(A0, approach, C_mid_H):
+    """Come down over the face with the fingers spread past the top edge, settle them on the rim (hook),
+    close the thumb (grip), lift and swing to the mid pose."""
+    a = np.asarray(approach, float)
+
+    def shift(T, v):
+        return pose(T[:3, :3], T[:3, 3] + v)
+
+    return [
+        wp(shift(A0, -0.10 * a + [0, 0, 0.10]), "open", 0.0, tag="start"),
+        wp(shift(A0, -0.05 * a), "open", 1.4, via=True, tag="approach"),
+        wp(A0, "open", 0.9, tag="pick"),
+        wp(A0, "hook", 0.6, tag="hook"),
+        wp(A0, "grip", 0.7, tag="grip"),
+        wp(A0, "grip", 0.3, tag="settle"),
+        wp(shift(A0, [0, 0, 0.08]), "grip", 1.1, via=True, tag="lift"),
+        wp(C_mid_H, "grip", 1.8, via=True, tag="turn"),
+    ]
+
+
+def pinch_plan(T_start, C_goal, approach, H, F, face, transport, p=PINCH):
+    """The whole pinch placement from the settled controller pose (as plan_path for the span grasp)."""
+    A0 = T_start @ H
+    ap = (A0 @ F)[:3, 2]
+    f = C_goal[:3, :3] @ np.asarray(face, float)
+    tip = Rotation.align_vectors([[0, 0, 1.0]], [f])[0].as_matrix()
+    C_mid = pose(tip @ C_goal[:3, :3], C_goal[:3, 3] - 0.12 * np.asarray(approach) + [0, 0, 0.10])
+    return pinch_pick_waypoints(A0, ap, C_mid @ H) + pinch_place_waypoints(C_goal, approach, H, transport, p)
 
 
 def event_times(wps: list[dict]) -> dict[str, float]:

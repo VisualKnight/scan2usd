@@ -334,15 +334,8 @@ class PinchSetup:
         T_hold = pose(yaw_matrix(self.hold_yaw), [*hold_xy, 0.0])
         self.T_target = T_hold @ pose(R_rel, t_rel)
         self.ctrl, self.correct, self.transport = ctrl, correct, transport
-        self.C_goal = self.T_target.copy()
-        self.al = -(self.C_goal[:3, :3] @ ctrl.face)  # the approach at the holder: into the face
-        self.C_goal[:3, 3] += RELEASE_LEAN * self.al  # set down leaning toward the holder's chest ...
-        self.C_goal[:3, 3] += PLACE_RIGHT * (self.C_goal[:3, :3] @ ctrl.right)  # ... and a little to its right
-        if PLACE_ROLL_DEG:  # pre-rolled about the face normal against the roll the thumb's slide-out gives it
-            c = self.C_goal[:3, :3] @ (np.asarray(grasp["center"]) if "center" in grasp else np.zeros(3)) + self.C_goal[:3, 3]
-            R = Rotation.from_rotvec(np.radians(PLACE_ROLL_DEG) * (self.C_goal[:3, :3] @ ctrl.face)).as_matrix()
-            self.C_goal[:3, :3] = R @ self.C_goal[:3, :3]
-            self.C_goal[:3, 3] = c + R @ (self.C_goal[:3, 3] - c)
+        self.C_goal, self.al = hand_motion.pinch_goal(self.T_target, ctrl.face, ctrl.right,
+                                                      grasp["center"] if "center" in grasp else np.zeros(3), PINCH_P)
         stand_xy = HP.STAND_XY + (rng.uniform(-0.02, 0.02, 2) if jit else 0)
         yaw0 = np.degrees(np.arctan2(HP.EDGE_DIR[1], HP.EDGE_DIR[0]) - np.arctan2(ctrl.top[1], ctrl.top[0]))
         yaw0 += rng.uniform(-10, 10) if jit else 0
@@ -392,62 +385,21 @@ class PinchSetup:
         return place_waypoints(self.C_goal, self.al, H_rel, self.transport)
 
 
+# The release and timing settings above, as hand_motion's pinch functions take them.
+PINCH_P = {"lean": RELEASE_LEAN, "place_right": PLACE_RIGHT, "place_roll_deg": PLACE_ROLL_DEG,
+           "letgo_back": LETGO_BACK, "nudge": NUDGE, "ramp": MOVE_RAMP, "insert_dur": INSERT_DUR, "seat_dur": SEAT_DUR}
+
+
 def place_waypoints(C_goal, approach, H_rel, transport):
-    """From the pre-place pose on (hand_motion.place_waypoints' moves) with this grasp's release: set down in
-    the holder's hands, the fingers lift off the rim and the thumb drops away as the hand backs off LETGO_BACK
-    (sliding it out from under the bottom edge), the fingers open, and the open hand nudges the top back onto
-    the holder before leaving."""
-    wps = hand_motion.place_waypoints(C_goal, approach, H_rel, "open", transport)
-    # No stop in front of the holder: the hand carries straight on into the insertion (re-aiming as it passes,
-    # demo_hand_place.execute), the move from the lift to the seat eased in and out over MOVE_RAMP; the
-    # insertion itself slower than demo_hand_place's.
-    durs = {"insert": INSERT_DUR, "seat": SEAT_DUR}
-    wps = [dict(w, via=True, ramp=MOVE_RAMP) if w["tag"] == "preplace" else
-           dict(w, dur=durs[w["tag"]]) if w["tag"] in durs else w for w in wps]
-    k = next(i for i, w in enumerate(wps) if w["tag"] == "release")
-    a = np.asarray(approach, float)
-    T = wps[k]["T"].copy()
-    T[:3, 3] -= LETGO_BACK * a
-    Tn = T.copy()
-    Tn[:3, 3] += (LETGO_BACK + NUDGE[0]) * a + [0, 0, NUDGE[1]]
-    letgo = dict(wps[k], T=T, g="letgo", dur=0.5, tag="release")
-    uncurl = dict(wps[k], T=T, g="open", dur=0.5, tag="uncurl")
-    nudge = dict(wps[k], T=Tn, g="open", dur=0.6, tag="nudge")
-    off = dict(wps[k], T=T, g="open", dur=0.5, tag="unnudge")
-    return wps[:k] + [letgo, uncurl] + ([nudge, off] if NUDGE[0] else []) + wps[k + 1:]
-
-
-def pick_waypoints(A0, approach, C_mid_H):
-    """Come down over the face with the fingers spread past the top edge, curl them round the rim, press
-    the thumb on, lift and swing to the mid pose."""
-    a = np.asarray(approach, float)
-
-    def shift(T, v):
-        return pose(T[:3, :3], T[:3, 3] + v)
-
-    wp = hand_motion.wp
-    return [
-        wp(shift(A0, -0.10 * a + [0, 0, 0.10]), "open", 0.0, tag="start"),
-        wp(shift(A0, -0.05 * a), "open", 1.4, via=True, tag="approach"),
-        wp(A0, "open", 0.9, tag="pick"),
-        wp(A0, "hook", 0.6, tag="hook"),
-        wp(A0, "grip", 0.7, tag="grip"),
-        wp(A0, "grip", 0.3, tag="settle"),
-        wp(shift(A0, [0, 0, 0.08]), "grip", 1.1, via=True, tag="lift"),
-        wp(C_mid_H, "grip", 1.8, via=True, tag="turn"),
-    ]
+    """From the pre-place pose on (hand_motion.pinch_place_waypoints): set down in the holder's hands, the
+    fingers lift off the rim and the thumb drops away as the hand backs off (sliding it out from under the
+    bottom edge), the fingers open."""
+    return hand_motion.pinch_place_waypoints(C_goal, approach, H_rel, transport, PINCH_P)
 
 
 def path(su):
-    """Waypoints for the whole placement (the moves of hand_motion.plan_path with this grasp's closing and
-    release steps)."""
-    A0 = su.T_start @ su.H
-    ap = (A0 @ su.F)[:3, 2]
-    C = su.C_goal
-    f = C[:3, :3] @ su.ctrl.face
-    tip = Rotation.align_vectors([[0, 0, 1.0]], [f])[0].as_matrix()
-    C_mid = pose(tip @ C[:3, :3], C[:3, 3] - 0.12 * np.asarray(su.al) + [0, 0, 0.10])
-    return pick_waypoints(A0, ap, C_mid @ su.H) + place_waypoints(C, su.al, su.H, su.transport)
+    """Waypoints for the whole placement (hand_motion.pinch_plan)."""
+    return hand_motion.pinch_plan(su.T_start, su.C_goal, su.al, su.H, su.F, su.ctrl.face, su.transport, PINCH_P)
 
 
 def pose_hand(su, T_forearm, q: dict):
@@ -556,6 +508,31 @@ def export_plans(ctrl, holder, R_rel, t_rel, grasp, seeds, path_out: Path) -> No
     print(f"wrote {path_out} ({len(trials)} plans)")
 
 
+def export_task(ctrl, holder, R_rel, t_rel, grasp, path_out: Path) -> None:
+    """The scene layout and plan inputs for the Isaac Lab task (scripts/rl/, hand_teacher.Spec), in
+    demo_hand_place.export_task's format plus the pinch's: the engine settles the controller, then calls
+    hand_motion.pinch_goal / pinch_plan itself. Poses in PinchSetup's world frame (z up, floor z = 0)."""
+    su = PinchSetup(0, ctrl, holder, R_rel, t_rel, "hulls", grasp, work_tag="export")
+    l_lo, l_hi = ctrl.lat.min() + 0.004, ctrl.lat.max() - 0.004
+    t_lo, t_hi = ctrl.up.min() + 0.003, ctrl.up.max() - 0.025
+    yaw0 = float(np.degrees(np.arctan2(HP.EDGE_DIR[1], HP.EDGE_DIR[0]) - np.arctan2(ctrl.top[1], ctrl.top[0])))
+    spec = {
+        "grasp": "pinch", "pinch": {k: (list(v) if isinstance(v, tuple) else v) for k, v in PINCH_P.items()},
+        "grasp_center": np.asarray(grasp["center"]).tolist(),
+        "controller_in_holder": pose(R_rel, t_rel).tolist(), "release_gap_m": 0.0,
+        "holder_xy": HP.HOLDER_XY.tolist(), "holder_yaw_deg": 0.0,
+        "tray_xy": HP.STAND_XY.tolist(), "tray_height_m": TRAY_H, "controller_yaw_deg": yaw0,
+        "tray_center_top_m": 0.5 * (t_lo + t_hi), "tray_center_right_m": 0.5 * (l_lo + l_hi),
+        "tray_half_extents": [0.5 * (l_hi - l_lo), 0.5 * (t_hi - t_lo), TRAY_H / 2],
+        "ctrl_axes": {"right": ctrl.right.tolist(), "top": ctrl.top.tolist(), "face": ctrl.face.tolist()},
+        "H": su.H.tolist(), "F": su.F.tolist(), "open_key": "open", "transport": su.transport,
+        "hand_q": su.q, "servo": HP.servo_table(su.model),
+    }
+    path_out.parent.mkdir(parents=True, exist_ok=True)
+    path_out.write_text(json.dumps(spec, indent=1))
+    print(f"wrote {path_out}")
+
+
 def trial(seed, ctrl, holder, R_rel, t_rel, grasp, correct, collision="hulls"):
     su = PinchSetup(seed, ctrl, holder, R_rel, t_rel, collision, grasp, correct=correct,
                     work_tag=f"trial_{collision}_{int(correct)}")
@@ -572,11 +549,15 @@ def main() -> None:
     ap.add_argument("--trials", type=int, default=12)
     ap.add_argument("--video", type=Path, help="render the hero video into this folder (uses the saved trial summary)")
     ap.add_argument("--export-plans", type=Path, help="write the plans + hand targets (JSON) for Isaac Sim and exit")
+    ap.add_argument("--export-task", type=Path, help="write the scene layout + plan inputs (JSON) for the Isaac Lab task")
     args = ap.parse_args()
     if not HAND.exists():
         raise SystemExit(f"{HAND} not found; fetch mujoco_menagerie/shadow_hand first (see README)")
     ctrl, holder, R_rel, t_rel = load()
     grasp = solve_grasp(ctrl, holder, R_rel, t_rel)
+    if args.export_task:
+        export_task(ctrl, holder, R_rel, t_rel, grasp, args.export_task)
+        return
     if args.export_plans:
         export_plans(ctrl, holder, R_rel, t_rel, grasp, range(args.trials), args.export_plans)
         return

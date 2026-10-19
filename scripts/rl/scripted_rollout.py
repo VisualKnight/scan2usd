@@ -48,6 +48,8 @@ parser.add_argument("--stills", default="", help="comma-separated times (s): sti
 parser.add_argument("--name", default=None)
 parser.add_argument("--spacing", type=float, default=1.0)
 parser.add_argument("--layout_yaw", type=float, default=0.0, help="turn every cell's layout (deg), for filming")
+parser.add_argument("--policy", default="", help="a learned policy checkpoint (train_policy.py): it drives every cell")
+parser.add_argument("--power_w", type=float, default=400.0, help="GPU power budget with --policy (policy.PowerGovernor)")
 args, _ = parser.parse_known_args()
 
 from isaaclab.app import AppLauncher  # noqa: E402
@@ -112,6 +114,25 @@ def main():
                    frame_dir=os.path.join(OUT, f"frames_{name}")) if (args.video or args.stills) else None
     if args.gui is not None:
         rec = Recorder(env, scenes, layout_yaw=args.layout_yaw, render=False)
+    if args.policy:  # the learned policy drives every cell (policy.Runner); the teacher only re-aims its own plan
+        import policy as PL
+
+        pol = PL.load(args.policy, dev)
+        run = PL.Runner(env, SPEC, layout_yaw=args.layout_yaw, governor=PL.PowerGovernor(args.power_w), obs_set=pol.obs_set)
+        t0 = time.time()
+        r, _ = run.episode(scenes, policy=pol, use_policy=torch.ones(n, dtype=torch.bool), collect=False,
+                           frame_cb=rec.frame if (rec and args.video) else None)
+        res = [{"env": i, "add_mm": float(r["add_mm"][i]), "rot_deg": float(r["rot_deg"][i]), "held": bool(r["held"][i]),
+                "placed": bool(r["placed"][i])} for i in range(n)]
+        summary = {**PL.summarize(r), "policy": args.policy, "wall_s": time.time() - t0, "power": run.gov.summary()}
+        print("[rollout]", json.dumps(summary), flush=True)
+        os.makedirs(OUT, exist_ok=True)
+        with open(os.path.join(OUT, f"rollout_{name}.json"), "w") as f:
+            json.dump({"summary": summary, "results": res, "seed": args.seed, "layout_yaw": args.layout_yaw}, f, indent=1)
+        if rec and args.video:
+            rec.finish(os.path.join(OUT, f"{name}.mp4"), res, learned=True)
+        env.close()
+        return
     still_steps = {int(round(float(t) * 30)): float(t) for t in args.stills.split(",") if t}
     count = [0]
 
@@ -144,7 +165,8 @@ def main():
         plans_w = [SPEC.plan(starts[i], scenes[i]) for i in range(n)]
     for w in plans_w:
         w[0] = {**w[0], "dur": 1.2}  # the glide from the park pose to the plan's start
-    sampled = [T.sample(w, dt, env.keys, start=(parks[i], SPEC.open_key)) for i, w in enumerate(plans_w)]
+    tracks = [T.Track(w, dt, env.keys, start=(parks[i], SPEC.open_key)) for i, w in enumerate(plans_w)]
+    sampled = [(tr.P, tr.Q, tr.ev) for tr in tracks]
     margin = int(1.0 / dt)
     L = max(len(p) for p, _, _ in sampled) + margin
     P = torch.zeros((n, L, 7), device=dev)
@@ -170,10 +192,7 @@ def main():
             C, F = to4(e.controller_pose()[ids]), to4(e.forearm_pose()[ids])
             for j, i in enumerate(ids):
                 H_rel = np.linalg.inv(C[j]) @ F[j]
-                wps = SPEC.replan_place(scenes[i], H_rel)
-                start = (plans_w[i][[w["tag"] for w in plans_w[i]].index("preplace")]["T"], "grip")
-                p, q, _ = T.sample(wps[1:], dt, e.keys, start=start)
-                k0 = int(cursor[i]) + 1
+                k0, p, q = tracks[i].reaim(int(cursor[i]), SPEC.replan_place(scenes[i], H_rel))
                 m = min(len(p), L - k0)
                 pt = torch.from_numpy(p[:m]).to(dev)
                 pt[:, :3] += e.scene.env_origins[i]
@@ -243,7 +262,7 @@ def grade(img: np.ndarray, exposure=GRADE["exposure"], lift=GRADE["lift"], shoul
     return (np.clip(out, 0, 1) * 255 + 0.5).astype(np.uint8)
 
 
-def encode(frame_dir: str, path: str, n_envs: int, placed: int, size=(1920, 1080), fps=30, **g):
+def encode(frame_dir: str, path: str, n_envs: int, placed: int, size=(1920, 1080), fps=30, learned=False, **g):
     """Raw frames (frame_dir/*.png) -> graded, captioned H.264 MP4 + stills. Separate from rendering so the
     grade can be tuned without re-simulating."""
     import glob
@@ -277,7 +296,9 @@ def encode(frame_dir: str, path: str, n_envs: int, placed: int, size=(1920, 1080
         a = max(0.0, min(1.0, (4.0 - t) / 0.7))  # the title, fading out
         if a > 0:
             l1 = f"{n_envs} scenes at once \u00b7 Isaac Sim 6 \u00b7 GPU PhysX"
-            l2 = "the scripted teacher: each scene randomized, the plan made from where the controller settled"
+            l2 = ("a learned policy: a small neural network on the simulator state, trained by imitating the scripted hand"
+                  if learned else
+                  "the scripted teacher: each scene randomized, the plan made from where the controller settled")
             w = max(d.textlength(l1, font=f1), d.textlength(l2, font=f2))
             y0 = yb - int(H * 0.088)
             d.rounded_rectangle([x0 - 18, y0 - 12, x0 + w + 18, yb], 10, fill=(255, 255, 255, int(205 * a)))
@@ -575,8 +596,8 @@ class Recorder:
                                                              compress_level=1)
             self.n += 1
 
-    def finish(self, path, res):
-        encode(self.frame_dir, path, len(res), sum(r["placed"] for r in res), self.size)
+    def finish(self, path, res, learned=False):
+        encode(self.frame_dir, path, len(res), sum(r["placed"] for r in res), self.size, learned=learned)
 
 
 if __name__ == "__main__":

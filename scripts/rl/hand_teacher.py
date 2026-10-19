@@ -64,6 +64,11 @@ class Spec:
         self.open_key, self.transport = s["open_key"], float(s["transport"])
         self.hand_q = s["hand_q"]
         self.servo = s.get("servo", {})
+        # the top-bottom pinch (demo_hand_pinch.py --export-task): its goal, plan and release settings
+        self.grasp = s.get("grasp", "span")
+        self.pinch = s.get("pinch", hand_motion.PINCH)
+        self.center = np.array(s.get("grasp_center", [0.0, 0.0, 0.0]))
+        self.tray_right_c = float(s.get("tray_center_right_m", 0.0))
 
     def scene(self, rng: np.random.Generator | None, rz: Randomization = Randomization(),
               layout_yaw: float = 0.0) -> dict:
@@ -79,12 +84,15 @@ class Spec:
                 return rng.uniform(-a, a, n) if n > 1 else float(rng.uniform(-a, a))
         T_hold = hand_motion.pose(yaw(self.holder_yaw + j(rz.holder_yaw)), [*(self.holder_xy + j(rz.holder_xy, 2)), 0.0])
         T_target = T_hold @ self.rel
-        C_goal = T_target.copy()
-        C_goal[2, 3] += self.gap
-        approach = -(C_goal[:3, :3] @ self.face)
+        if self.grasp == "pinch":
+            C_goal, approach = hand_motion.pinch_goal(T_target, self.face, self.right, self.center, self.pinch)
+        else:
+            C_goal = T_target.copy()
+            C_goal[2, 3] += self.gap
+            approach = -(C_goal[:3, :3] @ self.face)
         stand_xy = self.tray_xy + j(rz.tray_xy, 2)
         R0 = yaw(self.ctrl_yaw + j(rz.controller_yaw))
-        center = stand_xy + R0[:2, :2] @ (self.tray_top_c * self.top[:2])
+        center = stand_xy + R0[:2, :2] @ (self.tray_top_c * self.top[:2] + self.tray_right_c * self.right[:2])
         T_tray = hand_motion.pose(R0 @ np.c_[self.right, self.top, self.face], [*center, self.tray_h / 2])
         T_ctrl0 = hand_motion.pose(R0, [*stand_xy, self.tray_h + 0.003])
         G = hand_motion.pose(yaw(layout_yaw), np.zeros(3))
@@ -92,12 +100,17 @@ class Spec:
                 "tray": G @ T_tray, "tray_half_extents": self.tray_half.copy(), "controller_start": G @ T_ctrl0}
 
     def plan(self, T_start: np.ndarray, sc: dict) -> list[dict]:
-        """Waypoints from the settled controller pose (hand_motion.plan_path)."""
+        """Waypoints from the settled controller pose (hand_motion.plan_path or pinch_plan)."""
+        if self.grasp == "pinch":
+            return hand_motion.pinch_plan(T_start, sc["c_goal"], sc["approach"], self.H, self.F, self.face,
+                                          self.transport, self.pinch)
         return hand_motion.plan_path(T_start, sc["c_goal"], sc["approach"], self.H, self.F, self.face,
                                      self.open_key, self.transport)
 
     def replan_place(self, sc: dict, H_rel: np.ndarray) -> list[dict]:
         """The re-aim: place waypoints for the forearm pose measured in the controller frame."""
+        if self.grasp == "pinch":
+            return hand_motion.pinch_place_waypoints(sc["c_goal"], sc["approach"], H_rel, self.transport, self.pinch)
         return hand_motion.place_waypoints(sc["c_goal"], sc["approach"], H_rel, self.open_key, self.transport)
 
     def joint_targets(self, names: list[str]) -> dict[str, np.ndarray]:
@@ -105,27 +118,74 @@ class Spec:
         return {k: np.array([q.get(n, 0.0) for n in names], np.float32) for k, q in self.hand_q.items()}
 
 
+class Track:
+    """A plan sampled every dt, keeping its moves so that the placement can be re-aimed mid-run.
+
+    From wps[0] (or from `start` = (4x4 pose, key), the current state, through all of wps). P: forearm poses
+    (n, 7), Q: joint targets (n, J), ev: {tag: sample index at which the waypoint is reached} (stops and,
+    for eased-end moves, passed-through waypoints)."""
+
+    def __init__(self, wps: list[dict], dt: float, keys: dict[str, np.ndarray], start=None):
+        self.wps, self.dt, self.keys = list(wps), dt, keys
+        if start is None:
+            T_prev, g_prev, k = self.wps[0]["T"], self.wps[0]["g"], 1
+            P, Q = [pose7(T_prev)[None]], [np.asarray(keys[str(g_prev)])[None]]
+        else:
+            (T_prev, g_prev), k = start, 0
+            P, Q = [], []
+        self.moves, ev, count = [], {}, sum(len(x) for x in P)
+        while k < len(self.wps):
+            a, b = hand_motion.moves(self.wps, k)[0]
+            mv = hand_motion.Move(T_prev, g_prev, self.wps[a:b + 1])
+            qs = [keys[str(g)] for g in mv.g]
+            n = max(1, int(round(mv.duration / dt)))
+            i0 = count
+            p, q = _samples(mv, qs, np.arange(n))
+            P.append(p)
+            Q.append(q)
+            count += n
+            D = float(mv.cum[-1])
+            for j, w in enumerate(mv.legs[:-1]):
+                if mv.ramp:  # a passed-through waypoint of an eased-end move: when it is reached
+                    t_j = hand_motion.time_of(float(mv.cum[j + 1]), D, mv.ramp)
+                    ev.setdefault(w["tag"], i0 + max(0, int(round(t_j * n / mv.duration)) - 1))
+            ev.setdefault(self.wps[b]["tag"], count - 1)
+            self.moves.append((a, b, mv, qs, n, i0))
+            T_prev, g_prev = self.wps[b]["T"], self.wps[b]["g"]
+            k = b + 1
+        self.P = np.concatenate(P).astype(np.float32) if P else np.zeros((0, 7), np.float32)
+        self.Q = np.concatenate(Q).astype(np.float32) if Q else np.zeros((0, len(next(iter(keys.values())))), np.float32)
+        self.ev = ev
+
+    def reaim(self, k_now: int, place: list[dict]):
+        """Re-plan from the pre-place waypoint on (place: its re-aimed replacement, pre-place first), the run
+        being at sample k_now. If the pre-place waypoint is passed through, the rest of its move is retargeted
+        (hand_motion.Move.retarget: no velocity jump). Returns (first sample index, P tail, Q tail)."""
+        tags = [w["tag"] for w in self.wps]
+        p = tags.index("preplace")
+        a, b, mv, qs, n, i0 = next(m for m in self.moves if m[0] <= p <= m[1])
+        if p == b:  # a stop: everything after it re-planned from it
+            tail = Track(place[1:], self.dt, self.keys, start=(self.wps[p]["T"], self.wps[p]["g"]))
+            return i0 + n, tail.P, tail.Q
+        nrem = b - p
+        mv.retarget(p - a + 1, place[1:1 + nrem])
+        i_from = max(k_now - i0 + 1, 0)
+        P, Q = _samples(mv, qs, np.arange(i_from, n), n)
+        rest = Track(place[1 + nrem:], self.dt, self.keys, start=(place[nrem]["T"], place[nrem]["g"]))
+        return i0 + i_from, np.r_[P.astype(np.float32), rest.P], np.r_[Q.astype(np.float32), rest.Q]
+
+
+def _samples(mv, qs, idx, n=None):
+    """Samples idx (of n, default len(idx)) of a move: forearm poses (m, 7) and blended joint targets (m, J)."""
+    n = len(idx) if n is None else n
+    pos, quat, leg, u = mv.at_many((np.asarray(idx) + 1) * mv.duration / n)
+    quat = Rotation.from_matrix(Rotation.from_quat(quat).as_matrix()).as_quat()  # as pose7 of a 4x4 (same signs)
+    qa = np.asarray(qs, float)
+    return np.c_[pos, quat], qa[leg] + (qa[leg + 1] - qa[leg]) * u[:, None]
+
+
 def sample(wps: list[dict], dt: float, keys: dict[str, np.ndarray], start=None):
-    """The waypoints' blended moves sampled every dt, from wps[0] (or from `start` = (4x4 pose, key),
-    the current state, through all of wps). Returns forearm poses (n, 7), joint targets (n, J) and
-    {tag: sample index at which its move ends}."""
-    if start is None:
-        T_prev, g_prev, k = wps[0]["T"], wps[0]["g"], 1
-        P, Q = [pose7(T_prev)], [keys[str(g_prev)]]
-    else:
-        (T_prev, g_prev), k = start, 0
-        P, Q = [], []
-    ev = {}
-    while k < len(wps):
-        a, b = hand_motion.moves(wps, k)[0]
-        mv = hand_motion.Move(T_prev, g_prev, wps[a:b + 1])
-        qs = [keys[str(g)] for g in mv.g]
-        n = max(1, int(round(mv.duration / dt)))
-        for i in range(n):
-            T, leg, u = mv.at((i + 1) * mv.duration / n)
-            P.append(pose7(T))
-            Q.append(qs[leg] + (qs[leg + 1] - qs[leg]) * u)
-        T_prev, g_prev = wps[b]["T"], wps[b]["g"]
-        ev[wps[b]["tag"]] = len(P) - 1
-        k = b + 1
-    return np.array(P, np.float32), np.array(Q, np.float32), ev
+    """The waypoints' blended moves sampled every dt (Track): forearm poses (n, 7), joint targets (n, J) and
+    {tag: sample index}."""
+    tr = Track(wps, dt, keys, start)
+    return tr.P, tr.Q, tr.ev
