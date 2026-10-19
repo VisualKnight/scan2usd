@@ -371,9 +371,9 @@
   <video autoplay muted loop playsinline preload="metadata" poster="figures/hand_place.jpg" style="width:100%;border-radius:8px;display:block"><source src="figures/hand_place.mp4?v=2443a73b" type="video/mp4"></video>
   <p class="cap">The Panda's job with a floating Shadow Hand, holding the controller the way a person picks it up: index and middle on the top rim, thumb under the bottom edge, on its center line (contacts found on the scan, hand pose solved to reach them). The fingers settle first, then the thumb squeezes; upright, the controller's weight rests on the thumb. The hand carries it straight into the holder's hands, re-aiming from the in-hand pose on the way, and slides the thumb out. 12 trials (±2 cm / ±10°): <b><!--n:hand_held-->12/12<!--/n--> held, <!--n:hand_add-->7.4<!--/n--> mm / <!--n:hand_rot-->11<!--/n-->°</b> re-aimed; open loop <!--n:hand_open_held-->8/12<!--/n-->, <!--n:hand_open_add-->12.8<!--/n--> mm / <!--n:hand_open_rot-->15<!--/n-->° (<a href="figures/hand_place_compare.jpg">side by side</a>). One convex hull: <!--n:hand_hull_held-->0/12<!--/n-->. The hand is the real robot's size (&ldquo;similar to a typical male hand&rdquo;), its finger servos 10&times; stiffer than Menagerie's at the same 1 N·m limits, filmed on a 57 mm lens. <code>scripts/demo_hand_pinch.py</code> · <code>hand_motion.py</code></p>
   <div class="grid g2" style="margin-top:10px">
-    <div><video controls muted loop playsinline preload="none" poster="figures/isaac_hand_place.jpg" style="width:100%;border-radius:8px;display:block"><source src="figures/isaac_hand_place.mp4?v=cc61f9a4" type="video/mp4"></video>
+    <div><video controls muted loop playsinline preload="none" data-inview poster="figures/isaac_hand_place.jpg" style="width:100%;border-radius:8px;display:block"><source src="figures/isaac_hand_place.mp4?v=cc61f9a4" type="video/mp4"></video>
       <p class="cap"><b>Isaac Sim 6 (PhysX).</b> Same hand, assets and waypoints (<code>demo_hand_pinch.py --export-plans</code>); PhysX simulates every contact and the re-aim measures the controller in PhysX. Re-aimed <b><!--n:ihand_held-->12/12<!--/n-->, <!--n:ihand_add-->10.5<!--/n--> mm / <!--n:ihand_rot-->16<!--/n-->°</b>; open loop <!--n:ihand_open_held-->5/12<!--/n--> (the slip on the way stays uncorrected); one hull <!--n:ihand_hull_held-->0/12<!--/n-->. <code>scripts/isaac_hand_place.py</code></p></div>
-    <div><video controls muted loop playsinline preload="none" poster="figures/unreal_hand_place.jpg" style="width:100%;border-radius:8px;display:block"><source src="figures/unreal_hand_place.mp4?v=8bbae2f3" type="video/mp4"></video>
+    <div><video controls muted loop playsinline preload="none" data-inview poster="figures/unreal_hand_place.jpg" style="width:100%;border-radius:8px;display:block"><source src="figures/unreal_hand_place.mp4?v=8bbae2f3" type="video/mp4"></video>
       <p class="cap"><b>Unreal Engine 5.8, Lumen + MegaLights.</b> The MuJoCo run rendered frame for frame, with 108 shadow-casting fairy lights. <code>scripts/unreal_hand_render.py</code></p></div>
   </div></div>
 
@@ -607,6 +607,11 @@ const obs = new IntersectionObserver(es => es.forEach(e => {
   if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id));
 }), { rootMargin: '0px 0px -75% 0px' });
 document.querySelectorAll('.chap').forEach(c => obs.observe(c));
+// Muted looping videos marked data-inview play while on screen (they load only when first scrolled to).
+const vobs = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) e.target.play().catch(() => {}); else e.target.pause();
+}), { threshold: 0.35 });
+document.querySelectorAll('video[data-inview]').forEach(v => vobs.observe(v));
 </script>
 <script>if (location.protocol === 'file:') { const b = document.createElement('div'); b.style.cssText = 'position:sticky;top:0;z-index:9;background:#fef3c7;border-bottom:1px solid #f59e0b;padding:8px 16px;font:14px system-ui'; b.innerHTML = 'Local preview of the repository file. The published version is <a href=\"https://visualknight.github.io/scan2usd/\">visualknight.github.io/scan2usd</a> (updates a minute after each push).'; document.body.prepend(b); }</script></body>
 </html>
