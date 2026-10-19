@@ -41,7 +41,8 @@ parser.add_argument("--rand", type=float, nargs=4, default=None, metavar=("HOLDE
 parser.add_argument("--physics_hz", type=int, default=240)
 parser.add_argument("--video", action="store_true")
 parser.add_argument("--gui", type=float, default=None, metavar="T",
-                    help="open the Isaac Sim editor, frozen at T s, to pick a camera (logged to output/rl/picked_camera.json)")
+                    help="open the Isaac Sim editor at T s to pick a camera (logged to output/rl/picked_camera.json); "
+                         "static, or with --playback the whole episode replayable")
 parser.add_argument("--camera", default="", help="a camera JSON from --gui (output/rl/picked_camera.json): stills from it")
 parser.add_argument("--floor", default="gun30_r25", help="floor look with --camera (FLOORS); gun30_r25 as in the editor pick")
 parser.add_argument("--stills", default="", help="comma-separated times (s): stills of every camera variant (VIEWS)")
@@ -53,6 +54,13 @@ parser.add_argument("--power_w", type=float, default=400.0, help="GPU power budg
 parser.add_argument("--subtitle", default="", help="the video title's second line (default: says who drives)")
 parser.add_argument("--encode", action="store_true",
                     help="no simulation: re-encode output/rl/frames_<name>/ with rollout_<name>.json's results")
+parser.add_argument("--dome", default="studio", help="sky (DOMES): studio, gradient, uniform...; comma-separated "
+                                                     "with --camera --stills: one still each")
+parser.add_argument("--playback", action="store_true",
+                    help="with --gui: simulate the whole episode first, then a Playback window in the editor")
+parser.add_argument("--hide_forearm", action="store_true",
+                    help="render without the forearm's housing (its visual meshes only: physics unchanged), so it "
+                         "hides less of the grid behind it")
 args, _ = parser.parse_known_args()
 
 from isaaclab.app import AppLauncher  # noqa: E402
@@ -152,7 +160,9 @@ def main():
                 rec.frame()
             if rec and count[0] in still_steps:
                 rec.stills(os.path.join(OUT, f"stills_{name}"), still_steps[count[0]])
-            if args.gui is not None and count[0] == int(round(args.gui * 30)):
+            if args.gui is not None and args.playback:
+                rec.capture()
+            elif args.gui is not None and count[0] == int(round(args.gui * 30)):  # static: the editor at T s
                 rec.pick_camera(os.path.join(OUT, "picked_camera.json"))
                 app.close()
                 sys.exit(0)
@@ -222,6 +232,10 @@ def main():
     env.on_substep = None
     step(int(1.5 * 30))  # let it settle in the holder
     wall = time.time() - t0
+    if args.gui is not None:  # --playback: the whole episode is cached; hand the editor over from T
+        rec.pick_camera(os.path.join(OUT, "picked_camera.json"), start=int(round(args.gui * 30)) - 1)
+        app.close()
+        sys.exit(0)
 
     # score
     cp = torch.tensor(controller_points(), dtype=torch.float32, device=dev)
@@ -353,13 +367,31 @@ FLOORS = {
     "gun30_r75": ((0.30, 0.31, 0.33), 1.0, 0.75),
     "gun30_r80": ((0.30, 0.31, 0.33), 1.0, 0.80),
 }
-# Sky domes: (HDRI under NVIDIA's asset root or None for a plain white dome, intensity). The camera never sees
-# the sky: the HDRI only lights the cells and gives the metal floor something to reflect.
+# Sky domes: (HDRI under NVIDIA's asset root, a local image, or None for a plain dome; intensity; colour). The
+# dome lights the cells, is what the metal floor reflects, and is the background above the horizon.
 DOMES = {
-    "white": (None, 700.0),
-    "studio": ("/Assets/Skies/Studio/photo_studio_01_4k.hdr", 900.0),
-    "hall": ("/Assets/Skies/Indoor/ZetoCGcom_ExhibitionHall_Interior1.hdr", 900.0),
+    "white": (None, 700.0, (1.0, 1.0, 1.0)),
+    "studio": ("/Assets/Skies/Studio/photo_studio_01_4k.hdr", 900.0, (1.0, 1.0, 1.0)),
+    "hall": ("/Assets/Skies/Indoor/ZetoCGcom_ExhibitionHall_Interior1.hdr", 900.0, (1.0, 1.0, 1.0)),
+    # a smooth studio cyclorama: light grey, brightest at the horizon, a touch cooler and darker overhead
+    "gradient": ("gradient_sky.png", 1000.0, (1.0, 1.0, 1.0)),
+    "uniform": (None, 600.0, (0.86, 0.87, 0.88)),
 }
+
+
+def gradient_sky(path, w=1024, h=512):
+    """A lat-long sky (zenith at the top row): sRGB, a smoothstep from zenith to horizon, flat below it."""
+    from PIL import Image
+
+    el = np.linspace(90.0, -90.0, h)[:, None]  # elevation of each row
+    zen, hor, gnd = np.array([200, 206, 213.0]), np.array([238, 239, 240.0]), np.array([150, 151, 153.0])
+    s = np.clip(el / 60.0, 0.0, 1.0)
+    s = s * s * (3 - 2 * s)
+    up = hor + (zen - hor) * s[..., None]
+    g = np.clip(-el / 8.0, 0.0, 1.0)[..., None]  # a soft 8 deg blend under the horizon (hidden by the floor)
+    img = np.where(el[..., None] >= 0, up, hor + (gnd - hor) * g)
+    img = np.broadcast_to(img, (h, w, 3))
+    Image.fromarray((img + 0.5).astype(np.uint8)).save(path)
 V = "f20_h0.70_g0.46_p-38"
 STILL_PLAN = ([(v, "gun30_r60", "studio", "PathTracing") for v in VIEWS if v != "f18_h0.80_g0.65_p-34"]
               + [(V, f, "studio", "PathTracing") for f in ("gun30_r25", "gun30_r50", "gun30_r70", "gun30_r80")])
@@ -379,6 +411,7 @@ class Recorder:
         import hand_motion
 
         self.env, self.size, self.k, self.n = env, size, 0, 0
+        self.cache = []  # --gui: every cell's hand and controller state per frame, for playback in the editor
         self.frame_dir = frame_dir
         if frame_dir:
             os.makedirs(frame_dir, exist_ok=True)
@@ -411,13 +444,43 @@ class Recorder:
         self.track = hand_motion.camera_track(keys)
         self.eye = hand_motion.orbit_eye
         self.picked = None
-        if args.camera:  # the camera picked in the editor, static; its floor and studio lighting
-            pc = json.load(open(args.camera))
-            self.picked = Gf.Matrix4d(*np.array(pc["camera_to_world"], float).T.flatten().tolist())
-            cam.GetFocalLengthAttr().Set(float(pc["focal_mm"]))
+        if args.hide_forearm:
+            self.hide_forearm()
+        if args.camera:  # the camera picked in the editor, static; its floor and sky
+            self.picked = self.load_picked()
             self.set_floor(*FLOORS[args.floor])
-            self.set_dome(*DOMES["studio"])
+            self.set_dome(*DOMES[args.dome.split(",")[0]])
         self.place(0.0)
+
+    def hide_forearm(self):
+        """Make the forearm housing's visual meshes (forearm_0/1 under rh_forearm) invisible in every cell. The
+        collision shapes, masses and the weld are untouched."""
+        from pxr import Usd, UsdGeom
+
+        stage = self.env.scene.stage
+        fa = next(p for p in Usd.PrimRange(stage.GetPrimAtPath("/World/envs/env_0/Hand")) if p.GetName() == "rh_forearm")
+        rel = [str(c.GetPath()).removeprefix("/World/envs/env_0/") for c in fa.GetChildren()
+               if c.GetName().startswith("forearm_") and "collision" not in c.GetName()]
+        k = 0
+        for i in range(self.env.num_envs):
+            for r in rel:
+                p = stage.GetPrimAtPath(f"/World/envs/env_{i}/{r}")
+                if p.IsValid():
+                    UsdGeom.Imageable(p).MakeInvisible()
+                    k += 1
+        print(f"[rollout] forearm hidden: {rel} in {k // max(len(rel), 1)} cells", flush=True)
+
+    def load_picked(self):
+        """The picked camera (--camera), moved with the grid's near cell: the pose is kept relative to that
+        cell, so the framing holds when --spacing changes. Sets the focal length too."""
+        from pxr import Gf
+
+        pc = json.load(open(args.camera))
+        M = np.array(pc["camera_to_world"], float)
+        if "near_cell_look" in pc:
+            M[:3, 3] += self.look - np.array(pc["near_cell_look"])
+        self.cam.GetFocalLengthAttr().Set(float(pc["focal_mm"]))
+        return Gf.Matrix4d(*M.T.flatten().tolist())
 
     def set_view(self, x):
         """x: (lookat xyz, distance, azimuth, elevation) as hand_motion.camera_track samples."""
@@ -465,14 +528,10 @@ class Recorder:
 
         os.makedirs(out_dir, exist_ok=True)
         st = carb.settings.get_settings()
-        plan = [("picked", args.floor, "studio", "PathTracing")] if args.camera else STILL_PLAN
+        plan = [("picked", args.floor, d, "PathTracing") for d in args.dome.split(",")] if args.camera else STILL_PLAN
         for view, floor, dome, mode in plan:
             if view == "picked":  # the exact camera picked in the editor
-                from pxr import Gf
-
-                pc = json.load(open(args.camera))
-                self.cam.GetFocalLengthAttr().Set(float(pc["focal_mm"]))
-                self.xf.Set(Gf.Matrix4d(*np.array(pc["camera_to_world"], float).T.flatten().tolist()))
+                self.xf.Set(self.load_picked())
             else:
                 h, g, pitch, az_off, focal = VIEWS[view]
                 self.cam.GetFocalLengthAttr().Set(focal)
@@ -500,10 +559,71 @@ class Recorder:
                 os.makedirs(os.path.join(out_dir, "raw"), exist_ok=True)
                 Image.fromarray(img).save(os.path.join(out_dir, "raw", f"t{t:04.1f}_{tag}.png"))
         st.set("/rtx/rendermode", "RaytracedLighting")
-        self.cam.GetFocalLengthAttr().Set(24.0)
+        if self.picked is None:
+            self.cam.GetFocalLengthAttr().Set(24.0)
+        else:
+            self.picked = self.load_picked()
         print(f"[rollout] stills at {t:.1f} s -> {out_dir}", flush=True)
 
-    def pick_camera(self, path, view="f18_h0.80_g0.65_p-34", floor="gun30_r25", dome="studio"):
+    def capture(self):
+        e = self.env
+        self.cache.append((e.hand.data.root_link_pose_w.torch.clone(), e.hand.data.joint_pos.torch.clone(),
+                           e.controller.data.root_link_pose_w.torch.clone()))
+
+    def show(self, k):
+        """Put every cell back into cached frame k without stepping physics (the timeline is paused, so the
+        hand's links and Fabric are updated by hand)."""
+        from isaaclab_physx.physics.physx_manager import PhysxManager as PM
+
+        hp, q, cp = self.cache[k]
+        e = self.env
+        e.hand.write_root_link_pose_to_sim_index(root_pose=hp)
+        e.hand.write_joint_position_to_sim_index(position=q)
+        e.controller.write_root_link_pose_to_sim_index(root_pose=cp)
+        if PM._view is not None:
+            PM._view.update_articulations_kinematic()
+        if PM._update_fabric is not None:
+            PM._update_fabric(0.0, 0.0)
+
+    def playback_ui(self, start):
+        """A small window: play / pause and a time slider over the cached frames (30 fps)."""
+        import omni.ui as ui
+
+        n = len(self.cache)
+        st = {"k": min(max(start, 0), n - 1), "play": False, "shown": -1, "busy": False, "acc": 0.0}
+        win = ui.Window("Playback", width=460, height=120)
+        with win.frame:
+            with ui.VStack(spacing=6, height=0):
+                label = ui.Label("")
+                slider = ui.IntSlider(min=0, max=n - 1)
+                with ui.HStack(spacing=6):
+                    ui.Button("Play / Pause", clicked_fn=lambda: st.update(play=not st["play"]))
+                    ui.Button("|< Start", clicked_fn=lambda: st.update(k=0))
+                    ui.Button("End >|", clicked_fn=lambda: st.update(k=n - 1, play=False))
+
+        def moved(m):
+            if not st["busy"]:
+                st.update(k=m.get_value_as_int(), play=False)
+
+        slider.model.add_value_changed_fn(moved)
+        self._pb = (win, label, slider, st)
+
+        def tick(dt):
+            if st["play"]:
+                st["acc"] += dt * 30.0
+                adv = int(st["acc"])
+                st["acc"] -= adv
+                st["k"] = (st["k"] + adv) % n
+            if st["k"] != st["shown"]:
+                self.show(st["k"])
+                st["shown"] = st["k"]
+                st["busy"] = True
+                slider.model.set_value(st["k"])
+                st["busy"] = False
+                label.text = f"t = {st['k'] / 30.0:5.2f} s  /  {(n - 1) / 30.0:.2f} s   {'playing' if st['play'] else 'paused'}"
+        return tick
+
+    def pick_camera(self, path, view="f18_h0.80_g0.65_p-34", floor="gun30_r25", start=0):
         """Freeze the simulation and hand the editor over: the viewport looks through /World/FilmCam (start:
         `view`), which you fly with the usual viewport navigation (right mouse + WASD, Alt + mouse to
         orbit), its focal length in the Property panel. Its pose is written to `path` whenever it changes,
@@ -516,11 +636,15 @@ class Recorder:
         from pxr import Usd, UsdGeom
 
         omni.timeline.get_timeline_interface().pause()
-        h, g, pitch, az_off, focal = VIEWS[view]
-        self.cam.GetFocalLengthAttr().Set(focal)
-        self.set_eye(h, g, pitch, self.az + az_off)
-        self.set_floor(*FLOORS[floor])
-        self.set_dome(*DOMES[dome])
+        if self.picked is not None:  # --camera: start from the earlier pick (its pose, lens and --floor)
+            self.xf.Set(self.picked)
+            self.set_floor(*FLOORS[args.floor])
+        else:
+            h, g, pitch, az_off, focal = VIEWS[view]
+            self.cam.GetFocalLengthAttr().Set(focal)
+            self.set_eye(h, g, pitch, self.az + az_off)
+            self.set_floor(*FLOORS[floor])
+        self.set_dome(*DOMES[args.dome.split(",")[0]])
         try:
             from omni.kit.viewport.utility import get_active_viewport
 
@@ -529,9 +653,15 @@ class Recorder:
             print("[pick] could not set the viewport camera:", e, flush=True)
         print("[pick] ready: fly the camera in the viewport, close the window when done", flush=True)
         kit = omni.kit.app.get_app()
+        tick = self.playback_ui(start) if self.cache else None
         prim, last, k = self.cam.GetPrim(), None, 0
+        t_prev = time.time()
         while kit.is_running():
             kit.update()
+            now = time.time()
+            if tick:
+                tick(now - t_prev)
+            t_prev = now
             k += 1
             if k % 20:
                 continue
@@ -555,13 +685,21 @@ class Recorder:
             print(f"[pick] focal {f:.1f} mm, eye height {eye[2]:.2f} m, back {g:.2f} m, pitch {pitch:+.1f}, "
                   f"azimuth {az:.1f} (top edge {pitch + vfov / 2:+.1f} deg)", flush=True)
 
-    def set_dome(self, hdri, intensity):
+    def set_dome(self, hdri, intensity, color=(1.0, 1.0, 1.0)):
         from isaaclab.utils.assets import NVIDIA_NUCLEUS_DIR
-        from pxr import UsdLux
+        from pxr import Gf, UsdLux
 
+        if hdri and not hdri.startswith("/Assets"):  # a local image, made here (gradient_sky)
+            path = os.path.join(OUT, hdri)
+            if not os.path.exists(path):
+                gradient_sky(path)
+            hdri = path.replace("\\", "/")
+        elif hdri:
+            hdri = f"{NVIDIA_NUCLEUS_DIR}{hdri}"
         d = UsdLux.DomeLight(self.env.scene.stage.GetPrimAtPath("/World/Dome"))
         d.GetIntensityAttr().Set(float(intensity))
-        d.CreateTextureFileAttr().Set(f"{NVIDIA_NUCLEUS_DIR}{hdri}" if hdri else "")
+        d.GetColorAttr().Set(Gf.Vec3f(*color))
+        d.CreateTextureFileAttr().Set(hdri or "")
 
     def set_floor(self, color, metallic, roughness):
         from pxr import Gf, Usd, UsdShade
