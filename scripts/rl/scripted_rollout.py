@@ -34,7 +34,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--num_envs", type=int, default=12)
-parser.add_argument("--replay", action="store_true", help="the exported benchmark seeds (output/hand_place_plans.json)")
+parser.add_argument("--replay", action="store_true", help="the exported benchmark seeds (--plans)")
+parser.add_argument("--plans", default=os.path.join("output", "hand_pinch_plans.json"),
+                    help="with --replay: demo_hand_pinch.py --export-plans (the pinch; hand_place_plans.json: the span)")
+parser.add_argument("--track", choices=("grid", "plan"), default="grid",
+                    help="video camera: grid (the quarter view over the cells, or --camera) or plan (env 0's "
+                         "close-up: hand_motion.shot_keys as one move, the MuJoCo and Isaac Sim videos' camera)")
+parser.add_argument("--title", default="", help="the video title's first line")
 parser.add_argument("--seed", type=int, default=0)
 parser.add_argument("--rand", type=float, nargs=4, default=None, metavar=("HOLDER_XY", "HOLDER_YAW", "TRAY_XY", "CTRL_YAW"),
                     help="scene jitter (m, deg, m, deg); default: the benchmark's 0.02 10 0.02 10")
@@ -100,11 +106,14 @@ def to4(p: torch.Tensor) -> np.ndarray:
 def main():
     if args.encode:
         res = json.load(open(os.path.join(OUT, f"rollout_{name}.json")))["results"]
+        single = (f"Placed: {res[0]['add_mm']:.1f} mm / {res[0]['rot_deg']:.0f}\u00b0 from the real pose"
+                  if len(res) == 1 and res[0]["placed"] else None)
         encode(os.path.join(OUT, f"frames_{name}"), os.path.join(OUT, f"{name}.mp4"), len(res),
-               sum(r["placed"] for r in res), learned=bool(args.policy), subtitle=args.subtitle or None)
+               sum(r["placed"] for r in res), learned=bool(args.policy), subtitle=args.subtitle or None,
+               single=single)
         return
     if args.replay:
-        plans = json.load(open(os.path.join(T.ROOT, "output", "hand_place_plans.json")))["trials"]
+        plans = json.load(open(os.path.join(T.ROOT, args.plans)))["trials"]
         n = len(plans) if args.num_envs <= 0 else args.num_envs
         trials = [plans[i % len(plans)] for i in range(n)]
         scenes = []
@@ -185,6 +194,8 @@ def main():
         plans_w = [SPEC.plan(starts[i], scenes[i]) for i in range(n)]
     for w in plans_w:
         w[0] = {**w[0], "dur": 1.2}  # the glide from the park pose to the plan's start
+    if rec and args.track == "plan":
+        rec.plan_camera(plans_w[0], scenes[0])
     tracks = [T.Track(w, dt, env.keys, start=(parks[i], SPEC.open_key)) for i, w in enumerate(plans_w)]
     sampled = [(tr.P, tr.Q, tr.ev) for tr in tracks]
     margin = int(1.0 / dt)
@@ -287,7 +298,7 @@ def grade(img: np.ndarray, exposure=GRADE["exposure"], lift=GRADE["lift"], shoul
 
 
 def encode(frame_dir: str, path: str, n_envs: int, placed: int, size=(1920, 1080), fps=30, learned=False,
-           subtitle: str | None = None, **g):
+           subtitle: str | None = None, single: str | None = None, **g):
     """Raw frames (frame_dir/*.png) -> graded, captioned H.264 MP4 + stills. Separate from rendering so the
     grade can be tuned without re-simulating."""
     import glob
@@ -316,13 +327,15 @@ def encode(frame_dir: str, path: str, n_envs: int, placed: int, size=(1920, 1080
     x0, yb = int(W * 0.035), int(H * 0.955)  # bottom margin
     tmp = tempfile.mkdtemp(prefix="rl_video_")
     for i, fn in enumerate(files):
-        im = Image.fromarray(grade(np.asarray(Image.open(fn).convert("RGB")), **g)).convert("RGBA")
+        raw = np.array(Image.open(fn).convert("RGB"))
+        raw[0] = raw[1]  # RTX leaves a few stray dark pixels in the first row
+        im = Image.fromarray(grade(raw, **g)).convert("RGBA")
         ov = Image.new("RGBA", im.size, (0, 0, 0, 0))
         d = ImageDraw.Draw(ov)
         t = i / fps
         a = max(0.0, min(1.0, (4.0 - t) / 0.7))  # the title, fading out
         if a > 0:
-            l1 = f"{n_envs} scenes at once \u00b7 Isaac Sim 6 \u00b7 GPU PhysX"
+            l1 = args.title or f"{n_envs} scenes at once \u00b7 Isaac Sim 6 \u00b7 GPU PhysX"
             l2 = subtitle or ("a learned policy: a small neural network on the simulator state, trained by imitating the scripted hand"
                               if learned else
                               "the scripted teacher: each scene randomized, the plan made from where the controller settled")
@@ -333,7 +346,7 @@ def encode(frame_dir: str, path: str, n_envs: int, placed: int, size=(1920, 1080
             d.text((x0, y0 + int(H * 0.048)), l2, fill=(71, 85, 105, int(255 * a)), font=f2)
         b = max(0.0, min(1.0, (t - (n / fps - 2.6)) / 0.5))  # the result, fading in
         if b > 0:
-            msg = f"{placed}/{n_envs} placed in the holder"
+            msg = single or f"{placed}/{n_envs} placed in the holder"
             w = d.textlength(msg, font=f1)
             xr, y0 = W - x0 - w, yb - int(H * 0.05)
             d.rounded_rectangle([xr - 18, y0 - 12, xr + w + 18, yb], 10, fill=(255, 255, 255, int(215 * b)))
@@ -454,7 +467,23 @@ class Recorder:
             self.picked = self.load_picked()
             self.set_floor(*FLOORS[args.floor])
             self.set_dome(*DOMES[args.dome.split(",")[0]])
+        if args.track == "plan":  # env 0 close up, the 400-cell film's floor and sky, the shared lens
+            self.pending = True
+            self.set_floor(*FLOORS[args.floor])
+            self.set_dome(*DOMES[args.dome.split(",")[0]])
+            cam.GetFocalLengthAttr().Set(hand_motion.focal_mm(20.25))
         self.place(0.0)
+
+    def plan_camera(self, wps, sc):
+        """--track plan: hand_motion.shot_keys for env 0's plan as one continuous move (as demo_hand_pinch's
+        video and isaac_hand_place.py), its clock starting now, with the plan."""
+        import hand_motion
+
+        o = self.env.scene.env_origins[0].cpu().numpy()
+        c0, g = np.asarray(sc["controller_start"])[:3, 3] + o, np.asarray(sc["target"])[:3, 3] + o
+        (_, a), (_, b) = hand_motion.shot_keys(c0, g, wps)
+        self.plan_track = hand_motion.camera_track(a[:-1] + b)
+        self.pending = False
 
     def hide_forearm(self):
         """Make the forearm housing's visual meshes (forearm_0/1 under rh_forearm) invisible in every cell. The
@@ -505,6 +534,9 @@ class Recorder:
         self.xf.Set(Gf.Matrix4d().SetLookAt(Gf.Vec3d(*eye), Gf.Vec3d(*(eye + fwd)), Gf.Vec3d(0, 0, 1)).GetInverse())
 
     def place(self, t):
+        if getattr(self, "plan_track", None) is not None:
+            self.set_view(self.plan_track(t))
+            return
         if self.picked is not None:
             self.xf.Set(self.picked)
             return
@@ -726,6 +758,8 @@ class Recorder:
     def frame(self):
         from PIL import Image
 
+        if getattr(self, "pending", False):  # --track plan: nothing to film until the plan starts
+            return
         self.k += 1
         self.place(self.k / 30.0)
         # Headless with no visualizer nothing pumps Kit's loop, which renders the RTX render product; Isaac
@@ -749,8 +783,11 @@ class Recorder:
             self.n += 1
 
     def finish(self, path, res, learned=False):
+        r0 = res[0]
+        single = (f"Placed: {r0['add_mm']:.1f} mm / {r0['rot_deg']:.0f}\u00b0 from the real pose"
+                  if len(res) == 1 and r0["placed"] else None)
         encode(self.frame_dir, path, len(res), sum(r["placed"] for r in res), self.size, learned=learned,
-               subtitle=args.subtitle or None)
+               subtitle=args.subtitle or None, single=single)
 
 
 if __name__ == "__main__":

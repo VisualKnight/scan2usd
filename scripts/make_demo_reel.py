@@ -3,7 +3,7 @@
     pip install "imageio[ffmpeg]"
     python scripts/make_demo_reel.py [--out docs/scan2usd_demo.mp4]
 
-Title card -> photos to USD -> simulation demos (MuJoCo, Isaac Sim) -> perception -> self-aware assets ->
+Title card -> photos to USD -> simulation demos (MuJoCo, Isaac Sim, Isaac Lab) -> perception -> self-aware assets ->
 links. Every clip is an existing figure in docs/figures, so the reel stays in sync with them.
 """
 
@@ -49,29 +49,29 @@ def _place_subtitle() -> str:
             f"from the real pose; one convex hull: {h['held']}/{h['trials']}")
 
 
-def _hand_subtitle() -> str:
-    import json
-
-    try:
-        s = json.loads((FIG / "hand_place.json").read_text())["summary"]
-    except (OSError, KeyError):
-        return "Shadow Hand spans the controller, turns it upright and sets it into the holder"
-    o, r = s["hulls_open_loop"], s["hulls_reaimed"]
-    return (f"Span grasp at the center of mass: {o['held']}/{o['trials']} held open loop "
-            f"({o['add_mm_median']:.0f} mm / {o['rot_deg_median']:.0f}?), re-aimed from the in-hand pose "
-            f"{r['add_mm_median']:.1f} mm / {r['rot_deg_median']:.0f}?")
-
-
 def _isaac_hand_subtitle() -> str:
     import json
 
     try:
         s = json.loads((FIG / "isaac_hand_place.json").read_text())["summary"]
     except (OSError, KeyError):
-        return "Same hand, same scanned assets, same waypoints; PhysX simulates every contact"
-    r, o = s["decomposed_reaimed"], s["decomposed_open_loop"]
-    return (f"Same hand, assets and waypoints; PhysX contacts: re-aimed {r['held']}/{r['trials']} held, "
-            f"{r['add_mm_median']:.1f} mm / {r['rot_deg_median']:.0f}\u00b0; open loop {o['held']}/{o['trials']}")
+        return "Fingers on the top rim, thumb under the bottom edge; re-aimed from the in-hand pose"
+    r = s["decomposed_reaimed"]
+    return (f"Fingers on the top rim, thumb under the bottom edge, re-aimed from the in-hand pose; 12 jittered "
+            f"trials: {r['placed']}/{r['trials']} placed, median {r['add_mm_median']:.1f} mm / {r['rot_deg_median']:.0f}\u00b0")
+
+
+def _learned_subtitle() -> str:
+    import json
+
+    try:
+        s = json.loads((FIG / "learned_hand_place.json").read_text())
+    except (OSError, KeyError):
+        return "Isaac Lab: a small neural network learned the placement from the scripted hand"
+    ev = s["eval"]
+    return (f"A small neural network learned it from the scripted hand (cloning + DAgger, "
+            f"{s['train_minutes']:.0f} min): {ev['placed']}/{ev['envs']} fresh scenes placed, "
+            f"{ev['add_mm_median']:.1f} mm / {ev['rot_deg_median']:.0f}\u00b0")
 
 
 # (file, title, subtitle, seconds for stills / max seconds for animations)
@@ -101,14 +101,14 @@ SEGMENTS = [
      "A holder and a controller, each scanned alone, then photographed together as the answer key", 5),
     ("holder_fit.webp", "Scanned controller settles into the scanned holder", _holder_subtitle(), 6),
     ("holder_place.webp", "A robot puts it there", _place_subtitle(), 8),
-    ("hand_place.mp4", "Five fingers: Shadow Hand places it", _hand_subtitle(), 18),
-    ("isaac_hand_place.mp4", "The same plan in Isaac Sim (PhysX)", _isaac_hand_subtitle(), 11),
+    ("isaac_hand_place.mp4", "Five fingers: Shadow Hand places it (Isaac Sim 6)", _isaac_hand_subtitle(), 13),
+    ("learned_hand_place.mp4", "400 hands at once (Isaac Lab, GPU PhysX)", _learned_subtitle(), 15),
     ("holder_fit_render.jpg", "Path traced beside the other scans",
      "Phone-scanned holder and controller in the measured resting pose, Isaac Sim 6 RTX", 4),
     ("unreal_flythrough.mp4", "The same USD files in Unreal Engine 5.8",
      "Lumen + MegaLights: 80 shadow-casting fairy lights, real time on an RTX 4090", 6),
     ("unreal_hand_place.mp4", "The hand in Unreal: Lumen + MegaLights",
-     "The MuJoCo run frame for frame, every link keyed in Sequencer, 108 shadow-casting fairy lights", 13),
+     "The MuJoCo pinch frame for frame, every link keyed in Sequencer, 108 shadow-casting fairy lights", 13),
     ("uncertainty.png", "Assets that know what they don't know",
      "Seen / guessed / sealed surface and mass intervals stored in USD: truth inside for 5 of 6 objects", 4),
     ("splat_buddha.jpg", "Gaussian splat for looks, convex hulls for physics",
