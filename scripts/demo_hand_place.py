@@ -175,7 +175,11 @@ def hand_q(x) -> dict[str, float]:
 
 def hand_ctrl(model, x) -> np.ndarray:
     """Actuator targets for a span pose (hand_q mapped onto the actuators; tendons get J1 + J2)."""
-    q = hand_q(x)
+    return hand_ctrl_q(model, hand_q(x))
+
+
+def hand_ctrl_q(model, q: dict) -> np.ndarray:
+    """Actuator targets for joint targets {joint name: angle} (tendons get the sum of their joints)."""
     ctrl = np.zeros(model.nu)
     for a in range(model.nu):
         if model.actuator_trntype[a] == mujoco.mjtTrn.mjTRN_JOINT:
@@ -190,7 +194,8 @@ def hand_ctrl(model, x) -> np.ndarray:
 
 # --- scene -------------------------------------------------------------------------------------------
 
-def build(ctrl, holder, T_hold, T_ctrl0, T_stand, stand_half, collision, work: Path, ghost=None) -> mujoco.MjModel:
+def build(ctrl, holder, T_hold, T_ctrl0, T_stand, stand_half, collision, work: Path, ghost=None,
+          finger_gain=None, couple_distal=False, extra_xml: str = "") -> mujoco.MjModel:
     if work.exists():
         shutil.rmtree(work)
     shutil.copytree(HAND, work)
@@ -216,6 +221,10 @@ def build(ctrl, holder, T_hold, T_ctrl0, T_stand, stand_half, collision, work: P
                      f'quat="{" ".join(f"{q:.6f}" for q in quat_wxyz(ghost[:3, :3]))}">'
                      f'<geom type="mesh" mesh="ctrl_visual" contype="0" conaffinity="0" rgba="0.1 0.8 0.35 0.3"/></body>')
     sp = T_stand
+    # couple_distal: each finger's distal joint follows its middle one (J1 = J2), as the real hand's coupling
+    # does; without it the shared tendon only sets their sum and a contact can fold the finger either way
+    coupling = "".join(f'<joint joint1="rh_{f}J1" joint2="rh_{f}J2" polycoef="0 1 0 0 0" solref="0.005 1"/>'
+                       for f in ("FF", "MF", "RF", "LF")) if couple_distal else ""
     scene = f"""<mujoco model="hand_place">
   <include file="right_hand.xml"/>
   <option timestep="0.002" integrator="implicitfast" cone="elliptic" impratio="10" noslip_iterations="8"/>
@@ -235,16 +244,16 @@ def build(ctrl, holder, T_hold, T_ctrl0, T_stand, stand_half, collision, work: P
       <geom type="box" size="{stand_half[0]} {stand_half[1]} {STAND_H / 2}" rgba="0.62 0.60 0.57 1" friction="0.8 0.005 0.0001"/>
     </body>
     <body name="target" mocap="true" quat="0 1 0 1"/>
-    {hold.body_xml}{c.body_xml}{ghost_xml}
+    {hold.body_xml}{c.body_xml}{ghost_xml}{extra_xml}
   </worldbody>
-  <equality><weld body1="target" body2="rh_forearm" solref="0.005 1"/></equality>
+  <equality><weld body1="target" body2="rh_forearm" solref="0.005 1"/>{coupling}</equality>
 </mujoco>"""
     (work / "place_scene.xml").write_text(scene)
     model = mujoco.MjModel.from_xml_path(str(work / "place_scene.xml"))
     for a in range(model.nu):
         if "WRJ" not in model.actuator(a).name:
-            model.actuator_gainprm[a, 0] *= FINGER_GAIN
-            model.actuator_biasprm[a, 1] *= FINGER_GAIN
+            model.actuator_gainprm[a, 0] *= finger_gain or FINGER_GAIN
+            model.actuator_biasprm[a, 1] *= finger_gain or FINGER_GAIN
     return model
 
 
@@ -356,13 +365,14 @@ def execute(su, wps, render=None, fps=30, settle=1.5, on_waypoint=None):
     d.qpos[fadr + 3:fadr + 7] = quat_wxyz(T0[:3, :3])
     d.qvel[vadr:vadr + 6] = 0
     d.mocap_pos[0], d.mocap_quat[0] = T0[:3, 3], quat_wxyz(T0[:3, :3])
-    d.ctrl[:] = hand_ctrl(m, su.poses[wps[0]["g"]])
+    ctrl_of = getattr(su, "ctrl_of", None) or (lambda g: hand_ctrl(m, su.poses[g]))  # a grasp may bring its own
+    d.ctrl[:] = ctrl_of(wps[0]["g"])
     mujoco.mj_forward(m, d)
     T_prev, g_prev, k = T0, wps[0]["g"], 1
     while k < len(wps):
         a, b = hand_motion.moves(wps, k)[0]
         mv = hand_motion.Move(T_prev, g_prev, wps[a:b + 1])
-        c = [hand_ctrl(m, su.poses[g]) for g in mv.g]
+        c = [ctrl_of(g) for g in mv.g]
         n = max(1, int(round(mv.duration / m.opt.timestep)))
         for i in range(n):
             T, leg, u = mv.at((i + 1) * m.opt.timestep)
@@ -378,7 +388,7 @@ def execute(su, wps, render=None, fps=30, settle=1.5, on_waypoint=None):
             # perception pick's registration would; here it is read from the simulation) and re-aim the
             # rest of the placement at it.
             H_rel = np.linalg.inv(body_pose(m, d, "ctrl")) @ body_pose(m, d, "rh_forearm")
-            wps[b + 1:] = place_waypoints(su, H_rel)[1:]
+            wps[b + 1:] = (su.place_waypoints(H_rel) if hasattr(su, "place_waypoints") else place_waypoints(su, H_rel))[1:]
         k = b + 1
     for _ in range(int(settle / m.opt.timestep)):
         step()
