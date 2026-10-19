@@ -195,7 +195,7 @@ def hand_ctrl_q(model, q: dict) -> np.ndarray:
 # --- scene -------------------------------------------------------------------------------------------
 
 def build(ctrl, holder, T_hold, T_ctrl0, T_stand, stand_half, collision, work: Path, ghost=None,
-          finger_gain=None, couple_distal=False, extra_xml: str = "") -> mujoco.MjModel:
+          finger_gain=None, couple_distal=False, extra_xml: str = "", stand_h=None) -> mujoco.MjModel:
     if work.exists():
         shutil.rmtree(work)
     shutil.copytree(HAND, work)
@@ -221,6 +221,7 @@ def build(ctrl, holder, T_hold, T_ctrl0, T_stand, stand_half, collision, work: P
                      f'quat="{" ".join(f"{q:.6f}" for q in quat_wxyz(ghost[:3, :3]))}">'
                      f'<geom type="mesh" mesh="ctrl_visual" contype="0" conaffinity="0" rgba="0.1 0.8 0.35 0.3"/></body>')
     sp = T_stand
+    sh = stand_h or STAND_H
     # couple_distal: each finger's distal joint follows its middle one (J1 = J2), as the real hand's coupling
     # does; without it the shared tendon only sets their sum and a contact can fold the finger either way
     coupling = "".join(f'<joint joint1="rh_{f}J1" joint2="rh_{f}J2" polycoef="0 1 0 0 0" solref="0.005 1"/>'
@@ -240,8 +241,8 @@ def build(ctrl, holder, T_hold, T_ctrl0, T_stand, stand_half, collision, work: P
     <light pos="-0.6 0.4 0.9" dir="0.5 -0.3 -0.8" diffuse="0.30 0.32 0.36" castshadow="false"/>
     <light pos="-0.2 1.0 0.7" dir="0.1 -0.9 -0.4" diffuse="0.25 0.25 0.25" specular="0.3 0.3 0.3" castshadow="false"/>
     <geom name="floor" type="plane" size="12 12 0.05" material="grid" solref="0.005 1"/>
-    <body name="stand" pos="{sp[0, 3]:.5f} {sp[1, 3]:.5f} {STAND_H / 2:.5f}" quat="{" ".join(f"{q:.6f}" for q in quat_wxyz(sp[:3, :3]))}">
-      <geom type="box" size="{stand_half[0]} {stand_half[1]} {STAND_H / 2}" rgba="0.62 0.60 0.57 1" friction="0.8 0.005 0.0001"/>
+    <body name="stand" pos="{sp[0, 3]:.5f} {sp[1, 3]:.5f} {sh / 2:.5f}" quat="{" ".join(f"{q:.6f}" for q in quat_wxyz(sp[:3, :3]))}">
+      <geom type="box" size="{stand_half[0]} {stand_half[1]} {sh / 2}" rgba="0.62 0.60 0.57 1" friction="0.8 0.005 0.0001"/>
     </body>
     <body name="target" mocap="true" quat="0 1 0 1"/>
     {hold.body_xml}{c.body_xml}{ghost_xml}{extra_xml}

@@ -11,11 +11,11 @@ under the controller and carries its weight.
 
 The motion: come down over the face with the fingers spread past the edges, settle the fingers on the rim,
 close the thumb, lift, turn upright, carry, re-aim in front of the holder, set down in its hands (the
-holder stands on a pedestal as tall as the tray: upright, this grip's forearm comes from below the
-controller), then let go: the fingers lift off the rim and the thumb drops and slides out from under the
-bottom edge as the hand backs off, the fingers open, and the open hand nudges the top back onto the
-holder before leaving. The holder holds the controller on the same center line, so the thumb meets its
-hands for the last couple of centimetres of the set-down.
+holder on the floor, the controller's tray 8 cm tall; upright, this grip's forearm comes from below the
+controller, so the grasp is solved clear of the floor), then let go: the fingers lift off the rim and the
+thumb drops and slides out from under the bottom edge as the hand backs off, the fingers open, and the
+open hand nudges the top back onto the holder before leaving. The holder holds the controller on the same
+center line, so the thumb meets its hands for the last couple of centimetres of the set-down.
 
 Grasp design (solve_grasp): the contact points are found on the scan (ray casts), then the forearm pose
 and the hand joints are solved together (least squares) to put the three pads on them, facing in, with
@@ -69,7 +69,8 @@ NUDGE = (0.02, -0.015)  # then the open hand pushes the top back onto the holder
 SQUEEZE, OPENING = 0.008, 0.020  # grip: pads this far into the surfaces; open: this far out
 HOOK_GAP = 0.003  # first step of the close: the finger pads this close to the rim, the thumb still open
 FOREARM_MIN_UP = -0.20  # forearm origin vs the grasp along "top": at most this far below it, upright on the holder
-PEDESTAL_H, PEDESTAL_HALF = HP.STAND_H, 0.06  # the holder's pedestal: as tall as the tray, 12 cm square
+TRAY_H = 0.08  # the controller's tray (demo_hand_place's is 15 cm); the holder stands on the floor
+FLOOR_CLEAR = 0.02  # upright at the seat, the hand and forearm at least this far above the floor
 RING_CURL = (1.2, 1.5)  # ring and little J3, J2 (= J1) to start from: curled toward the palm
 FINGER_GAIN = 10.0  # finger servo stiffness multiplier (demo_hand_place uses 5); torque limits unchanged
 
@@ -109,16 +110,21 @@ class _Solver:
         self.ctrl = ctrl
         self.T_c = pose(np.eye(3), [0, 0, 0.5])
         self.T_h = self.T_c @ np.linalg.inv(pose(R_rel, t_rel))  # the holder, the controller seated in it ...
+        # ... and the floor under it, raised FLOOR_CLEAR (a slab in the holder's base plane, moved with it)
+        self.T_f = self.T_h @ pose(np.eye(3), [0, 0, FLOOR_CLEAR - 0.05])
         self.T_h[:3, 3] -= RELEASE_CHECK * (R_rel.T @ [0, 0, 1.0])  # ... and RELEASE_CHECK (straight up) above that
+        floor = (f'<body name="floor_proxy" pos="{" ".join(f"{v:.6f}" for v in self.T_f[:3, 3])}" '
+                 f'quat="{" ".join(f"{q:.6f}" for q in HP.quat_wxyz(self.T_f[:3, :3]))}">'
+                 f'<geom type="box" size="0.6 0.6 0.05" rgba="0 0 0 0"/></body>')
         m = self.m = HP.build(ctrl, holder, self.T_h, self.T_c, pose(np.eye(3), [5, -5, 0]), (0.01, 0.01), "hulls",
-                              ROOT / "data" / "work" / "hand_pinch_solve")
+                              ROOT / "data" / "work" / "hand_pinch_solve", extra_xml=floor)
         self.d = mujoco.MjData(m)
         self.cadr = m.joint(m.body("ctrl").jntadr[0]).qposadr[0]
         self.fadr = m.joint("forearm_free").qposadr[0]
         self.J = {m.joint(j).name: m.jnt_qposadr[j] for j in range(m.njnt)}
         self.lo = np.array([m.jnt_range[m.joint(n).id][0] for n in JOINTS])
         self.hi = np.array([m.jnt_range[m.joint(n).id][1] for n in JOINTS])
-        self.cid, self.hid = m.body("ctrl").id, m.body("holder").id
+        self.cid, self.hid, self.fid = m.body("ctrl").id, m.body("holder").id, m.body("floor_proxy").id
         self.hand = sorted({int(m.geom_bodyid[g]) for g in range(m.ngeom) if m.body(m.geom_bodyid[g]).name.startswith("rh_")})
         self.pads = {m.body(b).id for b, _ in PADS}
         # ring, little and the palm keep CLEAR from the controller (margin: MuJoCo reports them that close)
@@ -142,6 +148,7 @@ class _Solver:
         d.qpos[self.cadr:self.cadr + 3] = self.T_c[:3, 3] + off
         d.qpos[self.cadr + 3:self.cadr + 7] = [1, 0, 0, 0]
         m.body_pos[self.hid] = self.T_h[:3, 3] + off
+        m.body_pos[self.fid] = self.T_f[:3, 3] + off
         d.qpos[self.fadr:self.fadr + 3] = T[:3, 3]
         d.qpos[self.fadr + 3:self.fadr + 7] = HP.quat_wxyz(T[:3, :3])
         for n, v in grasp_q(x).items():
@@ -160,6 +167,8 @@ class _Solver:
             b1, b2 = m.geom_bodyid[c.geom1], m.geom_bodyid[c.geom2]
             other = b2 if b1 in self.hand else b1
             hb = int(b1 if b1 in self.hand else b2)
+            if other == self.fid:  # the floor counts as part of the holder
+                other = self.hid
             if (hb not in self.hand or other not in (self.cid, self.hid) or (other == self.hid and not holder)
                     or (other == self.cid and not ctrl)):
                 continue
@@ -267,7 +276,7 @@ def solve_grasp(ctrl, holder, R_rel, t_rel, starts: int = 6) -> dict:
     """The grasp: forearm pose H in the controller frame and joint vectors (JOINTS) for open, contact and grip."""
     cfg = {"thumb": THUMB_AT, "index": INDEX_AT, "middle": MIDDLE_AT, "squeeze": SQUEEZE, "opening": OPENING,
            "hook": HOOK_GAP, "ring": RING_CURL, "forearm": FOREARM_MIN_UP, "clear": CLEAR, "check": RELEASE_CHECK,
-           "letgo": LETGO_LIFT, "v": 12}
+           "letgo": LETGO_LIFT, "floor": FLOOR_CLEAR, "v": 13}
     if GRASP.exists():
         g = json.loads(GRASP.read_text())
         if g.get("cfg") == json.loads(json.dumps(cfg)):
@@ -316,12 +325,8 @@ class PinchSetup:
         jit = seed > 0
         hold_xy = HP.HOLDER_XY + (rng.uniform(-0.02, 0.02, 2) if jit else 0)
         self.hold_yaw = 0.0 + (rng.uniform(-10, 10) if jit else 0)
-        # The holder on a pedestal as tall as the controller's tray: set down on it upright, the controller is
-        # held from below and in front (the thumb under it), and the forearm runs down toward the robot.
-        T_hold = pose(yaw_matrix(self.hold_yaw), [*hold_xy, PEDESTAL_H])
-        ped = (f'<body name="pedestal" pos="{hold_xy[0]:.5f} {hold_xy[1]:.5f} {PEDESTAL_H / 2:.5f}" '
-               f'quat="{" ".join(f"{q:.6f}" for q in HP.quat_wxyz(yaw_matrix(self.hold_yaw)))}">'
-               f'<geom type="box" size="{PEDESTAL_HALF} {PEDESTAL_HALF} {PEDESTAL_H / 2}" rgba="0.62 0.60 0.57 1"/></body>')
+        # The holder on the floor, the controller on a low tray (TRAY_H).
+        T_hold = pose(yaw_matrix(self.hold_yaw), [*hold_xy, 0.0])
         self.T_target = T_hold @ pose(R_rel, t_rel)
         self.ctrl, self.correct, self.transport = ctrl, correct, transport
         self.C_goal = self.T_target.copy()
@@ -339,12 +344,12 @@ class PinchSetup:
         c_loc = 0.5 * (l_lo + l_hi) * ctrl.right[:2] + 0.5 * (t_lo + t_hi) * ctrl.top[:2]
         stand_center = stand_xy + R0[:2, :2] @ c_loc
         T_stand = pose(R0 @ np.c_[ctrl.right, ctrl.top, ctrl.face], [*stand_center, 0.0])
-        T_ctrl0 = pose(R0, [*stand_xy, HP.STAND_H + 0.003])
+        T_ctrl0 = pose(R0, [*stand_xy, TRAY_H + 0.003])
         work = ROOT / "data" / "work" / f"hand_pinch_{work_tag or collision}"
         self.model = HP.build(ctrl, holder, T_hold, T_ctrl0, T_stand, self.stand_half,
                               "hulls" if collision == "hulls" else "single", work,
                               ghost=self.T_target if ghost else None, finger_gain=finger_gain, couple_distal=True,
-                              extra_xml=ped)
+                              stand_h=TRAY_H)
         m = self.model
         d = self.data = mujoco.MjData(m)
         cadr = m.joint(m.body("ctrl").jntadr[0]).qposadr[0]
