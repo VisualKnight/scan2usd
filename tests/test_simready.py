@@ -97,6 +97,38 @@ def test_package_keeps_vertex_colors(tmp_path):
     assert lit[:, 1].mean() > lit[:, 0].mean() + 30  # rendered green, not the grey fallback
 
 
+def test_package_twice_and_repackage_a_package(tmp_path):
+    src = _textured_asset(tmp_path)
+    first = package(src, tmp_path / "pkg", INFO)
+    again = package(src, tmp_path / "pkg", INFO)  # replaces the earlier package
+    assert again == first and again.exists()
+    redo = package(first, tmp_path / "pkg", INFO)  # the package itself as the source
+    assert redo == first
+    stage = Usd.Stage.Open(str(redo))
+    assert stage.GetDefaultPrim().GetAttribute("semantics:labels:class").Get() == ["box"]
+    assert (redo.parent / "textures" / "albedo.png").exists()
+    assert not list((tmp_path / "pkg" / "red_box").glob(".*building*"))
+
+
+def test_package_keeps_same_named_textures_apart(tmp_path):
+    a, b = tmp_path / "src" / "a" / "texture.png", tmp_path / "src" / "b" / "texture.png"
+    for f, c in ((a, (200, 40, 40)), (b, (128, 128, 255))):
+        f.parent.mkdir(parents=True)
+        Image.new("RGB", (8, 8), c).save(f)
+    box = trimesh.creation.box((0.05, 0.05, 0.05))
+    box.visual = trimesh.visual.TextureVisuals(uv=np.full((len(box.vertices), 2), 0.5))
+    src = tmp_path / "src" / "two_tex.usda"
+    write_usd(src, "two_tex", box, single_hull(box), estimate_mass_properties(box, density=500.0),
+              SurfaceMaterial(texture=a, normal_texture=b), PhysicsMaterial())
+    stage = Usd.Stage.Open(str(package(src, tmp_path / "pkg", INFO, thumbnail=False)))
+    files = {p.GetName(): p.GetAttribute("inputs:file").Get().path for p in stage.Traverse()
+             if p.GetAttribute("inputs:file")}
+    assert files == {"albedoTexture": "./textures/texture.png", "normalTexture": "./textures/texture_1.png"}
+    tex = tmp_path / "pkg" / "two_tex" / INTERMEDIATE / "textures"
+    assert Image.open(tex / "texture.png").getpixel((0, 0)) == (200, 40, 40)
+    assert Image.open(tex / "texture_1.png").getpixel((0, 0)) == (128, 128, 255)
+
+
 def test_package_grasp_lines_cross_the_object(tmp_path):
     from scan2usd.schemas import Grasp, write_grasps
 

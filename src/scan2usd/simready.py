@@ -78,15 +78,30 @@ def bad_path_parts(path: str | Path) -> list[str]:
 
 def package(asset_usd: str | Path, out_root: str | Path, info: SimReadyInfo, name: str | None = None,
             thumbnail: bool = True) -> Path:
-    """Write the SimReady package of `asset_usd` under `out_root`; returns the main USD file."""
+    """Write the SimReady package of `asset_usd` under `out_root`; returns the main USD file. The package is
+    built in a temporary folder and swapped in at the end, so a failure leaves an earlier package intact,
+    and `asset_usd` may be an earlier package itself."""
     asset_usd = Path(asset_usd).resolve()
     name = name or package_name(asset_usd)
     pkg = Path(out_root) / name / INTERMEDIATE
+    work = pkg.parent / f".{INTERMEDIATE}_building"
+    if work.exists():
+        shutil.rmtree(work)
+    work.mkdir(parents=True)
+    main_name = f"sm_{name}_01.usda"
+    try:
+        _build(asset_usd, work / main_name, info, name, thumbnail)
+    except BaseException:
+        shutil.rmtree(work, ignore_errors=True)
+        raise
     if pkg.exists():
         shutil.rmtree(pkg)
-    pkg.mkdir(parents=True)
-    main = pkg / f"sm_{name}_01.usda"
+    work.rename(pkg)
+    return pkg / main_name
 
+
+def _build(asset_usd: Path, main: Path, info: SimReadyInfo, name: str, thumbnail: bool) -> None:
+    pkg = main.parent
     src = Usd.Stage.Open(str(asset_usd))
     src.Flatten().Export(str(main))
     stage = Usd.Stage.Open(str(main))
@@ -111,15 +126,16 @@ def package(asset_usd: str | Path, out_root: str | Path, info: SimReadyInfo, nam
     stage.GetRootLayer().Save()
     if thumbnail:
         write_thumbnail(stage, root, render, colors, pkg / ".thumbs" / "256x256" / f"{main.name}.png")
-    return main
 
 
 # --- content fixes ---------------------------------------------------------------------------------------
 
 
 def _copy_dependencies(stage: Usd.Stage, src_dir: Path, pkg: Path) -> None:
-    """Copy every file an asset-valued attribute points at into ``textures/`` and re-anchor it there."""
+    """Copy every file an asset-valued attribute points at into ``textures/`` and re-anchor it there. Two
+    different files with the same name get distinct names (``_1``, ``_2``...)."""
     tex = pkg / "textures"
+    placed: dict[Path, str] = {}  # source file -> its name in textures/
     for prim in stage.Traverse():
         for attr in prim.GetAttributes():
             if attr.GetTypeName() != Sdf.ValueTypeNames.Asset:
@@ -133,9 +149,17 @@ def _copy_dependencies(stage: Usd.Stage, src_dir: Path, pkg: Path) -> None:
                 f = Path(val.resolvedPath)
             if not f.exists():
                 raise FileNotFoundError(f"{prim.GetPath()}.{attr.GetName()}: {val.path} not found")
-            tex.mkdir(exist_ok=True)
-            shutil.copy2(f, tex / f.name)
-            attr.Set(Sdf.AssetPath(f"./textures/{f.name}"))
+            f = f.resolve()
+            if f not in placed:
+                taken = set(placed.values())
+                dest, k = f.name, 0
+                while dest in taken:
+                    k += 1
+                    dest = f"{f.stem}_{k}{f.suffix}"
+                tex.mkdir(exist_ok=True)
+                shutil.copy2(f, tex / dest)
+                placed[f] = dest
+            attr.Set(Sdf.AssetPath(f"./textures/{placed[f]}"))
 
 
 _SPEC_OUTPUTS = {  # UsdPreviewSurface spec: output types of the nodes the pipeline writes
@@ -238,7 +262,8 @@ def _albedo(mesh: UsdGeom.Mesh) -> tuple[np.ndarray, np.ndarray]:
                 if f and f.resolvedPath and st and st.GetInterpolation() == UsdGeom.Tokens.vertex:
                     from PIL import Image
 
-                    img = np.asarray(Image.open(f.resolvedPath).convert("RGB"), float) / 255.0
+                    with Image.open(f.resolvedPath) as im:
+                        img = np.asarray(im.convert("RGB"), float) / 255.0
                     uv = np.asarray(st.Get(), float) % 1.0
                     h, w = img.shape[:2]
                     x = np.clip((uv[:, 0] * (w - 1)).round().astype(int), 0, w - 1)

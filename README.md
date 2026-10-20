@@ -106,7 +106,7 @@ Python 3.10–3.12, with [uv](https://docs.astral.sh/uv/):
 uv venv --python 3.11
 uv pip install -e ".[dev]"
 .venv\Scripts\scan2usd demo            # synthetic mug -> output\demo\ (see preview.png)
-.venv\Scripts\python -m pytest         # 116 tests (one validates a SimReady package if SIMREADY_VALIDATE is set)
+.venv\Scripts\python -m pytest         # 118 tests (one validates a SimReady package if SIMREADY_VALIDATE is set)
 ```
 
 Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (CUDA build): unzip it to `tools\colmap\` or set `SCAN2USD_COLMAP`.
