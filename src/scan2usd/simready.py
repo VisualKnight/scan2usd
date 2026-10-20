@@ -94,9 +94,27 @@ def package(asset_usd: str | Path, out_root: str | Path, info: SimReadyInfo, nam
     except BaseException:
         shutil.rmtree(work, ignore_errors=True)
         raise
-    if pkg.exists():
-        shutil.rmtree(pkg)
-    work.rename(pkg)
+    # Swap by renames, not by deleting first: a directory rename fails as a whole (on Windows, e.g. while a
+    # viewer holds a file in it), so the earlier package survives any failure here.
+    backup = pkg.parent / f".{INTERMEDIATE}_previous"
+    if backup.exists():
+        shutil.rmtree(backup)
+    had_old = pkg.exists()
+    if had_old:
+        try:
+            pkg.rename(backup)
+        except OSError:
+            shutil.rmtree(work, ignore_errors=True)
+            raise
+    try:
+        work.rename(pkg)
+    except OSError:
+        if had_old:
+            backup.rename(pkg)
+        shutil.rmtree(work, ignore_errors=True)
+        raise
+    if had_old:
+        shutil.rmtree(backup, ignore_errors=True)
     return pkg / main_name
 
 
@@ -151,9 +169,9 @@ def _copy_dependencies(stage: Usd.Stage, src_dir: Path, pkg: Path) -> None:
                 raise FileNotFoundError(f"{prim.GetPath()}.{attr.GetName()}: {val.path} not found")
             f = f.resolve()
             if f not in placed:
-                taken = set(placed.values())
+                taken = {n.casefold() for n in placed.values()}  # file names are case-insensitive on Windows
                 dest, k = f.name, 0
-                while dest in taken:
+                while dest.casefold() in taken:
                     k += 1
                     dest = f"{f.stem}_{k}{f.suffix}"
                 tex.mkdir(exist_ok=True)

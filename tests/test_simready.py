@@ -111,7 +111,7 @@ def test_package_twice_and_repackage_a_package(tmp_path):
 
 
 def test_package_keeps_same_named_textures_apart(tmp_path):
-    a, b = tmp_path / "src" / "a" / "texture.png", tmp_path / "src" / "b" / "texture.png"
+    a, b = tmp_path / "src" / "a" / "Texture.png", tmp_path / "src" / "b" / "texture.png"  # case differs only
     for f, c in ((a, (200, 40, 40)), (b, (128, 128, 255))):
         f.parent.mkdir(parents=True)
         Image.new("RGB", (8, 8), c).save(f)
@@ -123,10 +123,22 @@ def test_package_keeps_same_named_textures_apart(tmp_path):
     stage = Usd.Stage.Open(str(package(src, tmp_path / "pkg", INFO, thumbnail=False)))
     files = {p.GetName(): p.GetAttribute("inputs:file").Get().path for p in stage.Traverse()
              if p.GetAttribute("inputs:file")}
-    assert files == {"albedoTexture": "./textures/texture.png", "normalTexture": "./textures/texture_1.png"}
+    assert files == {"albedoTexture": "./textures/Texture.png", "normalTexture": "./textures/texture_1.png"}
     tex = tmp_path / "pkg" / "two_tex" / INTERMEDIATE / "textures"
-    assert Image.open(tex / "texture.png").getpixel((0, 0)) == (200, 40, 40)
+    assert Image.open(tex / "Texture.png").getpixel((0, 0)) == (200, 40, 40)
     assert Image.open(tex / "texture_1.png").getpixel((0, 0)) == (128, 128, 255)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="open files block directory renames on Windows only")
+def test_package_keeps_the_old_one_when_a_file_is_locked(tmp_path):
+    src = _textured_asset(tmp_path)
+    main = package(src, tmp_path / "pkg", INFO)
+    with open(main.parent / "textures" / "albedo.png", "rb"):  # e.g. a viewer holding a texture
+        with pytest.raises(PermissionError):
+            package(src, tmp_path / "pkg", INFO)
+    assert main.exists() and (main.parent / ".thumbs" / "256x256" / f"{main.name}.png").exists()
+    assert not (main.parent.parent / f".{INTERMEDIATE}_building").exists()
+    assert package(src, tmp_path / "pkg", INFO) == main  # and works once the file is released
 
 
 def test_package_grasp_lines_cross_the_object(tmp_path):
