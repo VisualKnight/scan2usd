@@ -1,0 +1,4504 @@
+{
+ "summary": {
+  "profile": "Robotics-Prop",
+  "version": "4.0.0",
+  "validator": "2026.8.0",
+  "tiers": {
+   "tier_core": "2026.8.0"
+  },
+  "assets": 11,
+  "as_built_passed": 0,
+  "package_passed": 11,
+  "required_features": [
+   "FET_000_STANDARD",
+   "FET_001_STANDARD",
+   "FET_003_STANDARD",
+   "FET_006_STANDARD",
+   "FET_011_STANDARD",
+   "FET_011_RTX",
+   "FET_046_STANDARD",
+   "FET_031_STANDARD",
+   "FET_033_STANDARD"
+  ],
+  "optional_features": [
+   "FET_004_STANDARD",
+   "FET_005_STANDARD",
+   "FET_006_OPENPBR",
+   "FET_006_MDL",
+   "FET_010_STANDARD",
+   "FET_007_STANDARD",
+   "FET_100_ISAAC",
+   "FET_000_PHYSX",
+   "FET_003_PHYSX",
+   "FET_004_PHYSX",
+   "FET_000_NEWTON",
+   "FET_003_NEWTON",
+   "FET_004_NEWTON",
+   "FET_000_MUJOCO",
+   "FET_003_MUJOCO",
+   "FET_004_MUJOCO"
+  ],
+  "minutes": 0.9
+ },
+ "assets": [
+  {
+   "name": "ace_coffee_mug_kristen_16_oz_cup",
+   "label": "coffee mug",
+   "source": "output/gso_assets/ace_coffee_mug_kristen_16_oz_cup/ace_coffee_mug_kristen_16_oz_cup.usda",
+   "category": "mug",
+   "qcode": "Q386215",
+   "material": "ceramic",
+   "license": "CC-BY-4.0",
+   "note": "Google Scanned Objects, benchmark capture",
+   "package": {
+    "passed": true,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.007"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.004"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.001"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_001_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_011_RTX": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_011_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_046_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "as_built": {
+    "passed": false,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_001_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VG.027"
+      ]
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "GSP.001"
+      ]
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VM.PS.001"
+      ]
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "DISP.001"
+      ]
+     },
+     "FET_011_RTX": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001",
+       "SL.MAT.001"
+      ]
+     },
+     "FET_011_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SR.002",
+       "SR.004"
+      ]
+     },
+     "FET_046_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "package_file": "ace_coffee_mug_kristen_16_oz_cup/simready_usd/sm_ace_coffee_mug_kristen_16_oz_cup_01.usda"
+  },
+  {
+   "name": "cole_hardware_bowl_scirocco_yellowblue",
+   "label": "bowl",
+   "source": "output/gso_assets/cole_hardware_bowl_scirocco_yellowblue/cole_hardware_bowl_scirocco_yellowblue.usda",
+   "category": "bowl",
+   "qcode": "Q153988",
+   "material": "ceramic",
+   "license": "CC-BY-4.0",
+   "note": "Google Scanned Objects, benchmark capture",
+   "package": {
+    "passed": true,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.007"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.004"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.001"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_001_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_011_RTX": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_011_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_046_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "as_built": {
+    "passed": false,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_001_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VG.027"
+      ]
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "GSP.001"
+      ]
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VM.PS.001"
+      ]
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "DISP.001"
+      ]
+     },
+     "FET_011_RTX": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001",
+       "SL.MAT.001"
+      ]
+     },
+     "FET_011_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SR.002",
+       "SR.004"
+      ]
+     },
+     "FET_046_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "package_file": "cole_hardware_bowl_scirocco_yellowblue/simready_usd/sm_cole_hardware_bowl_scirocco_yellowblue_01.usda"
+  },
+  {
+   "name": "great_dinos_triceratops_toy",
+   "label": "Android toy",
+   "source": "output/gso_assets/great_dinos_triceratops_toy/great_dinos_triceratops_toy.usda",
+   "category": "action figure",
+   "qcode": "Q343566",
+   "material": "plastic",
+   "license": "CC-BY-4.0",
+   "note": "Google Scanned Objects, benchmark capture",
+   "package": {
+    "passed": true,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.007"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.004"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.001"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_001_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_011_RTX": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_011_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_046_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "as_built": {
+    "passed": false,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_001_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VG.027"
+      ]
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "GSP.001"
+      ]
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VM.PS.001"
+      ]
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "DISP.001"
+      ]
+     },
+     "FET_011_RTX": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001",
+       "SL.MAT.001"
+      ]
+     },
+     "FET_011_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SR.002",
+       "SR.004"
+      ]
+     },
+     "FET_046_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "package_file": "great_dinos_triceratops_toy/simready_usd/sm_great_dinos_triceratops_toy_01.usda"
+  },
+  {
+   "name": "schleich_lion_action_figure",
+   "label": "lion figure",
+   "source": "output/gso_assets/schleich_lion_action_figure/schleich_lion_action_figure.usda",
+   "category": "figurine",
+   "qcode": "Q1066288",
+   "material": "plastic",
+   "license": "CC-BY-4.0",
+   "note": "Google Scanned Objects, benchmark capture",
+   "package": {
+    "passed": true,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.007"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.004"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.001"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_001_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_011_RTX": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_011_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_046_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "as_built": {
+    "passed": false,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_001_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VG.027"
+      ]
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "GSP.001"
+      ]
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VM.PS.001"
+      ]
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "DISP.001"
+      ]
+     },
+     "FET_011_RTX": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001",
+       "SL.MAT.001"
+      ]
+     },
+     "FET_011_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SR.002",
+       "SR.004"
+      ]
+     },
+     "FET_046_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "package_file": "schleich_lion_action_figure/simready_usd/sm_schleich_lion_action_figure_01.usda"
+  },
+  {
+   "name": "womens_bluefish_2eye_boat_shoe_in_tan",
+   "label": "boat shoe",
+   "source": "output/gso_assets/womens_bluefish_2eye_boat_shoe_in_tan/womens_bluefish_2eye_boat_shoe_in_tan.usda",
+   "category": "boat shoe",
+   "qcode": "Q893193",
+   "material": "rubber",
+   "license": "CC-BY-4.0",
+   "note": "Google Scanned Objects, benchmark capture",
+   "package": {
+    "passed": true,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.007"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.004"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.001"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_001_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_011_RTX": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_011_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_046_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "as_built": {
+    "passed": false,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_001_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VG.027"
+      ]
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "GSP.001"
+      ]
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VM.PS.001"
+      ]
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "DISP.001"
+      ]
+     },
+     "FET_011_RTX": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001",
+       "SL.MAT.001"
+      ]
+     },
+     "FET_011_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SR.002",
+       "SR.004"
+      ]
+     },
+     "FET_046_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "package_file": "womens_bluefish_2eye_boat_shoe_in_tan/simready_usd/sm_womens_bluefish_2eye_boat_shoe_in_tan_01.usda"
+  },
+  {
+   "name": "ceramic_mug",
+   "label": "ceramic mug",
+   "source": "output/demo/asset/ceramic_mug.usda",
+   "category": "mug",
+   "qcode": "Q386215",
+   "material": "ceramic",
+   "license": "Apache-2.0",
+   "note": "synthetic demo capture",
+   "package": {
+    "passed": true,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.007"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.004"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.001"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_001_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_011_RTX": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_011_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_046_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "as_built": {
+    "passed": false,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_001_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VG.027"
+      ]
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "GSP.001"
+      ]
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VM.PS.001"
+      ]
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_011_RTX": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001",
+       "SL.MAT.001"
+      ]
+     },
+     "FET_011_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SR.002",
+       "SR.004"
+      ]
+     },
+     "FET_046_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "package_file": "ceramic_mug/simready_usd/sm_ceramic_mug_01.usda"
+  },
+  {
+   "name": "speckled_mug",
+   "label": "speckled mug",
+   "source": "data/work/mug_scan/asset/speckled_mug.usda",
+   "category": "mug",
+   "qcode": "Q386215",
+   "material": "ceramic",
+   "license": "Apache-2.0",
+   "note": "procedural benchmark mug",
+   "package": {
+    "passed": true,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.007"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.004"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.001"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_001_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_011_RTX": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_011_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_046_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "as_built": {
+    "passed": false,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_001_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VG.027"
+      ]
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "GSP.001"
+      ]
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VM.PS.001"
+      ]
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "DISP.001"
+      ]
+     },
+     "FET_011_RTX": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001",
+       "SL.MAT.001"
+      ]
+     },
+     "FET_011_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SR.002",
+       "SR.004"
+      ]
+     },
+     "FET_046_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "package_file": "speckled_mug/simready_usd/sm_speckled_mug_01.usda"
+  },
+  {
+   "name": "keepsake_box",
+   "label": "keepsake box",
+   "source": "output/articulated/keepsake_box.usda",
+   "category": "box",
+   "qcode": "Q639460",
+   "material": "wood",
+   "license": "Apache-2.0",
+   "note": "articulated: base + lid",
+   "package": {
+    "passed": true,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.007"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.004"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.001"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_001_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_004_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_005_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "GSP.001"
+      ]
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.PBR.001"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_011_RTX": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_011_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_046_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "as_built": {
+    "passed": false,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_001_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VG.027"
+      ]
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_004_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_005_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "GSP.001"
+      ]
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.PBR.001"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_011_RTX": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001",
+       "SL.MAT.001"
+      ]
+     },
+     "FET_011_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SR.002",
+       "SR.004"
+      ]
+     },
+     "FET_046_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "package_file": "keepsake_box/simready_usd/sm_keepsake_box_01.usda"
+  },
+  {
+   "name": "buddha_head",
+   "label": "Buddha head",
+   "source": "output/buddha/buddha_head.usda",
+   "category": "sculpture",
+   "qcode": "Q860861",
+   "material": "concrete",
+   "license": "CC-BY-4.0",
+   "note": "AliceVision Buddha photos",
+   "package": {
+    "passed": true,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.007"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.004"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.001"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_001_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "GSP.001"
+      ]
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_011_RTX": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_011_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_046_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "as_built": {
+    "passed": false,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_001_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VG.027"
+      ]
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "GSP.001"
+      ]
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VM.PS.001"
+      ]
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_011_RTX": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001",
+       "SL.MAT.001"
+      ]
+     },
+     "FET_011_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SR.002",
+       "SR.004"
+      ]
+     },
+     "FET_046_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "package_file": "buddha_head/simready_usd/sm_buddha_head_01.usda"
+  },
+  {
+   "name": "cod_holder",
+   "label": "holder (scan)",
+   "source": "output/holder_fit/assets/cod_holder/cod_holder.usda",
+   "category": "figurine",
+   "qcode": "Q1066288",
+   "material": "plastic",
+   "license": "proprietary",
+   "note": "own phone scan (a commercial product)",
+   "package": {
+    "passed": true,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.007"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.004"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.001"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_001_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "GSP.001"
+      ]
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_011_RTX": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_011_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_046_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "as_built": {
+    "passed": false,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_001_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VG.027"
+      ]
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "GSP.001"
+      ]
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VM.PS.001"
+      ]
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "DISP.001"
+      ]
+     },
+     "FET_011_RTX": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001",
+       "SL.MAT.001"
+      ]
+     },
+     "FET_011_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SR.002",
+       "SR.004"
+      ]
+     },
+     "FET_046_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "package_file": "cod_holder/simready_usd/sm_cod_holder_01.usda"
+  },
+  {
+   "name": "controller",
+   "label": "controller (scan)",
+   "source": "output/holder_fit/assets/controller/controller.usda",
+   "category": "gamepad",
+   "qcode": "Q273140",
+   "material": "plastic",
+   "license": "proprietary",
+   "note": "own phone scan (a commercial product)",
+   "package": {
+    "passed": true,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.007"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.004"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RV.001"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_001_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "GSP.001"
+      ]
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_011_RTX": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_011_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_046_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "as_built": {
+    "passed": false,
+    "features": {
+     "FET_000_MUJOCO": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_NEWTON": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_PHYSX": {
+      "met": false,
+      "blocking": true,
+      "optional": true,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_000_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "NP.005"
+      ]
+     },
+     "FET_001_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VG.027"
+      ]
+     },
+     "FET_003_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001"
+      ]
+     },
+     "FET_003_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001"
+      ]
+     },
+     "FET_003_PHYSX": {
+      "met": true,
+      "blocking": false,
+      "optional": true,
+      "unmet": []
+     },
+     "FET_003_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_004_MUJOCO": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "MUJOCO.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_NEWTON": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NEWTON.COL.001",
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_PHYSX": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_004_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "RB.MB.001"
+      ]
+     },
+     "FET_005_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "GSP.001"
+      ]
+     },
+     "FET_006_MDL": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.MDL.003"
+      ]
+     },
+     "FET_006_OPENPBR": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "VM.BIND.002",
+       "VM.PBR.001",
+       "VM.PBR.003"
+      ]
+     },
+     "FET_006_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "VM.PS.001"
+      ]
+     },
+     "FET_007_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "NVM.001",
+       "NVM.002",
+       "NVM.003"
+      ]
+     },
+     "FET_010_STANDARD": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "DISP.001"
+      ]
+     },
+     "FET_011_RTX": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001",
+       "SL.MAT.001"
+      ]
+     },
+     "FET_011_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_031_STANDARD": {
+      "met": true,
+      "blocking": false,
+      "optional": false,
+      "unmet": []
+     },
+     "FET_033_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SR.002",
+       "SR.004"
+      ]
+     },
+     "FET_046_STANDARD": {
+      "met": false,
+      "blocking": true,
+      "optional": false,
+      "unmet": [
+       "SL.001"
+      ]
+     },
+     "FET_100_ISAAC": {
+      "met": false,
+      "blocking": false,
+      "optional": true,
+      "unmet": [
+       "ISA.001"
+      ]
+     }
+    }
+   },
+   "package_file": "controller/simready_usd/sm_controller_01.usda"
+  }
+ ]
+}

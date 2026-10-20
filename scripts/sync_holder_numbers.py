@@ -43,6 +43,7 @@ def values() -> dict[str, str]:
         **reel_values(),
         **learned_values(),
         **progress_values(),
+        **simready_values(),
         **genai_values(),
     }
 
@@ -149,6 +150,25 @@ def progress_values() -> dict[str, str]:
     for k, f in s.get("films", {}).items():
         out[f"film_{k.removeprefix('stage_')}"] = frac(f)
     return out
+
+
+def simready_values() -> dict[str, str]:
+    """NVIDIA SimReady conformance of the library (scripts/study_simready.py)."""
+    p = ROOT / "docs" / "figures" / "simready.json"
+    if not p.exists():
+        return {}
+    d = json.loads(p.read_text())
+    s, rows = d["summary"], d["assets"]
+    n = len(rows)
+
+    def met(fid):
+        return sum(r["package"]["features"].get(fid, {}).get("met", False) for r in rows)
+
+    return {"sr_pkg": f"{s['package_passed']}/{n}", "sr_built": f"{s['as_built_passed']}/{n}",
+            "sr_req": str(len(s["required_features"])), "sr_opt": str(len(s["optional_features"])),
+            "sr_version": s["version"], "sr_validator": s["validator"],
+            "sr_grasp": f"{met('FET_005_STANDARD')}/{n}", "sr_disp": f"{met('FET_010_STANDARD')}/{n}",
+            "sr_physx": f"{met('FET_003_PHYSX')}/{n}"}
 
 
 def reel_values() -> dict[str, str]:

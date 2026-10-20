@@ -196,7 +196,8 @@ def author_body(stage: Usd.Stage, body: Usd.Prim, usd_path: Path, mesh: trimesh.
         tex.CreateInput("wrapS", Sdf.ValueTypeNames.Token).Set("repeat")
         tex.CreateInput("wrapT", Sdf.ValueTypeNames.Token).Set("repeat")
         tex.CreateInput("st", Sdf.ValueTypeNames.Float2).ConnectToSource(reader.ConnectableAPI(), "result")
-        diffuse.ConnectToSource(tex.ConnectableAPI(), "rgb")
+        # UsdUVTexture's rgb output is float3 in the UsdPreviewSurface spec, even into a color3f input
+        diffuse.ConnectToSource(tex.CreateOutput("rgb", Sdf.ValueTypeNames.Float3))
         if surface.normal_texture is not None:
             # UsdPreviewSurface normal maps: raw (non-color) data remapped from [0, 1] to [-1, 1].
             nrm = UsdShade.Shader.Define(stage, mat.GetPath().AppendChild("normalTexture"))
@@ -219,7 +220,7 @@ def author_body(stage: Usd.Stage, body: Usd.Prim, usd_path: Path, mesh: trimesh.
         reader = UsdShade.Shader.Define(stage, mat.GetPath().AppendChild("colorReader"))
         reader.CreateIdAttr("UsdPrimvarReader_float3")
         reader.CreateInput("varname", Sdf.ValueTypeNames.Token).Set("displayColor")
-        diffuse.ConnectToSource(reader.ConnectableAPI(), "result")
+        diffuse.ConnectToSource(reader.CreateOutput("result", Sdf.ValueTypeNames.Float3))  # float3 per the spec
     else:
         diffuse.Set(Gf.Vec3f(*surface.base_color))
         render.CreateDisplayColorPrimvar(UsdGeom.Tokens.constant).Set(Vt.Vec3fArray([Gf.Vec3f(*surface.base_color)]))
@@ -229,6 +230,9 @@ def author_body(stage: Usd.Stage, body: Usd.Prim, usd_path: Path, mesh: trimesh.
     for i, hull in enumerate(hulls):
         col = _define_mesh(stage, str(body_path.AppendPath(f"collision/hull_{i:03d}")), hull)
         col.CreatePurposeAttr(UsdGeom.Tokens.guide)
+        # flat normals: guide meshes still shade in viewers, and SimReady (VG.027) asks normals of every mesh
+        col.CreateNormalsAttr(Vt.Vec3fArray.FromNumpy(np.asarray(hull.face_normals, dtype=np.float32)))
+        col.SetNormalsInterpolation(UsdGeom.Tokens.uniform)
         prim = col.GetPrim()
         UsdPhysics.CollisionAPI.Apply(prim)
         UsdPhysics.MeshCollisionAPI.Apply(prim).CreateApproximationAttr(UsdPhysics.Tokens.convexHull)

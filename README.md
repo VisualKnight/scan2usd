@@ -13,7 +13,7 @@
 *400 Shadow Hands at once in Isaac Lab, each driven by a small neural network that learned the placement from the scripted hand: <!--n:learn_film-->400/400<!--/n--> controllers seated in their holders, both assets scanned from phone photos ([full video](https://visualknight.github.io/scan2usd/figures/learned_hand_place.mp4?v=e0216497), [how it learned](https://visualknight.github.io/scan2usd/overview.html#hand)).*
 
 - **Accurate:** 0.6–0.8 mm mean surface error on textured objects, scored against ground truth; size within 1.43% from a ColorChecker alone, no ruler.
-- **Physics-ready:** convex decomposition, mass, inertia, articulated joints. A Franka Panda picks a scanned mug that a single convex hull makes unpickable.
+- **Physics-ready:** convex decomposition, mass, inertia, articulated joints. A Franka Panda picks a scanned mug that a single convex hull makes unpickable. Packaged for NVIDIA SimReady, all <!--n:sr_pkg-->11/11<!--/n--> library assets pass its Robotics-Prop profile.
 - **Checked against reality:** from my own phone photos, a scanned controller settles into a scanned holder a median <!--n:sim_add-->9.1<!--/n--> mm from where the real one sits, and a Franka Panda and a Shadow Hand place it there in MuJoCo and Isaac Sim.
 - **Ready for robot learning:** in Isaac Lab, a small neural network learns that placement from the scripted hand and places <!--n:learn_placed-->400/400<!--/n--> fresh scenes; a detector trained only on Isaac Sim renders finds the object in **67/67** real photos and drives a see-locate-pick loop (10/10).
 - **Assets that know what they don't know:** tested grasps, measurement uncertainty and a Gaussian-splat look stored in the USD file.
@@ -36,6 +36,7 @@
 | Capture guide | Which photos to take next | `guide.py` |
 | Splat hybrid | A Gaussian splat for looks under the physics hulls | `splat.py` |
 | Validate, evaluate | 33 checks on the written file; scoring against ground truth | `validate.py`, `evaluate.py` |
+| SimReady | NVIDIA SimReady Foundation package (Robotics-Prop) and its validation | `simready.py` |
 | Register, carve | Align scans up to scale; cut out space the photos see through | `register.py`, `carve.py` |
 
 ## Results
@@ -66,6 +67,10 @@ Surfaces no photo can match (a plain white interior, a bowl's underside) get sea
 ![Generated vs scanned](docs/figures/genai_drop.jpg)
 
 **Generated vs scanned.** Image-to-3D models, given photos from the same captures and run through the same build and yardsticks: from four phone photos per object, a Hunyuan3D-2mv controller drops into its Hunyuan3D-2mv holder <!--n:gen_held_mv-->12/12<!--/n--> times at <!--n:gen_add_mv-->8.4<!--/n--> mm from the real pose (the scans: <!--n:gen_held_pg-->12/12<!--/n-->, <!--n:gen_add_pg-->9.1<!--/n--> mm). On the benchmark, one photo into Hunyuan3D 2.1 beats 78 into photogrammetry on <!--n:gen_wins_h21-->4/6<!--/n--> objects ([F-score <!--n:gen_f_h21-->0.804<!--/n--> vs <!--n:gen_f_pg-->0.786<!--/n-->](docs/figures/genai_geometry.jpg)), mostly by not sealing what no camera sees; it loses on fine detail. Its textures are plausible but [not measured](docs/figures/genai_look.jpg) (ΔE <!--n:gen_de_h21-->10.0<!--/n--> vs <!--n:gen_de_pg-->6.8<!--/n-->). `scripts/study_generative.py`, `genai_generate.py`
+
+![SimReady Robotics-Prop features per asset, as built and as a package](docs/figures/simready.png)
+
+**Industry standard: NVIDIA SimReady.** [SimReady Foundation](https://github.com/NVIDIA/simready-foundation) states "simulation-ready" as testable requirements, bundled into profiles; Robotics-Prop is the one for objects robots handle. Checked with NVIDIA's own validator (`simready-validate` <!--n:sr_validator-->2026.8.0<!--/n-->, profile <!--n:sr_version-->4.0.0<!--/n-->), the library's assets pass <!--n:sr_built-->0/11<!--/n--> as built, since the physics was there but not what a shared library needs. `scan2usd simready` packages a copy (folder layout, `LabelsAPI` semantic labels with Wikidata Q-codes, provenance metadata, thumbnail, grasp lines from the stored grasps) and all <!--n:sr_pkg-->11/11<!--/n--> pass. It also caught two spec slips the 33 checks didn't, now fixed in the builder: collision hulls without normals, and texture outputs typed `color3f` where UsdPreviewSurface says `float3`. `scan2usd simready`, `scripts/study_simready.py`
 
 ![Panda](docs/figures/panda_demo.jpg)
 
@@ -101,7 +106,7 @@ Python 3.10–3.12, with [uv](https://docs.astral.sh/uv/):
 uv venv --python 3.11
 uv pip install -e ".[dev]"
 .venv\Scripts\scan2usd demo            # synthetic mug -> output\demo\ (see preview.png)
-.venv\Scripts\python -m pytest         # 109 tests
+.venv\Scripts\python -m pytest         # 116 tests (one validates a SimReady package if SIMREADY_VALIDATE is set)
 ```
 
 Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (CUDA build): unzip it to `tools\colmap\` or set `SCAN2USD_COLMAP`.
@@ -145,6 +150,11 @@ scan2usd splat output\mug\mug.usda work\mug_splat\splat.ply --workspace work\mug
 
 scan2usd preview output\mug\mug.usd    # PNG of render mesh + colliders, no 3D app needed
 scan2usd validate output\mug\mug.usd --markdown report.md
+
+# NVIDIA SimReady package (Robotics-Prop): layout, semantic labels, metadata, thumbnail; --validate needs
+# `pip install simready-validate simready-foundation-tier-core` in its own Python 3.12 venv (path without spaces)
+scan2usd simready output\mug\mug.usda -o D:\packages --category mug --qcode Q386215 --material ceramic `
+    --license Apache-2.0 --validate --validator D:\simready\.venv\Scripts\simready-validate.exe
 scan2usd calibrate chart.jpg --chart-corners corners.json
 scan2usd materials                     # density / friction presets
 ```
@@ -201,6 +211,7 @@ Isaac Sim scripts (`isaac_*.py`) run with Isaac Sim 6's Python (`set OMNI_KIT_AC
 | `make_hand_hero.py` | The second hero strip: the real pair → Shadow Hand grasp, insertion, result (Isaac Sim path-traced stills from `isaac_hand_place.py --stills`) |
 | `make_sim2real_compare.py` | The sim-to-real figure: the same upright real photos through the detector trained without and with distractors |
 | `study_generative.py`, `genai_generate.py`, `genai_raster.py` | Image-to-3D (Hunyuan3D 2.1, Hunyuan3D-2mv, TripoSG; textures by Hunyuan3D-2.1 paint) vs photogrammetry: same build, ground-truth scores, the real-pair drop, and held-out looks re-rendered in the capture scene. Generation runs in its own venv (see `genai_generate.py`; no compiler: `genai_raster.py` replaces the paint model's CUDA rasterizer) |
+| `study_simready.py` | Every library asset as built and as a SimReady package, validated against Robotics-Prop with NVIDIA's `simready-validate` (`--out` a path without spaces, `--validator` its executable); the figure and `docs/figures/simready.json` |
 | `make_demo_reel.py` | The demo video, assembled from the figures (`pip install "imageio[ffmpeg]"`) |
 
 </details>
