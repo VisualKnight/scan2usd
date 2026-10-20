@@ -1,7 +1,7 @@
 """SimReady conformance of the asset library: every asset as built, and as a SimReady package.
 
     pip install simready-validate simready-foundation-tier-core   (Python 3.12, its own venv)
-    python scripts/study_simready.py --out D:/scan2usd_simready --validator <venv>/Scripts/simready-validate.exe
+    python scripts/study_simready.py --out D:/local_projects/scan2usd_simready --validator <venv>/Scripts/simready-validate.exe
 
 Profile: NVIDIA SimReady Foundation ``Robotics-Prop`` 4.0.0, validated with ``simready-validate``.
 "As built" is the asset file and its textures copied as they are to the (space-free) output root, so the

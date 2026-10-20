@@ -154,7 +154,7 @@ scan2usd validate output\mug\mug.usd --markdown report.md
 # NVIDIA SimReady package (Robotics-Prop): layout, semantic labels, metadata, thumbnail; --validate needs
 # `pip install simready-validate simready-foundation-tier-core` in its own Python 3.12 venv (path without spaces)
 scan2usd simready output\mug\mug.usda -o D:\packages --category mug --qcode Q386215 --material ceramic `
-    --license Apache-2.0 --validate --validator D:\simready\.venv\Scripts\simready-validate.exe
+    --license Apache-2.0 --validate --validator D:\local_projects\simready\.venv\Scripts\simready-validate.exe
 scan2usd calibrate chart.jpg --chart-corners corners.json
 scan2usd materials                     # density / friction presets
 ```

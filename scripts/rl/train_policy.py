@@ -1,7 +1,7 @@
 """Train the hand-place policy: behavior cloning on the scripted teacher, then DAgger (Isaac Lab, GPU PhysX).
 
     set OMNI_KIT_ACCEPT_EULA=YES
-    D:\\il\\venv\\Scripts\\python.exe scripts\\rl\\train_policy.py [--num_envs 512] [--rounds 8] [--power_w 400]
+    D:\\local_projects\\il\\venv\\Scripts\\python.exe scripts\\rl\\train_policy.py [--num_envs 512] [--rounds 8] [--power_w 400]
 
 Round 0: the teacher drives every cell (demonstrations); the policy is fit to its targets (policy.py).
 Rounds 1..: the policy drives a growing share of the cells (the rest stay with the teacher, which keeps the

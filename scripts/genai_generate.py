@@ -11,13 +11,13 @@ Reads output/genai/inputs.json (study_generative.py --stage inputs), writes
   output/genai/textured/<model>/<object>.glb the mesh textured by Hunyuan3D-2.1's paint model
 
 Setup (Windows, one 24 GB GPU, no compiler needed):
-  uv venv --python 3.11 D:\\genai\\venv
+  uv venv --python 3.11 D:\\local_projects\\genai\\venv
   uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
   uv pip install diffusers "transformers<5" accelerate einops omegaconf scikit-image trimesh pymeshlab
                  opencv-python huggingface_hub peft jaxtyping typeguard "rembg[gpu]" timm torchdiffeq
                  xatlas embreex pytorch-lightning
   git clone https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1 / Hunyuan3D-2 / VAST-AI-Research/TripoSG
-       into D:\\genai\\repos (GENAI_REPOS); weights download into D:\\genai\\hf (GENAI_WEIGHTS), including
+       into D:\\local_projects\\genai\\repos (GENAI_REPOS); weights download into D:\\local_projects\\genai\\hf (GENAI_WEIGHTS), including
        the paint model's facebook/dinov2-giant.
 Licenses: Hunyuan3D (Tencent Hunyuan Community License; not for use in the EU, UK or South Korea),
 TripoSG (MIT), BiRefNet via rembg (MIT). The weights are not redistributed here.
@@ -38,8 +38,8 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "output" / "genai"
-REPOS = Path(os.environ.get("GENAI_REPOS", r"D:\genai\repos"))
-WEIGHTS = Path(os.environ.get("GENAI_WEIGHTS", r"D:\genai\hf"))
+REPOS = Path(os.environ.get("GENAI_REPOS", r"D:\local_projects\genai\repos"))
+WEIGHTS = Path(os.environ.get("GENAI_WEIGHTS", r"D:\local_projects\genai\hf"))
 os.environ.setdefault("HY3DGEN_MODELS", str(WEIGHTS / "hy3dgen"))
 os.environ.setdefault("HF_HOME", str(WEIGHTS))
 MV_ROLES = ("front", "left", "back", "right")

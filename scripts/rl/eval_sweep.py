@@ -5,9 +5,9 @@ Shows how the network got there (behavior-cloning snapshots, DAgger rounds) and 
 batch of cells per job, the same scenes for every checkpoint at a given jitter.
 
     set OMNI_KIT_ACCEPT_EULA=YES
-    D:\\il\\venv\\Scripts\\python.exe scripts\\rl\\eval_sweep.py --name curve ^
+    D:\\local_projects\\il\\venv\\Scripts\\python.exe scripts\\rl\\eval_sweep.py --name curve ^
         --jobs bc100=output/rl/curve/bc_100.pt bc1000=output/rl/curve/bc_1000.pt final=scripts/rl/checkpoints/hand_place_policy.pt
-    D:\\il\\venv\\Scripts\\python.exe scripts\\rl\\eval_sweep.py --name jitter --scales 1 2 3 4 ^
+    D:\\local_projects\\il\\venv\\Scripts\\python.exe scripts\\rl\\eval_sweep.py --name jitter --scales 1 2 3 4 ^
         --jobs teacher final=scripts/rl/checkpoints/hand_place_policy.pt
 
 Writes output/rl/sweep_<name>.json (after every job).
