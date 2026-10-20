@@ -88,7 +88,7 @@ box("truth", 600, 272, 184, 100, "ver", "Ground truth", ["surface error vs", "tr
 box("realcheck", 600, 444, 184, 100, "ver", "Real-world check", ["scan vs the real", "objects, posed"])
 
 # 4 use
-box("physics", 836, 150, 308, 118, "use", "Physics + robots", ["MuJoCo · Isaac Sim PhysX", "Franka Panda · Shadow Hand", "pick, place, drop tests"])
+box("physics", 836, 150, 308, 118, "use", "Physics + robots", ["MuJoCo · Isaac Sim · Isaac Lab", "Franka Panda · Shadow Hand", "pick, place, a learned policy"])
 box("perception", 836, 288, 308, 100, "use", "Perception", ["Replicator synthetic data →", "detector → pose → pick"])
 box("render", 836, 408, 308, 136, "use", "Rendering + library", ["Isaac Sim RTX path tracing", "Unreal Engine 5.8 (MegaLights)", "USD asset library, 3D gallery"])
 

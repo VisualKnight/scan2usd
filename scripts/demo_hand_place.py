@@ -1,7 +1,7 @@
 """A Shadow Hand places the scanned controller into the scanned holder (MuJoCo).
 
     python scripts/demo_hand_place.py [--trials 12] [--out docs/figures] [--no-video]
-    python scripts/demo_hand_place.py --export-plans output/hand_place_plans.json   # for isaac_hand_place.py
+    python scripts/demo_hand_place.py --export-plans output/hand_place_plans.json   # the span: isaac_hand_place.py --plans
 
 The five-finger version of scripts/demo_holder_place.py, with the same answer key: the controller
 lies face up on a raised tray; the hand comes down over its face, spans its width (thumb on one

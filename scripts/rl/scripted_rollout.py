@@ -11,7 +11,7 @@ Setup (once; Isaac Lab v3.0.0-beta2.patch1 on Isaac Sim 6.0.1, Python 3.12, Wind
     D:\\il\\venv\\Scripts\\python.exe scripts\\rl\\scripted_rollout.py --replay              # the 12 benchmark seeds
     D:\\il\\venv\\Scripts\\python.exe scripts\\rl\\scripted_rollout.py --num_envs 100 --seed 0 --video
 
---replay runs the exported benchmark plans (output/hand_place_plans.json: MuJoCo's scenes, settled
+--replay runs the exported benchmark plans (--plans, default output/hand_pinch_plans.json: MuJoCo's scenes, settled
 controller poses and waypoints), as scripts/isaac_hand_place.py does on CPU PhysX, here on GPU PhysX
 with all seeds in parallel. Otherwise each env gets its own random scene (hand_teacher.Spec.scene), the
 controller settles, and the plan is made from its settled pose. Both re-aim at the pre-place pose (the

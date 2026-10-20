@@ -38,7 +38,8 @@ HAND_USD = os.path.join(HAND_DIR, "right_hand", "right_hand.usda")
 FPS = 60  # control and app updates; PhysX substeps at PHYSICS_HZ
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--plans", default=os.path.join(ROOT, "output", "hand_place_plans.json"))
+parser.add_argument("--plans", default=os.path.join(ROOT, "output", "hand_pinch_plans.json"),
+                    help="demo_hand_pinch.py --export-plans (the published pinch); demo_hand_place.py's: the span")
 parser.add_argument("--trials", type=int, default=12)
 parser.add_argument("--physics-hz", type=int, default=480)
 parser.add_argument("--video", action="store_true", help="also render the re-aimed run of seed 0 (RTX)")

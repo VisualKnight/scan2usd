@@ -78,9 +78,9 @@
   <g class="node" data-k="physics" data-stage="use" tabindex="0">
   <rect x="836" y="150" width="308" height="118" rx="10" fill="#ffffff" stroke="#c2410c" stroke-width="2.2" filter="url(#arch_rough)"/>
   <text x="850" y="176" font-size="16" fill="#1e293b" text-anchor="start" font-weight="bold">Physics + robots</text>
-  <text x="850" y="198" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">MuJoCo · Isaac Sim PhysX</text>
+  <text x="850" y="198" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">MuJoCo · Isaac Sim · Isaac Lab</text>
   <text x="850" y="217" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">Franka Panda · Shadow Hand</text>
-  <text x="850" y="236" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">pick, place, drop tests</text>
+  <text x="850" y="236" font-size="13" fill="#1e293b" text-anchor="start" font-weight="normal">pick, place, a learned policy</text>
   </g>
   <g class="node" data-k="perception" data-stage="use" tabindex="0">
   <rect x="836" y="288" width="308" height="100" rx="10" fill="#ffffff" stroke="#c2410c" stroke-width="2.2" filter="url(#arch_rough)"/>

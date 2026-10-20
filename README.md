@@ -2,17 +2,21 @@
 
 **Scan-to-Sim asset pipeline**: phone photos of everyday objects in, physics-ready **OpenUSD** assets out, verified in NVIDIA **Isaac Sim** and **MuJoCo**, and rendered in **Unreal Engine**.
 
+> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[<!--n:reel_s-->147<!--/n--> s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4?v=381f7ca3)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · [benchmark](docs/benchmark.md)
+
 ![Scan2USD: real photos to a simulation-ready OpenUSD asset](docs/figures/hero.jpg)
 
 ![A Shadow Hand places the scanned controller into the scanned holder, Isaac Sim 6](docs/figures/hand_hero.jpg)
 
+[![400 Shadow Hands in Isaac Lab, each driven by a small neural network, place the scanned controller into the scanned holder](docs/figures/learned_hand_place.webp)](https://visualknight.github.io/scan2usd/figures/learned_hand_place.mp4?v=e0216497)
+
+*400 Shadow Hands at once in Isaac Lab, each driven by a small neural network that learned the placement from the scripted hand: <!--n:learn_film-->400/400<!--/n--> controllers seated in their holders, both assets scanned from phone photos ([full video](https://visualknight.github.io/scan2usd/figures/learned_hand_place.mp4?v=e0216497), [how it learned](https://visualknight.github.io/scan2usd/overview.html#hand)).*
+
 - **Accurate:** 0.6–0.8 mm mean surface error on textured objects, scored against ground truth; size within 1.43% from a ColorChecker alone, no ruler.
 - **Physics-ready:** convex decomposition, mass, inertia, articulated joints. A Franka Panda picks a scanned mug that a single convex hull makes unpickable.
-- **Checked against reality:** from my own phone photos, a scanned controller settles into a scanned holder a median <!--n:sim_add-->9.1<!--/n--> mm from where the real one sits, and a Shadow Hand places it there in MuJoCo and Isaac Sim.
-- **Useful for robot learning:** a detector trained only on Isaac Sim renders finds the object in **67/67** real photos and drives a see-locate-pick loop (10/10).
+- **Checked against reality:** from my own phone photos, a scanned controller settles into a scanned holder a median <!--n:sim_add-->9.1<!--/n--> mm from where the real one sits, and a Franka Panda and a Shadow Hand place it there in MuJoCo and Isaac Sim.
+- **Ready for robot learning:** in Isaac Lab, a small neural network learns that placement from the scripted hand and places <!--n:learn_placed-->400/400<!--/n--> fresh scenes; a detector trained only on Isaac Sim renders finds the object in **67/67** real photos and drives a see-locate-pick loop (10/10).
 - **Assets that know what they don't know:** tested grasps, measurement uncertainty and a Gaussian-splat look stored in the USD file.
-
-> Personal R&D project · Oct 2026 · **[Visual overview](https://visualknight.github.io/scan2usd/)** · **[<!--n:reel_s-->147<!--/n--> s demo video](https://visualknight.github.io/scan2usd/scan2usd_demo.mp4?v=381f7ca3)** · **[Interactive 3D gallery](https://visualknight.github.io/scan2usd/gallery/)** · **[USD asset library](https://visualknight.github.io/scan2usd/library/)** · [benchmark](docs/benchmark.md)
 
 ## What it does
 
@@ -53,7 +57,11 @@ Surfaces no photo can match (a plain white interior, a bowl's underside) get sea
 
 **Real-world check: scan, simulate, compare.** I photographed a controller holder and a controller, each alone, then together; the combined scan is the answer key. Dropped into the scanned holder, the scanned controller settles <!--n:sim_held-->12/12<!--/n--> times, median **<!--n:sim_add-->9.1<!--/n--> mm / <!--n:sim_rot-->11<!--/n-->°** from where the real one sits ([MuJoCo](docs/figures/holder_fit.webp); [Isaac Sim PhysX](docs/figures/isaac_holder_fit.webp): <!--n:isaac_held-->11/12<!--/n-->, <!--n:isaac_add-->9.0<!--/n--> mm). With one convex hull for the holder it slides off (<!--n:hull_held-->0/12<!--/n-->). `scripts/study_holder_fit.py`
 
-**Robots put it there.** A [Franka Panda](docs/figures/holder_place.webp) pinches the controller, turns it upright and seats it: <!--n:place_held-->12/12<!--/n--> held, <!--n:place_add-->4.7<!--/n--> mm / <!--n:place_rot-->8<!--/n-->° from the real pose. A [Shadow Hand](docs/figures/hand_place.webp) pinches it top to bottom instead, the way a person picks it up: <!--n:hand_held-->12/12<!--/n--> at <!--n:hand_add-->7.4<!--/n--> mm / <!--n:hand_rot-->11<!--/n-->°, re-aimed from the in-hand pose. The same plan [in Isaac Sim PhysX](docs/figures/isaac_hand_place.mp4): <!--n:ihand_held-->12/12<!--/n--> at <!--n:ihand_add-->10.5<!--/n--> mm / <!--n:ihand_rot-->16<!--/n-->°, also [rendered in Unreal Engine 5.8](docs/figures/unreal_hand_place.mp4). A small neural network [learned it in Isaac Lab](docs/figures/learned_hand_place.mp4) from the scripted hand (behavior cloning, then DAgger, on exact simulator state): <!--n:learn_placed-->400/400<!--/n--> fresh scenes placed at <!--n:learn_add-->8.7<!--/n--> mm / <!--n:learn_rot-->14<!--/n-->° (`scripts/rl/`). [Before that](docs/overview.html#hand), imitation alone placed <!--n:prog_bc-->236/400<!--/n-->; on scenes jittered 4× wider than training it places <!--n:jit4_net-->122/400<!--/n--> (the script: <!--n:jit4_teach-->299/400<!--/n-->). The Panda's plans [in Isaac Sim PhysX](docs/figures/isaac_holder_place.webp): <!--n:iplace_held-->12/12<!--/n--> at <!--n:iplace_add-->7.2<!--/n--> mm / <!--n:iplace_rot-->9<!--/n-->°, once PhysX got the torsional friction MuJoCo's pads have. With one convex hull for the holder, every placement fails. `scripts/demo_holder_place.py`, `isaac_holder_place.py`, `demo_hand_pinch.py`, `isaac_hand_place.py`
+**Robots put it there.** A [Franka Panda](docs/figures/holder_place.webp) pinches the controller, turns it upright and seats it: <!--n:place_held-->12/12<!--/n--> held, <!--n:place_add-->4.7<!--/n--> mm / <!--n:place_rot-->8<!--/n-->° from the real pose; its plans [in Isaac Sim PhysX](docs/figures/isaac_holder_place.webp): <!--n:iplace_held-->12/12<!--/n--> at <!--n:iplace_add-->7.2<!--/n--> mm / <!--n:iplace_rot-->9<!--/n-->°, once PhysX got the torsional friction MuJoCo's pads have. A [Shadow Hand](docs/figures/hand_place.webp) pinches it top to bottom instead, the way a person picks it up, and re-aims from the in-hand pose on the way: <!--n:hand_held-->12/12<!--/n--> at <!--n:hand_add-->7.4<!--/n--> mm / <!--n:hand_rot-->11<!--/n-->° in MuJoCo, <!--n:ihand_held-->12/12<!--/n--> at <!--n:ihand_add-->10.5<!--/n--> mm / <!--n:ihand_rot-->16<!--/n-->° [in Isaac Sim PhysX](https://visualknight.github.io/scan2usd/figures/isaac_hand_place.mp4?v=bbe93b7d), also [rendered in Unreal Engine 5.8](https://visualknight.github.io/scan2usd/figures/unreal_hand_place.mp4?v=387f89b1). With one convex hull for the holder, every placement fails. The hand videos leave out the forearm housing so it doesn't hide the scene; it is still simulated. `scripts/demo_holder_place.py`, `isaac_holder_place.py`, `demo_hand_pinch.py`, `isaac_hand_place.py`
+
+![How the network learned, and where it breaks](docs/figures/learned_progress.png)
+
+**A small neural network learns it (Isaac Lab).** An MLP on exact simulator state (the clock, where the controller started, where it belongs) imitates the scripted hand on GPU PhysX: <!--n:learn_demos-->2,048<!--/n--> demonstrations, behavior cloning, then <!--n:learn_rounds-->10<!--/n--> rounds of DAgger, <!--n:learn_min-->22<!--/n--> minutes on one RTX 4090. On 400 fresh scenes it places <!--n:learn_placed-->400/400<!--/n--> at <!--n:learn_add-->8.7<!--/n--> mm / <!--n:learn_rot-->14<!--/n-->° (the script: <!--n:teach_add-->9.3<!--/n--> mm / <!--n:teach_rot-->15<!--/n-->°). Imitation alone placed <!--n:prog_bc-->236/400<!--/n-->; one DAgger round made it <!--n:prog_r1-->400/400<!--/n-->. On scenes jittered 4× wider than it trained on it places <!--n:jit4_net-->122/400<!--/n-->, the script <!--n:jit4_teach-->299/400<!--/n-->: it learned the training range, not the geometry. `scripts/rl/`
 
 ![Generated vs scanned](docs/figures/genai_drop.jpg)
 
@@ -73,7 +81,7 @@ Surfaces no photo can match (a plain white interior, a bowl's underside) get sea
 
 ![Splat vs mesh](docs/figures/splat_buddha.jpg)
 
-**Gaussian splat for looks, convex hulls for physics.** A splat trained on the same photos rides on the rigid body as a `UsdVol.ParticleField3DGaussianSplat`. On photos it never saw, it beats the textured mesh 18/18 (Buddha PSNR 19.7 → 27.0 dB), and it [falls on PhysX](docs/figures/splat_drop.mp4). `scan2usd splat`
+**Gaussian splat for looks, convex hulls for physics.** A splat trained on the same photos rides on the rigid body as a `UsdVol.ParticleField3DGaussianSplat`. On photos it never saw, it beats the textured mesh 18/18 (Buddha PSNR 19.7 → 27.0 dB), and it [falls on PhysX](https://visualknight.github.io/scan2usd/figures/splat_drop.mp4?v=9f439bf5). `scan2usd splat`
 
 ![Path traced](docs/figures/render_modes.jpg)
 
@@ -81,9 +89,9 @@ Surfaces no photo can match (a plain white interior, a bowl's underside) get sea
 
 ![Unreal Engine 5.8, Lumen + MegaLights](docs/figures/unreal_render.jpg)
 
-**The same USD files in Unreal Engine 5.8.** One USD stage with the scans and 80 shadow-casting fairy lights, imported as is. MegaLights renders it in <!--n:ue_on-->8.8<!--/n--> ms per frame vs <!--n:ue_off-->14.8<!--/n--> ms without, slightly closer to the path tracer ([comparison](docs/figures/unreal_megalights.jpg), [orbit](docs/figures/unreal_flythrough.mp4)). `scripts/unreal_render.py`
+**The same USD files in Unreal Engine 5.8.** One USD stage with the scans and 80 shadow-casting fairy lights, imported as is. MegaLights renders it in <!--n:ue_on-->8.8<!--/n--> ms per frame vs <!--n:ue_off-->14.8<!--/n--> ms without, slightly closer to the path tracer ([comparison](docs/figures/unreal_megalights.jpg), [orbit](https://visualknight.github.io/scan2usd/figures/unreal_flythrough.mp4?v=774620f9)). `scripts/unreal_render.py`
 
-**More on the [overview page](https://visualknight.github.io/scan2usd/):** dexterous grasping, how accurate a scan must be, articulated assets, the asset library, color calibration, capture guidance, and lessons learned.
+**More on the [overview page](https://visualknight.github.io/scan2usd/):** dexterous grasping, the learned policy's failure cases, how accurate a scan must be, articulated assets, the asset library, color calibration, capture guidance, and lessons learned.
 
 ## Quickstart
 
@@ -147,7 +155,7 @@ Build outputs: `<name>.usd(a)`, `<name>.glb`, `textures/`, `color_calibration.js
 
 ## Scripts
 
-Isaac Sim scripts (`isaac_*.py`) run with Isaac Sim 6's Python (`set OMNI_KIT_ACCEPT_EULA=YES`, then `<isaac-sim>\python.exe scripts\isaac_....py`); the rest use the project venv.
+Isaac Sim scripts (`isaac_*.py`) run with Isaac Sim 6's Python (`set OMNI_KIT_ACCEPT_EULA=YES`, then `<isaac-sim>\python.exe scripts\isaac_....py`); the Isaac Lab scripts (`scripts/rl/`) with an Isaac Lab venv (setup in `scripts/rl/scripted_rollout.py`); the rest use the project venv.
 
 <details><summary>All scripts (benchmarks, demos, studies, figures)</summary>
 
@@ -161,11 +169,11 @@ Isaac Sim scripts (`isaac_*.py`) run with Isaac Sim 6's Python (`set OMNI_KIT_AC
 | `demo_holder_place.py` | Panda picks the scanned controller off a tray, turns it upright and places it into the scanned holder; scored against the real pose (decomposed vs one-hull holder); needs `study_holder_fit.py` output |
 | `study_robustness.py` | Pick success vs. collision variant, friction, mass, scan size error and grasp error (93 MuJoCo trials in parallel, ~10 s) |
 | `demo_hand_place.py` | The first Shadow Hand placement: the hand spans the scanned controller, turns it upright and places it into the scanned holder; open loop vs re-aimed from the in-hand pose, decomposed vs one-hull holder; needs `study_holder_fit.py` output and the Menagerie Shadow Hand |
-| `demo_hand_pinch.py` | The published Shadow Hand placement: a top-bottom pinch solved on the scan, carried without stopping into the holder (re-aimed on the way); same trials and variants; `--video`, `--export-plans` for Isaac Sim |
+| `demo_hand_pinch.py` | The published Shadow Hand placement: a top-bottom pinch solved on the scan, carried without stopping into the holder (re-aimed on the way); same trials and variants; `--video` (`--no-forearm`: without the forearm housing), `--export-plans` for Isaac Sim, `--export-task` for Isaac Lab |
 | `isaac_holder_place.py` | The Panda placement plans replayed in Isaac Sim 6 PhysX (MuJoCo finger pads with torsional friction added to Isaac's Franka, targets every substep); 12/12 placed |
-| `isaac_hand_place.py` | The same placement in Isaac Sim 6 PhysX (hand via Isaac's MJCF importer, plans from `demo_hand_pinch.py --export-plans`, or `demo_hand_place.py`'s); run with Isaac Sim's Python |
-| `rl/train_policy.py` | The learned placement in Isaac Lab (GPU PhysX, hundreds of cells): the scripted pinch as teacher (`rl/hand_teacher.py`, task from `demo_hand_pinch.py --export-task`), behavior cloning then DAgger (`rl/policy.py`); `rl/scripted_rollout.py --policy` films a checkpoint (`rl/checkpoints/`); `rl/eval_sweep.py` scores checkpoints and the teacher on the same scenes at several jitters (`rl/plot_learning.py` charts it); run with the Isaac Lab venv |
-| `unreal_hand_render.py` | The MuJoCo placement rendered in Unreal Engine 5.8 (Lumen + MegaLights): USD stage of the hand meshes and scanned assets, per-frame tracks keyed in Sequencer, Movie Render Queue |
+| `isaac_hand_place.py` | The same placement in Isaac Sim 6 PhysX: the benchmark (hand via Isaac's MJCF importer, plans from `demo_hand_pinch.py --export-plans output/hand_pinch_plans.json`, the default); run with Isaac Sim's Python |
+| `rl/train_policy.py` | The learned placement in Isaac Lab (GPU PhysX, hundreds of cells): the scripted pinch as teacher (`rl/hand_teacher.py`, task from `demo_hand_pinch.py --export-task`), behavior cloning then DAgger (`rl/policy.py`); `rl/scripted_rollout.py` films the teacher or a checkpoint (`--policy`, `rl/checkpoints/`) over the grid (`--camera rl/camera_v2.json --spacing 0.65 --dome gradient --hide_forearm`) or one cell (`--replay --num_envs 1 --track plan`: the overview's Isaac Sim video); `rl/eval_sweep.py` scores checkpoints and the teacher on the same scenes at several jitters (`rl/plot_learning.py` charts it); run with the Isaac Lab venv |
+| `unreal_hand_render.py` | The MuJoCo placement rendered in Unreal Engine 5.8 (Lumen + MegaLights): USD stage of the hand meshes and scanned assets, per-frame tracks keyed in Sequencer, Movie Render Queue; `--no-forearm` |
 | `hand_motion.py` | Waypoints, blended minimum-jerk moves, the re-aim step and the camera cut, shared by the three engines above |
 | `demo_hand_grasp.py` | Shadow Hand grasp sampling on the rigid benchmark assets (8 assets, 1,440 trials) (needs `git -C data\external\menagerie sparse-checkout add shadow_hand`) |
 | `isaac_pathtrace.py`, `make_render_figures.py` | Isaac Sim 6 RTX path tracing: beauty shot, normal-map comparison, look-dev render from a photo's camera |
@@ -182,7 +190,7 @@ Isaac Sim scripts (`isaac_*.py`) run with Isaac Sim 6's Python (`set OMNI_KIT_AC
 | `study_uncertainty.py`, `study_robust_grasps.py` | Do the stored intervals contain the truth? Does randomizing within them predict real grasp success? |
 | `isaac_holder_fit.py` | The holder drop-in test in Isaac Sim 6 PhysX (same assets, same releases) |
 | `study_holder_fit.py` | Own phone captures: pen-box removal, two controller passes merged (`register.py`), assets at measured size and mass, both registered into the combined scan, MuJoCo drop-in vs the real pose |
-| `sync_holder_numbers.py` | Writes the holder study's numbers into README.md and the overview from the result files (values sit between `<!--n:key-->` markers) |
+| `sync_holder_numbers.py` | Writes the project's result numbers into README.md and the overview from the result files (values sit between `<!--n:key-->` markers), and versions linked videos |
 | `study_capture_guide.py` | Weak capture + 8 guided / random / higher-ring photos rendered in Blender (`blender_render_capture.py --poses`), each reconstructed and scored |
 | `isaac_splat.py`, `compare_splat.py` | Hybrid assets in Isaac Sim RTX: mesh vs splat from held-out photo cameras (scored against the photos), showcase, physics drop |
 | `train_detector.py`, `make_coco_figure.py` | Train Faster R-CNN on the synthetic COCO set (needs `torch`/`torchvision`), score on held-out synthetic frames and on real photos |
@@ -219,10 +227,11 @@ Articulated assets put one such body per part under a root with `PhysicsArticula
 - Part splitting for articulation is manual (plane + hinge line).
 - Image-to-3D models (the generated-vs-scanned study) give no metric scale or up direction, and their textures are plausible rather than measured; one measurement sets the scale.
 - Gaussian splats keep the lighting of the capture (they don't relight), render only in RTX real-time path tracing in Isaac Sim 6.0, and need an external trainer ([Brush](https://github.com/ArthurBrussee/brush) binary, no CUDA toolkit needed). With the shadow proxy, splats get somewhat darker where the proxy shadows them.
+- The learned hand policy reads exact simulator state (no camera, no touch) and only knows the scene range it trained on: it degrades faster than the scripted hand on wider scenes. It hasn't been fine-tuned with reinforcement learning or tried on a real robot.
 
 ## Credits
 
-Ground-truth meshes: [Google Scanned Objects](https://app.gazebosim.org/GoogleResearch/fuel/collections/Scanned%20Objects%20by%20Google%20Research) (CC-BY 4.0; the model id `Great_Dinos_Triceratops_Toy` contains an Android figure). Real photos: [AliceVision Buddha dataset](https://github.com/alicevision/dataset_buddha) (CC-BY 4.0). Robots: [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie) Franka Panda and Shadow Hand (Apache-2.0). Image-to-3D: [Hunyuan3D 2.1 / 2mv](https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1) (Tencent Hunyuan Community License), [TripoSG](https://github.com/VAST-AI-Research/TripoSG) (MIT); weights not redistributed. Tools: COLMAP, CoACD, OpenUSD, MuJoCo, NVIDIA Isaac Sim, Blender, Brush (Gaussian splatting), OpenCV, trimesh, pymeshlab.
+Ground-truth meshes: [Google Scanned Objects](https://app.gazebosim.org/GoogleResearch/fuel/collections/Scanned%20Objects%20by%20Google%20Research) (CC-BY 4.0; the model id `Great_Dinos_Triceratops_Toy` contains an Android figure). Real photos: [AliceVision Buddha dataset](https://github.com/alicevision/dataset_buddha) (CC-BY 4.0). Robots: [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie) Franka Panda and Shadow Hand (Apache-2.0). Image-to-3D: [Hunyuan3D 2.1 / 2mv](https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1) (Tencent Hunyuan Community License), [TripoSG](https://github.com/VAST-AI-Research/TripoSG) (MIT); weights not redistributed. Tools: COLMAP, CoACD, OpenUSD, MuJoCo, NVIDIA Isaac Sim and Isaac Lab, Unreal Engine, PyTorch, Blender, Brush (Gaussian splatting), OpenCV, trimesh, pymeshlab.
 
 ## License
 
