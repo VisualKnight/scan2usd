@@ -119,7 +119,7 @@
 <aside class="toc">
   <a class="brand" href="#top">Scan2USD</a>
   <div class="legend"><span class="s-cap">Capture</span><span class="s-bld">Build</span><span class="s-ver">Verify</span><span class="s-use">Use</span></div>
-  <nav><a class="s-bld" href="#architecture"><i>01</i>Architecture</a><a class="s-ver" href="#real"><i>02</i>Real-world check</a><a class="s-use" href="#robotics"><i>03</i>Robotics demos</a><a class="s-use" href="#hand"><i>04</i>Shadow Hand</a><a class="s-use" href="#perception"><i>05</i>Perception</a><a class="s-ver" href="#tolerance"><i>06</i>Accuracy needed</a><a class="s-ver" href="#benchmark"><i>07</i>Benchmark</a><a class="s-ver" href="#generated"><i>08</i>Generated vs scanned</a><a class="s-use" href="#rendering"><i>09</i>Rendering</a><a class="s-bld" href="#uncertainty"><i>10</i>Uncertainty</a><a class="s-cap" href="#color"><i>11</i>Color</a><a class="s-note" href="#learn"><i>12</i>Learn</a><a class="s-note" href="#lessons"><i>13</i>Lessons</a><a class="s-note" href="#timeline"><i>14</i>Timeline</a><a class="s-cap" href="#capture"><i>15</i>Capture your own</a></nav>
+  <nav><a class="s-bld" href="#architecture"><i>01</i>Architecture</a><a class="s-ver" href="#real"><i>02</i>Real-world check</a><a class="s-use" href="#robotics"><i>03</i>Robotics demos</a><a class="s-use" href="#hand"><i>04</i>Shadow Hand</a><a class="s-use" href="#perception"><i>05</i>Perception</a><a class="s-ver" href="#tolerance"><i>06</i>Accuracy needed</a><a class="s-ver" href="#benchmark"><i>07</i>Benchmark</a><a class="s-ver" href="#generated"><i>08</i>Generated vs scanned</a><a class="s-ver" href="#simready"><i>09</i>SimReady</a><a class="s-use" href="#rendering"><i>10</i>Rendering</a><a class="s-bld" href="#uncertainty"><i>11</i>Uncertainty</a><a class="s-cap" href="#color"><i>12</i>Color</a><a class="s-note" href="#learn"><i>13</i>Learn</a><a class="s-note" href="#lessons"><i>14</i>Lessons</a><a class="s-note" href="#timeline"><i>15</i>Timeline</a><a class="s-cap" href="#capture"><i>16</i>Capture your own</a></nav>
   <div class="out"><a href="gallery/index.html">3D gallery &#8599;</a><br><a href="library/index.html">USD asset library &#8599;</a><br><a href="https://github.com/VisualKnight/scan2usd">Source on GitHub &#8599;</a></div>
 </aside>
 <main class="wrap">
@@ -131,7 +131,7 @@
 <div class="flow">
   <div class="s-cap"><b>1 · Capture</b><p>Phone photos, a color chart, and a guide to the next shots</p></div>
   <div class="s-bld"><b>2 · Build</b><p>Mesh, calibrated color and scale, mass, convex colliders, USD</p></div>
-  <div class="s-ver"><b>3 · Verify</b><p>33 checks on the file, two physics engines, ground truth</p></div>
+  <div class="s-ver"><b>3 · Verify</b><p>33 checks plus NVIDIA SimReady on the file, two physics engines, ground truth</p></div>
   <div class="s-use"><b>4 · Use</b><p>Robot picks, synthetic training data, renders in Isaac Sim and Unreal</p></div>
 </div>
 <img class="board" src="figures/hero.jpg" alt="Real photos to a simulation-ready OpenUSD asset" style="margin-bottom:10px">
@@ -281,7 +281,7 @@
 <div class="archd" data-k="guide" hidden><h4>Capture guide</h4><p>Reads the asset's uncertainty and lists camera positions that would see the physics-relevant surface no photo saw twice. Work in progress.</p><ul><li>8 extra photos, rendered where asked</li><li>helps the bowl; not the printed mug (its white inside is visible but textureless)</li></ul><div><code>guide.py</code><code>study_capture_guide.py</code><code>scan2usd guide</code></div></div>
 <div class="archd" data-k="pipeline" hidden><h4>scan2usd pipeline</h4><p>COLMAP structure-from-motion and multi-view stereo → table plane to z = 0 → object isolated → Poisson surface. Then repair, meters and Z-up, decimate, bake 2K albedo + normal maps, correct color, set metric scale, split into convex hulls (CoACD) and compute mass, center of mass and inertia. Optional: carve out space the photos see through, or split a scan into parts on a revolute joint.</p><ul><li>controller holder: <!--n:holder_hulls-->64<!--/n--> convex pieces</li><li>one command: scan2usd scan photos\ -o out\</li></ul><div><code>pipeline.py</code><code>reconstruct.py</code><code>mesh_ops.py</code><code>bake.py</code><code>color.py</code><code>physics.py</code><code>carve.py</code><code>articulation.py</code></div></div>
 <div class="archd" data-k="asset" hidden><h4>OpenUSD asset</h4><p>One file: render mesh with a PBR look, convex-hull colliders with a physics material, rigid body, mass and inertia. Codeless USD schemas add tested grasps, property intervals (mass, scale, friction) and per-vertex observed / inferred / sealed labels. Optional Gaussian splat for the look. Many assets become one library with collision and friction variant sets.</p><ul><li>true mass inside the stored interval: 5/6 objects</li><li>756 grasp re-tests stored</li><li>also exported as glTF and MuJoCo MJCF</li></ul><div><code>usd_io.py</code><code>schemas.py</code><code>uncertainty.py</code><code>splat.py</code><code>library.py</code><code>mjcf.py</code></div></div>
-<div class="archd" data-k="validator" hidden><h4>Validator</h4><p>Opens the written file the way a simulator would and checks it: USD units and up axis, textures resolve; geometry watertight, consistent winding, plausible size, resting on z = 0; hulls convex, ≤ 255 vertices, matching the render mesh; mass, inertia (triangle inequality), center of mass, density; drop tests settle.</p><ul><li>33 checks on every asset</li></ul><div><code>validate.py</code><code>simulate.py</code><code>scan2usd validate</code></div></div>
+<div class="archd" data-k="validator" hidden><h4>Validator</h4><p>Opens the written file the way a simulator would and checks it: USD units and up axis, textures resolve; geometry watertight, consistent winding, plausible size, resting on z = 0; hulls convex, ≤ 255 vertices, matching the render mesh; mass, inertia (triangle inequality), center of mass, density; drop tests settle. Packaged for NVIDIA SimReady, every asset also passes its Robotics-Prop profile (NVIDIA's validator).</p><ul><li>33 checks on every asset</li><li>SimReady Robotics-Prop: <!--n:sr_pkg-->11/11<!--/n--> packages pass</li></ul><div><code>validate.py</code><code>simulate.py</code><code>scan2usd validate</code><code>simready.py</code><code>scan2usd simready</code></div></div>
 <div class="archd" data-k="truth" hidden><h4>Ground truth</h4><p>Aligns each scan to its true mesh, then measures surface accuracy, completeness, F-score and volume, and color error on the chart before and after correction. Image-to-3D meshes are scored the same way.</p><ul><li>mean error 0.60–3.03 mm over 6 objects</li><li>F-score @2 mm up to 0.94</li><li>one photo, Hunyuan3D 2.1: F <!--n:gen_f_h21-->0.804<!--/n--> vs <!--n:gen_f_pg-->0.786<!--/n--> (78 photos)</li></ul><div><code>evaluate.py</code><code>run_benchmark.py</code><code>evaluate_synthetic.py</code><code>study_generative.py</code></div></div>
 <div class="archd" data-k="realcheck" hidden><h4>Real-world check</h4><p>A controller holder and a controller, scanned alone and together. Registering the scans gives the real resting pose: the answer key. The scanned controller is dropped into the scanned holder, then placed by robots.</p><ul><li>drop: <!--n:sim_held-->12/12<!--/n--> held, median <!--n:sim_add-->9.1<!--/n--> mm (MuJoCo); <!--n:isaac_held-->11/12<!--/n--> in Isaac Sim</li><li>holder as one convex hull: <!--n:hull_held-->0/12<!--/n--></li><li>scans agree on scale within <!--n:scale_agree-->1.2<!--/n-->%</li></ul><div><code>study_holder_fit.py</code><code>register.py</code><code>isaac_holder_fit.py</code></div></div>
 <div class="archd" data-k="physics" hidden><h4>Physics + robots</h4><p>MuJoCo and Isaac Sim PhysX run the same assets. A Franka Panda pinches the controller and seats it in the holder (MuJoCo IK, replayed on Isaac's Franka); a Shadow Hand pinches it top to bottom as a person does, and a small network learns that from the script in Isaac Lab; the Panda picks the scanned mug; an articulated lid opens on its joint.</p><ul><li>Panda: <!--n:place_held-->12/12<!--/n--> MuJoCo, <!--n:iplace_held-->12/12<!--/n--> Isaac Sim (<!--n:iplace_add-->7.2<!--/n--> mm)</li><li>Shadow Hand: <!--n:hand_held-->12/12<!--/n--> MuJoCo, <!--n:ihand_held-->12/12<!--/n--> Isaac Sim</li><li>learned policy (Isaac Lab): <!--n:learn_placed-->400/400<!--/n--> fresh scenes</li><li>holder as one convex hull: every placement fails</li></ul><div><code>demo_holder_place.py</code><code>isaac_holder_place.py</code><code>demo_hand_pinch.py</code><code>isaac_hand_place.py</code><code>rl/train_policy.py</code><code>demo_panda.py</code><code>isaac_franka_pick.py</code></div></div>
@@ -488,7 +488,22 @@
 </ul>
 <p class="where"><code>scripts/study_generative.py</code> · <code>genai_generate.py</code> (Hunyuan3D 2.1 / 2mv, Tencent Hunyuan Community License; TripoSG, MIT)</p>
 
-<div class="chap s-use" id="rendering"><div class="no">09</div><div><div class="eb">Use</div><h2>Rendering: Isaac Sim and Unreal Engine</h2></div></div>
+<div class="chap s-ver" id="simready"><div class="no">09</div><div><div class="eb">Verify</div><h2>Industry standard: NVIDIA SimReady</h2></div></div>
+<p>NVIDIA's <a href="https://github.com/NVIDIA/simready-foundation">SimReady Foundation</a> turns "simulation-ready" into testable requirements (each with an ID, such as VG.027 "meshes have normals"), grouped into features and bundled into profiles. <b>Robotics-Prop</b> is the contract for objects a robot handles. Every asset in the library is checked with NVIDIA's own validator (<code>simready-validate</code> <!--n:sr_validator-->2026.8.0<!--/n-->, core tier), against profile <!--n:sr_version-->4.0.0<!--/n-->: <!--n:sr_req-->9<!--/n--> required features, <!--n:sr_opt-->16<!--/n--> optional.</p>
+<div class="card" style="margin-bottom:12px"><h3>As built <!--n:sr_built-->0/11<!--/n-->, as a SimReady package <!--n:sr_pkg-->11/11<!--/n--></h3><img src="figures/simready.png" alt="SimReady Robotics-Prop features per asset, as built and as a package">
+  <p class="cap">The physics already passed: rigid bodies, colliders and mass, plus the PhysX rigid-body runtime variant. What was missing is what a large, shared asset library needs, and <code>scan2usd simready</code> adds it to a copy of each asset:</p>
+  <ul class="small">
+    <li><b>Layout:</b> <code>&lt;name&gt;/simready_usd/sm_&lt;name&gt;_01.usda</code>, its textures inside, a 256&times;256 thumbnail. No spaces anywhere in the path: NP.003 checks every folder of the absolute path, so even a project folder named "Local Projects" fails.</li>
+    <li><b>Semantic labels</b> with USD's own <code>LabelsAPI</code>: what the object is, its <a href="https://www.wikidata.org">Wikidata</a> Q-code (mug: Q386215, looked up for each asset) and what it is made of, on every material. These keys drive segmentation ground truth in synthetic data.</li>
+    <li><b>Provenance</b> in the file: author, license, category, source, mass, extents, rigid-body count.</li>
+    <li><b>Two genuine spec slips</b>, now fixed in the builder too: collision hulls had no normals (VG.027), and texture and vertex-color nodes typed their output <code>color3f</code> where the UsdPreviewSurface spec says <code>float3</code> (VM.PS.001). The project's own 33 checks didn't cover either.</li>
+    <li><b>Optional features met:</b> grasp vectors on <!--n:sr_grasp-->7/11<!--/n--> (a line from each of our stored, tested grasps through the object; the other four have no stored grasps), display color on <!--n:sr_disp-->11/11<!--/n-->, multi-body physics for the articulated box.</li>
+    <li><b>Not yet:</b> MDL and OpenPBR materials, non-visual (sensor) materials, the MuJoCo and Newton runtime variants, and Isaac Sim composition, all optional.</li>
+    <li><b>One finding:</b> SL.MAT.001's text excludes physics materials, but its checker (2026.8.0) asks every material for a label. The physics material is the same stuff, so it gets one too.</li>
+  </ul>
+  <p class="cap">Reproduce: <code>pip install simready-validate simready-foundation-tier-core</code> (its own Python 3.12 venv), then <code>scan2usd simready asset.usda -o D:/packages --category mug --qcode Q386215 --material ceramic --license Apache-2.0 --validate</code>. <code>src/scan2usd/simready.py</code> · <code>scripts/study_simready.py</code></p></div>
+
+<div class="chap s-use" id="rendering"><div class="no">10</div><div><div class="eb">Use</div><h2>Rendering: Isaac Sim and Unreal Engine</h2></div></div>
 <div class="card" style="margin-bottom:12px"><h3>Same USD files in Unreal Engine 5.8: Lumen + MegaLights</h3><img src="figures/unreal_render.jpg" alt="Scanned assets in Unreal Engine 5.8">
   <p class="cap">One USD stage: the scans by reference, a wood table and <b>80 shadow-casting fairy lights</b>, imported unchanged. Lumen gives the bounce light, MegaLights a soft shadow for every bulb. Scripted build and render. <a href="figures/unreal_flythrough.mp4?v=774620f9"><b>10-second orbit</b></a>.</p></div>
 <div class="card" style="margin-bottom:12px"><h3>What MegaLights buys: <!--n:ue_on-->8.8<!--/n--> vs <!--n:ue_off-->14.8<!--/n--> ms GPU per frame</h3><img src="figures/unreal_megalights.jpg" alt="MegaLights on, off, and path-traced reference">
@@ -502,7 +517,7 @@
     <p class="cap">Rendered from the photo's solved camera: 63% of the silhouette lies within 3 px of the photo's edges, which checks geometry, scale and camera at once.</p></div>
 </div>
 
-<div class="chap s-bld" id="uncertainty"><div class="no">10</div><div><div class="eb">Build</div><h2>Assets that know what they don't know</h2></div></div>
+<div class="chap s-bld" id="uncertainty"><div class="no">11</div><div><div class="eb">Build</div><h2>Assets that know what they don't know</h2></div></div>
 <p class="muted" style="max-width:900px">Scan-to-sim tools usually output one confident mesh. These assets also store what the camera actually saw, what was guessed, how to hold them, and how they really look: all inside the USD file, where any simulator can read it.</p>
 <div class="grid g4" style="margin-bottom:12px">
   <div class="card kpi"><b>5 / 6</b><span>true masses inside the stored interval; the single nominal value is within 10% for only 2 / 6</span></div>
@@ -523,7 +538,7 @@
     <p class="cap"><code>scan2usd guide</code> lists camera positions that would see the physics-relevant surface no photo saw twice. Tested with 8 photos rendered exactly where asked: it wins on the bowl and loses on the printed mug, whose white interior is visible but textureless. Next: score views by texture too.</p></div>
 </div>
 
-<div class="chap s-cap" id="color"><div class="no">11</div><div><div class="eb">Capture</div><h2>Color calibration</h2></div></div>
+<div class="chap s-cap" id="color"><div class="no">12</div><div><div class="eb">Capture</div><h2>Color calibration</h2></div></div>
 <div class="grid" style="grid-template-columns: 1.6fr 1fr">
   <div class="card"><img src="figures/color_chart.svg" alt="ColorChecker before/after"><p class="cap">Each patch: as captured · corrected · reference, with ΔE2000.</p></div>
   <div class="card"><h3>What each reference buys you</h3>
@@ -537,7 +552,7 @@
     <p class="cap">ΔE2000 below about 2 is hard to notice.</p></div>
 </div>
 
-<div class="chap s-note" id="learn"><div class="no">12</div><div><div class="eb">Notes</div><h2>Learn</h2></div></div>
+<div class="chap s-note" id="learn"><div class="no">13</div><div><div class="eb">Notes</div><h2>Learn</h2></div></div>
 <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr))">
   <details><summary>Photogrammetry with COLMAP <span>· photos → points → mesh</span></summary>
     <p><b>Structure from motion</b> matches features across photos and solves every camera's position. <b>Multi-view stereo</b> then estimates depth per pixel and fuses millions of colored points. A Poisson solve turns the points into a closed surface.</p>
@@ -577,7 +592,7 @@
     <p class="where"><code>uncertainty.py</code> · <code>schemas.py</code> · <code>guide.py</code> · <code>scan2usd uncertainty | grasps | guide</code></p></details>
 </div>
 
-<div class="chap s-note" id="lessons"><div class="no">13</div><div><div class="eb">Notes</div><h2>Lessons</h2></div></div>
+<div class="chap s-note" id="lessons"><div class="no">14</div><div><div class="eb">Notes</div><h2>Lessons</h2></div></div>
 <ol class="lessons">
   <li><b>Test on real data, not just synthetic.</b> The detector scored a perfect 1.00 on held-out renders and still made 4.3 false detections per real photo. Unlabeled distractors in training cut that by 84%.</li>
   <li><b>Read the units, don't tune by eye.</b> Depth of field was far too strong: USD lens values are in tenths of a scene unit, so on a meters stage &ldquo;50&rdquo; is a 5 m lens.</li>
@@ -593,10 +608,10 @@
   <li><b>Score a new tool with the old yardsticks.</b> Generated meshes went through the same build and the same ground truth as the scans, so the comparison is fair. A sanity row caught a bug on our side: the scans' vertex colors are sRGB, but glTF reads them as linear, which washed them out.</li>
 </ol>
 
-<div class="chap s-note" id="timeline"><div class="no">14</div><div><div class="eb">Notes</div><h2>Timeline</h2></div></div>
+<div class="chap s-note" id="timeline"><div class="no">15</div><div><div class="eb">Notes</div><h2>Timeline</h2></div></div>
 <p class="small muted">Pipeline core → photos to USD, scored against ground truth → robot demos in MuJoCo and Isaac Sim, sim-to-real detector → path tracing and a USD asset library → grasps, uncertainty and splats in the asset → own phone scans, checked against the real pair and placed by a Panda and a Shadow Hand → Unreal Engine 5.8 → generated vs scanned assets. <b>Next:</b> a ColorChecker in real phone captures; texture-aware capture guidance.</p>
 
-<div class="chap s-cap" id="capture"><div class="no">15</div><div><div class="eb">Capture</div><h2>Capture your own</h2></div></div>
+<div class="chap s-cap" id="capture"><div class="no">16</div><div><div class="eb">Capture</div><h2>Capture your own</h2></div></div>
 <div class="grid g2">
   <div class="card small"><h3>Shoot</h3><ul>
     <li><b>Start easy:</b> a matte, textured object (wooden toy, sneaker, speckled mug). Dark, glossy or plain surfaces are the hardest; masking tape with pen marks helps inside plain cups.</li>

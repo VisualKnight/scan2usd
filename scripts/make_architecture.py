@@ -195,9 +195,10 @@ DETAILS = {
         "Validator",
         "Opens the written file the way a simulator would and checks it: USD units and up axis, textures resolve; "
         "geometry watertight, consistent winding, plausible size, resting on z = 0; hulls convex, ≤ 255 vertices, "
-        "matching the render mesh; mass, inertia (triangle inequality), center of mass, density; drop tests settle.",
-        ["33 checks on every asset"],
-        ["validate.py", "simulate.py", "scan2usd validate"],
+        "matching the render mesh; mass, inertia (triangle inequality), center of mass, density; drop tests settle. "
+        "Packaged for NVIDIA SimReady, every asset also passes its Robotics-Prop profile (NVIDIA's validator).",
+        ["33 checks on every asset", f"SimReady Robotics-Prop: {n('sr_pkg')} packages pass"],
+        ["validate.py", "simulate.py", "scan2usd validate", "simready.py", "scan2usd simready"],
     ),
     "truth": (
         "Ground truth",

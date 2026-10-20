@@ -350,6 +350,28 @@ def cmd_grasps(args) -> int:
     return 0
 
 
+def cmd_simready(args) -> int:
+    from .simready import SimReadyInfo, bad_path_parts, package, validate
+
+    bad = bad_path_parts(args.output)
+    if bad:
+        print(f"note: SimReady NP.003 rejects these folder names in the package path: {bad} "
+              "(validation will flag them; use an output folder without spaces)")
+    info = SimReadyInfo(category=args.category, qcode=args.qcode, material=args.material, license=args.license,
+                        author=args.author, source_file=args.source_file or "")
+    main = package(args.usd, args.output, info, name=args.name)
+    print(f"wrote {main}")
+    if not args.validate:
+        return 0
+    report = validate(main, exe=args.validator)
+    print(f"{report['profile']} {report['version']} (simready-validate {report['validator']}): "
+          f"{'PASSED' if report['passed'] else 'FAILED'}")
+    for fid, f in sorted(report["features"].items(), key=lambda x: (x[1]["optional"], x[0])):
+        state = "met" if f["passed"] else ("FAILS" if f["blocking"] and not f["optional"] else "not met")
+        print(f"  {'optional' if f['optional'] else 'required'} {fid:<18} {state:<8} {' '.join(f['failing'])}")
+    return 0 if report["passed"] else 1
+
+
 def cmd_materials(_args) -> int:
     from .physics import MATERIALS
 
@@ -491,6 +513,22 @@ def main(argv: list[str] | None = None) -> int:
     sd.add_argument("--images", type=Path, help="photos (default: <workspace>/dense/0/images)")
     sd.add_argument("--exclude", default="", help="comma-separated photos to hold out")
     sd.set_defaults(func=cmd_splat_data)
+
+    sr = sub.add_parser("simready", help="package an asset for NVIDIA SimReady (Robotics-Prop): folder layout, "
+                                         "semantic labels, provenance metadata, thumbnail; optionally validate")
+    sr.add_argument("usd", type=Path, help="a built asset")
+    sr.add_argument("-o", "--output", type=Path, required=True,
+                    help="package root (<root>/<name>/simready_usd/sm_<name>_01.usda); no spaces in the path")
+    sr.add_argument("--category", required=True, help="what the object is, e.g. mug")
+    sr.add_argument("--qcode", required=True, help="its Wikidata item, e.g. Q386215 (mug)")
+    sr.add_argument("--material", required=True, help="what it is made of, e.g. ceramic")
+    sr.add_argument("--license", required=True, help="e.g. CC-BY-4.0, Apache-2.0, proprietary")
+    sr.add_argument("--author", default="Yibo Liu (Scan2USD)")
+    sr.add_argument("--source-file", help="what it was built from (default: from the build metadata)")
+    sr.add_argument("--name", help="package name (default: the asset's default prim, snake_case)")
+    sr.add_argument("--validate", action="store_true", help="run simready-validate on the package")
+    sr.add_argument("--validator", help="simready-validate executable (default: $SIMREADY_VALIDATE or PATH)")
+    sr.set_defaults(func=cmd_simready)
 
     args = parser.parse_args(argv)
     return args.func(args)
