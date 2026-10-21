@@ -44,6 +44,7 @@ def values() -> dict[str, str]:
         **learned_values(),
         **progress_values(),
         **simready_values(),
+        **vision_values(),
         **genai_values(),
     }
 
@@ -169,6 +170,30 @@ def simready_values() -> dict[str, str]:
             "sr_version": s["version"], "sr_validator": s["validator"],
             "sr_grasp": f"{met('FET_005_STANDARD')}/{n}", "sr_disp": f"{met('FET_010_STANDARD')}/{n}",
             "sr_physx": f"{met('FET_003_PHYSX')}/{n}"}
+
+
+def vision_values() -> dict[str, str]:
+    """The vision-based hand policy (scripts/rl/vision_summary.py): every run as vis_<run> (placed/400) and
+    vis_<run>_add (median mm); the pose networks' closed-loop estimate errors as vis_<run>_<scene|start|hand>_mm."""
+    p = ROOT / "docs" / "figures" / "vision_policy.json"
+    if not p.exists():
+        return {}
+    d = json.loads(p.read_text())
+    out = {}
+    for k, r in d["runs"].items():
+        out[f"vis_{k}"] = f"{r['placed']}/{r['envs']}"
+        out[f"vis_{k}_add"] = f"{r['add_mm_median']:.1f}"
+        out[f"vis_{k}_rot"] = f"{r['rot_deg_median']:.0f}"
+        e = r.get("estimates", {})
+        for name, key in (("goal", "target_mm_median"), ("start", "start_mm_median"), ("hand", "hand_mm_median")):
+            if key in e:
+                out[f"vis_{k}_{name}_mm"] = f"{e[key]:.1f}"
+    for k, v in d.get("nets", {}).items():
+        if "vision" in v and "mm_median" in v["vision"]:
+            out[f"vis_net_{k}_mm"] = f"{v['vision']['mm_median']:.1f}"
+        elif "vision" in v:
+            out[f"vis_net_{k}_mm"] = f"{v['vision']['target']['mm_median']:.1f}"
+    return out
 
 
 def reel_values() -> dict[str, str]:

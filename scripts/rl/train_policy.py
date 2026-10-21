@@ -9,6 +9,10 @@ data on the teacher's path too), the teacher labels every state visited, the dat
 policy is fine-tuned. Every round logs the policy's own success on the cells it drove. A final evaluation
 runs fresh scenes (other seeds) with the policy alone. The GPU's average power is held under --power_w
 (policy.PowerGovernor). Writes output/rl/policy/{policy.pt, round_<k>.pt, train_log.json}.
+
+--vision (with --resume <state-based policy>): DAgger again, now on what the cameras see (vision_policy.py):
+the policy's scene poses and its view of the controller in the hand come from the pose networks, under new
+random looks every round; the teacher still labels from the simulator's exact state.
 """
 
 from __future__ import annotations
@@ -38,11 +42,16 @@ parser.add_argument("--resume", default="", help="a checkpoint to start from (sk
 parser.add_argument("--demos_file", default="", help="demonstrations saved by an earlier run (demos.pt): no re-simulation")
 parser.add_argument("--max_hours", type=float, default=5.0, help="stop starting new rounds after this")
 parser.add_argument("--snapshots", default="", help="comma-separated BC steps: save the network part-way (bc_<steps>.pt)")
+parser.add_argument("--vision", action="store_true",
+                    help="the policy sees the cameras' pose estimates (vision_policy.VisionRunner); use with --resume")
+parser.add_argument("--scene_net", default="", help="--vision: the scene pose network (default scripts/rl/checkpoints)")
+parser.add_argument("--hand_net", default="", help="--vision: the in-hand pose network")
+parser.add_argument("--vision_noise", action="store_true", help="--vision: a noisier sensor (vision_policy.corrupt)")
 args, _ = parser.parse_known_args()
 
 from isaaclab.app import AppLauncher  # noqa: E402
 
-app = AppLauncher(headless=True).app
+app = AppLauncher(headless=True, enable_cameras=args.vision).app
 
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
@@ -57,13 +66,33 @@ DART = tuple(float(v) for v in args.dart.split(",")) if args.dart else None
 
 
 def make_env(n):
-    cfg = HandPlaceEnvCfg()
+    if args.vision:
+        from vision_env import VisionHandPlaceEnv, VisionHandPlaceEnvCfg
+
+        cfg, cls = VisionHandPlaceEnvCfg(), VisionHandPlaceEnv
+    else:
+        cfg, cls = HandPlaceEnvCfg(), HandPlaceEnv
     cfg.scene.num_envs = n
-    cfg.scene.env_spacing = 1.0
+    if not args.vision:
+        cfg.scene.env_spacing = 1.0
     cfg.episode_length_s = 1.0e5  # episodes are run by the Runner, never reset by the env
-    env = HandPlaceEnv(cfg)
+    env = cls(cfg)
     env.reset()
     return env
+
+
+def make_runner(env, gov):
+    if not args.vision:
+        return PL.Runner(env, SPEC, governor=gov, obs_set=args.obs_set)
+    import vision_policy as VP
+
+    nets = [VP.load_net(p or d, env.device) for p, d in ((args.scene_net, VP.SCENE_NET), (args.hand_net, VP.HAND_NET))]
+    return VP.VisionRunner(env, SPEC, *nets, governor=gov, obs_set=args.obs_set, noise=args.vision_noise)
+
+
+def new_looks(env, seed):
+    if args.vision:
+        env.randomize_looks(np.random.default_rng([seed, 31]))
 
 
 def scenes(seed, n):
@@ -130,7 +159,7 @@ def main():
     gov = PL.PowerGovernor(args.power_w)
     env = make_env(args.num_envs)
     dev = env.device
-    run = PL.Runner(env, SPEC, governor=gov, obs_set=args.obs_set)
+    run = make_runner(env, gov)
     n = args.num_envs
     t_start = time.time()
     log = {"args": vars(args), "rounds": []}
@@ -139,6 +168,10 @@ def main():
     seed = 0
     if args.resume:
         policy = PL.load(args.resume, dev)
+        if args.demos_file:  # keep the original demonstrations in the mix (exact frames, clean labels)
+            o, a = torch.load(args.demos_file)
+            data.obs.append(o)
+            data.act.append(a)
     else:
         # round 0: demonstrations (simulated, or loaded with --demos_file)
         r0 = {"round": 0, "teacher": []}
@@ -170,10 +203,13 @@ def main():
         share = min(1.0, 0.7 + 0.1 * (k - 1))  # the policy's share of the cells
         use = torch.rand(n, generator=torch.Generator().manual_seed(1000 + k)) < share
         t0 = time.time()
+        new_looks(env, 100 + k)
         res, d = run.episode(scenes(100 + k, n), policy=policy, use_policy=use.to(dev), collect=True, dart=DART)
         data.add(d)
         rk = {"round": k, "policy_share": share, "policy": PL.summarize(res, use), "teacher": PL.summarize(res, ~use),
               "episode_s": time.time() - t0}
+        if args.vision:
+            rk["estimates"] = run.error_summary()
         print(f"[train] round {k}: policy {rk['policy']}  teacher {rk['teacher']}", flush=True)
         fit(policy, data, args.steps, dev, args.lr * 0.5, rk)
         PL.save(policy, os.path.join(OUT, f"round_{k}.pt"), {"round": k, "policy": rk["policy"]})
@@ -186,6 +222,7 @@ def main():
     ev = []
     m = args.num_envs
     for k in range(max(1, int(np.ceil(args.eval_envs / m)))):
+        new_looks(env, 5000 + k)
         res, _ = run.episode(scenes(5000 + k, m), policy=policy, use_policy=torch.ones(m, dtype=torch.bool), collect=False)
         ev.append(res)
     res = {key: torch.cat([r[key] for r in ev])[:args.eval_envs] for key in ev[0]}

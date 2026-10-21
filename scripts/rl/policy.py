@@ -231,13 +231,25 @@ class Runner:
     def from_cell(self, pos: torch.Tensor, R: torch.Tensor) -> torch.Tensor:
         return torch.cat([pos @ self.G.T, mat_to_quat(self.G @ R)], -1)
 
+    def scene_estimate(self, start7: torch.Tensor, target7: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """The controller's settled start pose and its seated (target) pose as the policy will see them, called
+        once per episode after the scene settles. Here the simulator's exact poses; the vision policy
+        (vision_policy.VisionRunner) estimates them from its cameras."""
+        return start7, target7
+
+    def controller_state(self, t: float) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """The controller's pose (env-relative, x y z qx qy qz qw) and its world linear and angular velocity as
+        the policy sees them at plan time t. Here exact; the vision policy estimates them."""
+        cv = self.env.controller.data.root_com_vel_w.torch
+        return self.env.controller_pose(), cv[:, :3], cv[:, 3:6]
+
     def observe(self, t: float, start7: torch.Tensor, target7: torch.Tensor) -> torch.Tensor:
         e = self.env
         n = e.num_envs
         fp, fR = self.to_cell(e.forearm_pose())
-        cp, cR = self.to_cell(e.controller_pose())
-        cv = e.controller.data.root_com_vel_w.torch
-        lin, ang = cv[:, :3] @ self.G, cv[:, 3:6] @ self.G
+        c7, lin_w, ang_w = self.controller_state(t)
+        cp, cR = self.to_cell(c7)
+        lin, ang = lin_w @ self.G, ang_w @ self.G
         sp, sR = self.to_cell(start7)
         tp, tR = self.to_cell(target7)
         q = e.hand.data.joint_pos.torch
@@ -336,8 +348,10 @@ class Runner:
             lengths[i], preplace[i] = m, tr.ev["preplace"]
         start7 = torch.tensor(np.array([T.pose7(s) for s in starts]), dtype=torch.float32, device=dev)
         target7 = torch.tensor(np.array([T.pose7(s["target"]) for s in scenes]), dtype=torch.float32, device=dev)
+        seen_start7, seen_target7 = self.scene_estimate(start7, target7)  # the policy's view of the scene
         ev0 = tracks[0].ev
-        self.set_frames(start7, target7, ev0.get("settle", 0) * dt, ev0.get("preplace", ev0.get("seat", 1)) * dt)
+        self.set_frames(seen_start7, seen_target7, ev0.get("settle", 0) * dt,
+                        ev0.get("preplace", ev0.get("seat", 1)) * dt)
         cursor = torch.zeros(n, dtype=torch.long, device=dev)
         reaimed = torch.zeros(n, dtype=torch.bool, device=dev)
         rows = torch.arange(n, device=dev)
@@ -411,7 +425,7 @@ class Runner:
                         noise[key] = a_ * noise[key] + sig * (1 - a_ * a_) ** 0.5 * torch.randn_like(noise[key])
                 need = collect or (policy is not None and use_policy.any())
                 if need:
-                    obs = self.observe(t, start7, target7)
+                    obs = self.observe(t, seen_start7, seen_target7)
                     c1 = (cursor + dec - 1).clamp(max=L - 1)
                     if collect:
                         obs_buf.append(obs.cpu())
