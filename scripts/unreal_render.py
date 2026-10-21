@@ -1,7 +1,7 @@
 """Render the Scan2USD tabletop in Unreal Engine 5 with Lumen + MegaLights, and measure it.
 
     python scripts/unreal_layout.py          # the scene as USD (assets, table, 80 fairy lights, key, camera)
-    python scripts/unreal_render.py [--ue "C:/Program Files/Epic Games/UE_5.8"] [--project D:/UE/Scan2USD_UE]
+    python scripts/unreal_render.py [--ue "C:/Program Files/Epic Games/UE_5.8"] [--project tools/UE/Scan2USD_UE]
                                     [--stages project,build,stills,timing,figure] [--video]
 
 Stages:
@@ -291,7 +291,7 @@ def stage_video(ue: UE, seconds: float = 10.0, fps: int = 30) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--ue", type=Path, default=Path(r"C:\Program Files\Epic Games\UE_5.8"))
-    ap.add_argument("--project", type=Path, default=Path(r"D:\UE\Scan2USD_UE"))
+    ap.add_argument("--project", type=Path, default=ROOT / "tools" / "UE" / "Scan2USD_UE")
     ap.add_argument("--stages", default="project,build,stills,timing,figure")
     ap.add_argument("--video", action="store_true")
     args = ap.parse_args()

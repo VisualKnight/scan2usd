@@ -1,7 +1,10 @@
 """SimReady conformance of the asset library: every asset as built, and as a SimReady package.
 
-    pip install simready-validate simready-foundation-tier-core   (Python 3.12, its own venv)
-    python scripts/study_simready.py --out D:/scan2usd_simready --validator <venv>/Scripts/simready-validate.exe
+    uv venv --python 3.12 tools/simready/.venv
+    uv pip install --python tools/simready/.venv/Scripts/python.exe simready-validate simready-foundation-tier-core
+    python scripts/study_simready.py [--out output/simready] [--validator <venv>/Scripts/simready-validate.exe]
+
+The validator defaults to $SIMREADY_VALIDATE, then tools/simready/.venv, then PATH.
 
 Profile: NVIDIA SimReady Foundation ``Robotics-Prop`` 4.0.0, validated with ``simready-validate``.
 "As built" is the asset file and its textures copied as they are to the (space-free) output root, so the
@@ -13,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
 import time
@@ -130,6 +134,9 @@ def main() -> None:
     ap.add_argument("--validator", help="simready-validate executable (default: $SIMREADY_VALIDATE or PATH)")
     ap.add_argument("--figure-only", action="store_true", help="redraw docs/figures/simready.png from simready.json")
     args = ap.parse_args()
+    local = ROOT / "tools" / "simready" / ".venv" / "Scripts" / "simready-validate.exe"
+    if not args.validator and not os.environ.get("SIMREADY_VALIDATE") and local.exists():
+        args.validator = str(local)
     if args.figure_only:
         data = json.loads((FIG / "simready.json").read_text())
         s = data["summary"]

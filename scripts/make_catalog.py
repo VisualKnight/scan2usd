@@ -2,7 +2,8 @@
 
     python scripts/make_catalog.py [output/library/scan2usd_library.usda] [--out docs/library]
 
-Writes docs/library/index.html and thumbnails (rendered with scan2usd.preview, no 3D app needed).
+Writes docs/library/index.html and thumbnails (rendered with scan2usd.preview, no 3D app needed), with each
+asset's SimReady result from docs/figures/simready.json (scripts/study_simready.py) when present.
 """
 
 from __future__ import annotations
@@ -45,6 +46,7 @@ table {{ border-collapse: collapse; font-size: 14px; width: 100%; }} td {{ paddi
 td:first-child {{ color: #64748b; width: 70px; }}
 pre {{ background: #0f172a; color: #e2e8f0; padding: 12px 14px; border-radius: 8px; overflow-x: auto; font-size: 13px; }}
 code {{ font-family: ui-monospace, Consolas, monospace; }} a {{ color: #2563eb; }}
+.sr {{ display: inline-block; background: #dcfce7; color: #166534; border-radius: 999px; padding: 0 8px; font-size: 12.5px; font-weight: 600; }}
 @media (max-width: 820px) {{ .row {{ grid-template-columns: 1fr; }} }}
 </style></head><body><main>
 <p><a href="../overview.html">← Overview</a> · <a href="../gallery/index.html">3D gallery</a> · <a href="https://github.com/VisualKnight/scan2usd">GitHub</a></p>
@@ -52,7 +54,7 @@ code {{ font-family: ui-monospace, Consolas, monospace; }} a {{ color: #2563eb; 
 <p class="muted">{n} assets composed into one USD stage, <code>scan2usd_library.usda</code>. Each asset is a <b>payload</b>
 (loaded on demand) with two <b>variant sets</b> authored in the library layer, so the asset files are never edited:
 <b>collision</b> (decomposed · convex_hull · bounding_box) and <b>friction</b> (measured · low · high).
-Total {mass:.2f} kg, {colliders} convex colliders in the default variant.</p>
+Total {mass:.2f} kg, {colliders} convex colliders in the default variant.{simready}</p>
 <div class="card"><b>Use it</b>
 <pre>scan2usd library output/assets -o library.usda        # build
 
@@ -70,6 +72,24 @@ and contact properties can be randomized for robust policies, without copying as
 """
 
 
+def simready_results() -> tuple[dict, dict]:
+    """Per-asset SimReady results from scripts/study_simready.py, keyed by asset name."""
+    p = ROOT / "docs" / "figures" / "simready.json"
+    if not p.exists():
+        return {}, {}
+    d = json.loads(p.read_text())
+    return d["summary"], {r["name"]: r for r in d["assets"]}
+
+
+def simready_rows(summary: dict, r: dict | None) -> list[tuple[str, str]]:
+    if r is None or not r["package"]["passed"]:
+        return []
+    qcode = html.escape(r["qcode"])
+    return [("class", f'{html.escape(r["category"])} · <a href="https://www.wikidata.org/wiki/{qcode}">{qcode}</a>'),
+            ("SimReady", f'<span class="sr">✓ {html.escape(summary["profile"])} '
+                         f'{html.escape(summary["version"])}</span>')]
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("library", type=Path, nargs="?", default=ROOT / "output" / "library" / "scan2usd_library.usda")
@@ -78,6 +98,7 @@ def main() -> None:
     args = p.parse_args()
     (args.out / "thumbs").mkdir(parents=True, exist_ok=True)
 
+    sr_summary, sr_assets = simready_results()
     cards, total_mass, total_cols = [], 0.0, 0
     for e in library_entries(args.library):
         name = e["name"]
@@ -103,6 +124,7 @@ def main() -> None:
             ("friction", f"μs {mat.get('static_friction', 0):.2f} · μd {mat.get('dynamic_friction', 0):.2f}"),
             ("prim", f"<code>{html.escape(e['path'])}</code>"),
         ]
+        rows += simready_rows(sr_summary, sr_assets.get(name))
         table = "".join(f"<tr><td>{k}</td><td>{v}</td></tr>" for k, v in rows)
         cards.append(f'<div class="card"><div class="row"><div><img src="thumbs/{name}.jpg" alt="{name}" '
                      f'style="width:100%;border-radius:6px"><h3 style="margin:6px 0 4px">'
@@ -112,7 +134,14 @@ def main() -> None:
         total_cols += e["colliders"]["decomposed"]
         print(f"  {name}")
 
-    page = PAGE.format(n=len(cards), mass=total_mass, colliders=total_cols, cards="\n".join(cards))
+    simready = ""
+    if sr_summary:
+        simready = (f'<br>Each asset also ships as an <a href="https://github.com/NVIDIA/simready-foundation">NVIDIA '
+                    f'SimReady</a> package (<code>scan2usd simready</code>): {sr_summary["package_passed"]}/{len(cards)} '
+                    f'pass the {html.escape(sr_summary["profile"])} {html.escape(sr_summary["version"])} profile '
+                    f'with NVIDIA\'s validator.')
+    page = PAGE.format(n=len(cards), mass=total_mass, colliders=total_cols, cards="\n".join(cards),
+                       simready=simready)
     (args.out / "index.html").write_text(page, encoding="utf-8")
     (args.out / "library.json").write_text(json.dumps(library_entries(args.library), indent=2))
     print(f"wrote {args.out / 'index.html'}")

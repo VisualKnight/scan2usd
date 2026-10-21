@@ -25,7 +25,7 @@ decomposition and density). Then the same yardsticks:
            cameras, compared with the photos (compare_splat.py's protocol).
   figure   docs/figures/genai_{geometry,drop,look}.jpg and the summary docs/figures/genai.json.
 
-Model weights and the generation venv live outside the repository (D:\\genai by default).
+Model weights and the generation venv live in tools/genai (git-ignored; see genai_generate.py).
 """
 
 from __future__ import annotations

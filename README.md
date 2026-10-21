@@ -68,10 +68,6 @@ Surfaces no photo can match (a plain white interior, a bowl's underside) get sea
 
 **Generated vs scanned.** Image-to-3D models, given photos from the same captures and run through the same build and yardsticks: from four phone photos per object, a Hunyuan3D-2mv controller drops into its Hunyuan3D-2mv holder <!--n:gen_held_mv-->12/12<!--/n--> times at <!--n:gen_add_mv-->8.4<!--/n--> mm from the real pose (the scans: <!--n:gen_held_pg-->12/12<!--/n-->, <!--n:gen_add_pg-->9.1<!--/n--> mm). On the benchmark, one photo into Hunyuan3D 2.1 beats 78 into photogrammetry on <!--n:gen_wins_h21-->4/6<!--/n--> objects ([F-score <!--n:gen_f_h21-->0.804<!--/n--> vs <!--n:gen_f_pg-->0.786<!--/n-->](docs/figures/genai_geometry.jpg)), mostly by not sealing what no camera sees; it loses on fine detail. Its textures are plausible but [not measured](docs/figures/genai_look.jpg) (ΔE <!--n:gen_de_h21-->10.0<!--/n--> vs <!--n:gen_de_pg-->6.8<!--/n-->). `scripts/study_generative.py`, `genai_generate.py`
 
-![SimReady Robotics-Prop features per asset, as built and as a package](docs/figures/simready.png)
-
-**Industry standard: NVIDIA SimReady.** [SimReady Foundation](https://github.com/NVIDIA/simready-foundation) states "simulation-ready" as testable requirements, bundled into profiles; Robotics-Prop is the one for objects robots handle. Checked with NVIDIA's own validator (`simready-validate` <!--n:sr_validator-->2026.8.0<!--/n-->, profile <!--n:sr_version-->4.0.0<!--/n-->), the library's assets pass <!--n:sr_built-->0/11<!--/n--> as built, since the physics was there but not what a shared library needs. `scan2usd simready` packages a copy (folder layout, `LabelsAPI` semantic labels with Wikidata Q-codes, provenance metadata, thumbnail, grasp lines from the stored grasps) and all <!--n:sr_pkg-->11/11<!--/n--> pass. It also caught two spec slips the 33 checks didn't, now fixed in the builder: collision hulls without normals, and texture outputs typed `color3f` where UsdPreviewSurface says `float3`. `scan2usd simready`, `scripts/study_simready.py`
-
 ![Panda](docs/figures/panda_demo.jpg)
 
 **Why collision geometry matters** ([animation](docs/figures/panda_demo.webp)). A Franka Panda rim-grasps the scanned mug with one finger inside. With a single convex hull, that finger lands on a phantom lid and the pick fails. The [same plan in Isaac Sim](docs/figures/isaac_franka_pick.webp), from the grasp stored in the USD asset, places it within 5.5 mm, and fails the same way with one hull. `scripts/demo_panda.py`, `isaac_franka_pick.py`
@@ -110,6 +106,8 @@ uv pip install -e ".[dev]"
 ```
 
 Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (CUDA build): unzip it to `tools\colmap\` or set `SCAN2USD_COLMAP`.
+
+`tools\` (git-ignored) is also where the heavier environments live, each set up as its script's docstring describes: Isaac Sim 6 (`tools\isaac`), Isaac Lab (`tools\il` + its source `tools\isaaclab`), the image-to-3D models (`tools\genai`), the Unreal project (`tools\UE`), NVIDIA's SimReady validator (`tools\simready`) and Brush (`tools\brush`). Scripts default to these locations.
 
 ## Usage
 
@@ -154,7 +152,7 @@ scan2usd validate output\mug\mug.usd --markdown report.md
 # NVIDIA SimReady package (Robotics-Prop): layout, semantic labels, metadata, thumbnail; --validate needs
 # `pip install simready-validate simready-foundation-tier-core` in its own Python 3.12 venv (path without spaces)
 scan2usd simready output\mug\mug.usda -o D:\packages --category mug --qcode Q386215 --material ceramic `
-    --license Apache-2.0 --validate --validator D:\simready\.venv\Scripts\simready-validate.exe
+    --license Apache-2.0 --validate --validator tools\simready\.venv\Scripts\simready-validate.exe
 scan2usd calibrate chart.jpg --chart-corners corners.json
 scan2usd materials                     # density / friction presets
 ```
