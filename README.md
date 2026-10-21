@@ -96,7 +96,7 @@ Surfaces no photo can match (a plain white interior, a bowl's underside) get sea
 
 **The same USD files in Unreal Engine 5.8.** One USD stage with the scans and 80 shadow-casting fairy lights, imported as is. MegaLights renders it in <!--n:ue_on-->8.8<!--/n--> ms per frame vs <!--n:ue_off-->14.8<!--/n--> ms without, slightly closer to the path tracer ([comparison](docs/figures/unreal_megalights.jpg), [orbit](https://visualknight.github.io/scan2usd/figures/unreal_flythrough.mp4?v=774620f9)). `scripts/unreal_render.py`
 
-**More on the [overview page](https://visualknight.github.io/scan2usd/):** dexterous grasping, the learned policy's failure cases, how accurate a scan must be, articulated assets, the asset library, color calibration, capture guidance, and lessons learned.
+**More on the [overview page](https://visualknight.github.io/scan2usd/):** dexterous grasping, the learned policy's failure cases and its camera version, how accurate a scan must be, articulated assets, the asset library, uncertainty, and lessons learned.
 
 ## Quickstart
 
@@ -114,6 +114,8 @@ Photo reconstruction needs [COLMAP](https://github.com/colmap/colmap/releases) (
 `tools\` (git-ignored) is also where the heavier environments live, each set up as its script's docstring describes: Isaac Sim 6 (`tools\isaac`), Isaac Lab (`tools\il` + its source `tools\isaaclab`), the image-to-3D models (`tools\genai`), the Unreal project (`tools\UE`), NVIDIA's SimReady validator (`tools\simready`) and Brush (`tools\brush`). Scripts default to these locations.
 
 ## Usage
+
+**Capturing:** a matte, textured object is easiest (dark, glossy or plain surfaces are hardest; masking tape with pen marks helps inside plain cups). Take 60–150 photos in 3 rings with 60–80% overlap, object and lights still, exposure, white balance and focus locked, no flash; put a ColorChecker beside it in a few frames (an 18% gray card gets ΔE 1.7, white paper 3.8, a ColorChecker 0.2). Weigh the object for `--mass` (kg). `scan2usd guide` then suggests extra shots.
 
 ```powershell
 # Photos -> USD in one step (reconstruct + build); --scale-to is the measured height
