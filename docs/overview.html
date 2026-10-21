@@ -119,7 +119,7 @@
 <aside class="toc">
   <a class="brand" href="#top">Scan2USD</a>
   <div class="legend"><span class="s-cap">Capture</span><span class="s-bld">Build</span><span class="s-ver">Verify</span><span class="s-use">Use</span></div>
-  <nav><a class="s-bld" href="#architecture"><i>01</i>Architecture</a><a class="s-ver" href="#real"><i>02</i>Real-world check</a><a class="s-use" href="#robotics"><i>03</i>Robotics demos</a><a class="s-use" href="#hand"><i>04</i>Shadow Hand</a><a class="s-use" href="#perception"><i>05</i>Perception</a><a class="s-ver" href="#tolerance"><i>06</i>Accuracy needed</a><a class="s-ver" href="#benchmark"><i>07</i>Benchmark</a><a class="s-ver" href="#generated"><i>08</i>Generated vs scanned</a><a class="s-use" href="#rendering"><i>09</i>Rendering</a><a class="s-bld" href="#uncertainty"><i>10</i>Uncertainty</a><a class="s-cap" href="#color"><i>11</i>Color</a><a class="s-note" href="#learn"><i>12</i>Learn</a><a class="s-note" href="#lessons"><i>13</i>Lessons</a><a class="s-note" href="#timeline"><i>14</i>Timeline</a><a class="s-cap" href="#capture"><i>15</i>Capture your own</a></nav>
+  <nav><a class="s-bld" href="#architecture"><i>01</i>Architecture</a><a class="s-ver" href="#real"><i>02</i>Real-world check</a><a class="s-use" href="#robotics"><i>03</i>Robotics demos</a><a class="s-use" href="#hand"><i>04</i>Shadow Hand</a><a class="s-use" href="#perception"><i>05</i>Perception</a><a class="s-ver" href="#tolerance"><i>06</i>Accuracy needed</a><a class="s-ver" href="#benchmark"><i>07</i>Benchmark</a><a class="s-ver" href="#generated"><i>08</i>Generated vs scanned</a><a class="s-use" href="#rendering"><i>09</i>Rendering</a><a class="s-bld" href="#uncertainty"><i>10</i>Uncertainty</a><a class="s-note" href="#lessons"><i>11</i>Lessons</a></nav>
   <div class="out"><a href="gallery/index.html">3D gallery &#8599;</a><br><a href="library/index.html">USD asset library &#8599;</a><br><a href="https://github.com/VisualKnight/scan2usd">Source on GitHub &#8599;</a></div>
 </aside>
 <main class="wrap">
@@ -477,6 +477,19 @@
     <p class="cap">A ColorChecker in the scene is also a ruler: its patches are 16 mm apart on the Mini.</p></div>
 </div>
 
+<div class="grid" style="grid-template-columns: 1.6fr 1fr; margin-top:12px">
+  <div class="card"><img src="figures/color_chart.svg" alt="ColorChecker before/after"><p class="cap">Each patch: as captured · corrected · reference.</p></div>
+  <div class="card"><h3>Which color reference?</h3>
+    <table>
+      <tr><th>Reference</th><th>ΔE2000</th><th>Cost</th></tr>
+      <tr><td>none</td><td>6.7</td><td>–</td></tr>
+      <tr><td>white paper</td><td>3.8</td><td>free</td></tr>
+      <tr><td>18% gray card</td><td class="good">1.7</td><td>≈ $10</td></tr>
+      <tr><td>ColorChecker</td><td class="good"><b>0.2</b></td><td>≈ $60–110</td></tr>
+    </table>
+    <p class="cap">Mean ΔE2000 of the corrected chart; below about 2 is hard to notice. <code>color.py</code> · <code>chart.py</code></p></div>
+</div>
+
 <div class="chap s-ver" id="generated"><div class="no">08</div><div><div class="eb">Verify</div><h2>Generated vs scanned: is one photo enough?</h2></div></div>
 <p>Image-to-3D models now turn a photo into a mesh in under a minute. Three open ones get photos from the same captures, and their meshes go through the same build (the same one measured height, convex decomposition and density) and the same yardsticks as the scans.</p>
 <div class="card" style="margin-bottom:12px"><h3>The real pair, generated: the controller still lands in the hands</h3><img src="figures/genai_drop.jpg" alt="Generated controller dropped into the generated holder, per model">
@@ -535,90 +548,16 @@
     <p class="cap"><code>scan2usd guide</code> lists camera positions that would see the physics-relevant surface no photo saw twice. Tested with 8 photos rendered exactly where asked: it wins on the bowl and loses on the printed mug, whose white interior is visible but textureless. Next: score views by texture too.</p></div>
 </div>
 
-<div class="chap s-cap" id="color"><div class="no">11</div><div><div class="eb">Capture</div><h2>Color calibration</h2></div></div>
-<div class="grid" style="grid-template-columns: 1.6fr 1fr">
-  <div class="card"><img src="figures/color_chart.svg" alt="ColorChecker before/after"><p class="cap">Each patch: as captured · corrected · reference, with ΔE2000.</p></div>
-  <div class="card"><h3>What each reference buys you</h3>
-    <table>
-      <tr><th>Reference</th><th>ΔE2000</th><th>Cost</th></tr>
-      <tr><td>none</td><td>6.7</td><td>–</td></tr>
-      <tr><td>white paper</td><td>3.8</td><td>free</td></tr>
-      <tr><td>18% gray card</td><td class="good">1.7</td><td>≈ $10</td></tr>
-      <tr><td>ColorChecker</td><td class="good"><b>0.2</b></td><td>≈ $60–110</td></tr>
-    </table>
-    <p class="cap">ΔE2000 below about 2 is hard to notice.</p></div>
-</div>
-
-<div class="chap s-note" id="learn"><div class="no">12</div><div><div class="eb">Notes</div><h2>Learn</h2></div></div>
-<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr))">
-  <details><summary>Photogrammetry with COLMAP <span>· photos → points → mesh</span></summary>
-    <p><b>Structure from motion</b> matches features across photos and solves every camera's position. <b>Multi-view stereo</b> then estimates depth per pixel and fuses millions of colored points. A Poisson solve turns the points into a closed surface.</p>
-    <p class="where"><code>reconstruct.py</code> · table plane → Z-up; object kept as the densest footprint above the table</p></details>
-  <details><summary>Accuracy, completeness, F-score <span>· how reconstruction is graded</span></summary>
-    <p>Accuracy: how far the built surface is from the truth. Completeness: how much of the truth was captured. F-score at τ combines both: the share of each surface within τ (2 mm here) of the other. These are the standard metrics of the DTU and Tanks &amp; Temples benchmarks.</p>
-    <p class="where"><code>evaluate.py</code> · yaw search + ICP alignment, then point-to-surface distances</p></details>
-  <details><summary>Normal maps &amp; PBR <span>· the game-art pipeline, for scans</span></summary>
-    <p>Real-time engines render a light mesh and fake the fine detail: a <b>normal map</b> stores, per texel, how the dense surface tilts relative to the low-poly one (in the "tangent space" of its UV layout). <b>PBR</b> materials describe surfaces physically (base color, roughness, metalness, index of refraction, a clearcoat layer for glazes), so they look right under any light. A path tracer then simulates the light itself. For robotics, the same assets give physics a light collision mesh and give cameras realistic images.</p>
-    <p class="where"><code>bake.bake_normal_map</code> · <code>usd_io.LOOKS</code> · <code>scripts/isaac_pathtrace.py</code></p></details>
-  <details><summary>Color calibration <span>· physically based calibration, for scans</span></summary>
-    <p>A 3×3 matrix maps the camera's colors of known chart patches to their true values in linear light; it's then applied to the scan's albedo. ΔE2000 ≈ 1 is just noticeable.</p>
-    <p class="where"><code>color.py</code></p></details>
-  <details><summary>Metric scale from the chart <span>· no ruler needed</span></summary>
-    <p>Photogrammetry alone can't tell a mug from a giant mug: its scale is arbitrary. The ColorChecker's patches are a known distance apart (16 mm on the Mini), so the pipeline finds the chart in many photos, triangulates its 24 patch centers with the solved cameras, and reads off meters per unit. RANSAC drops misdetections. On the benchmark: 0.35–1.43% error.</p>
-    <p class="where"><code>chart.py</code> · <code>scan2usd scan --chart-pitch-mm 16</code></p></details>
-  <details><summary>Convex decomposition <span>· why the grasp works</span></summary>
-    <p>Physics engines collide convex shapes quickly. One hull around a mug fills its cavity; CoACD splits it into pieces that keep the opening, so fingers and objects can go inside.</p>
-    <p class="where"><code>physics.py</code></p></details>
-  <details><summary>Mass for real, holey scans <span>· voxel fill</span></summary>
-    <p>Mass needs a closed solid. Scans often have holes, so the pipeline voxelizes the surface, closes small gaps, and fills enclosed space; open cavities (bowls, cups) stay empty, as long as the reconstruction left them open (see the benchmark's sealed mug). Example: bowl 322 g (hull estimate) → 192 g.</p>
-    <p class="where"><code>physics.voxel_solid</code></p></details>
-  <details><summary>Articulations in USD <span>· lids, doors, laptops</span></summary>
-    <p>Each part is its own rigid body; a <code>UsdPhysics.RevoluteJoint</code> joins them with a hinge axis and angle limits, under an <code>ArticulationRootAPI</code> so PhysX solves them as one mechanism.</p>
-    <p class="where"><code>articulation.py</code> · <code>scan2usd articulate</code></p></details>
-  <details><summary>USD composition: payloads &amp; variants <span>· one library, many configurations</span></summary>
-    <p>USD builds a scene from layers. A <b>payload</b> is a reference that loads on demand, so a 1,000-asset library opens instantly and loads only what a scene needs. A <b>variant set</b> is a named switch with alternative opinions inside, here <code>collision</code> and <code>friction</code>. Variants are stronger than payloads (the "LIVRPS" strength order), so the library can hide an asset's colliders and add simpler ones without editing the asset file. The same idea drives LODs and material looks in film and game pipelines.</p>
-    <p class="where"><code>library.py</code> · <code>scan2usd library</code> · <a href="library/index.html">catalog</a></p></details>
-  <details><summary>Synthetic data &amp; sim-to-real <span>· Replicator, domain randomization</span></summary>
-    <p>Robots learn perception from labeled images. Simulators render perfect labels for free. The catch is the <b>sim-to-real gap</b>: a model that's perfect on renders can still fail on photos. <b>Domain randomization</b> varies everything that shouldn't matter (lights, colors, camera, junk objects) so the model learns only what does. Here, distractors cut false positives on real photos by 84%.</p>
-    <p class="where"><code>scripts/isaac_synthdata.py</code> · <code>scripts/train_detector.py</code></p></details>
-  <details><summary>Gaussian splatting <span>· a photo-real look from the same photos</span></summary>
-    <p>Instead of a surface with a texture, a <b>splat</b> is a cloud of small, colored, semi-transparent 3D Gaussians, optimized until their renders match the photos. Each one stores its color as spherical harmonics, so it changes with the viewing angle (sheen, glaze). The result looks like the photos, but there's no surface, so a physics engine can't collide with it. OpenUSD 26.03 added a standard prim for them (<code>ParticleField3DGaussianSplat</code>). Here the mesh does the physics and also tells the splat trainer where the object is (alpha masks).</p>
-    <p class="where"><code>splat.py</code> · <code>scan2usd splat-data</code> → Brush → <code>scan2usd splat</code> · <code>scripts/isaac_splat.py</code></p></details>
-  <details><summary>Uncertainty in an asset <span>· intervals, not just values</span></summary>
-    <p>A scan measures some things well (surface it saw from two angles), guesses others (a hole the mesher closed) and can't know some at all (the inside of a cup nobody photographed). Storing that with the asset lets a simulator <b>randomize physics where the scan is unsure</b> (domain randomization, but grounded in the measurement) and tells you which photos to take next. Custom properties live in a <b>codeless USD schema</b>: a plugin with only a <code>plugInfo.json</code> and a schema file, no compiled code, so Isaac Sim, usdview and Python all read it.</p>
-    <p class="where"><code>uncertainty.py</code> · <code>schemas.py</code> · <code>guide.py</code> · <code>scan2usd uncertainty | grasps | guide</code></p></details>
-</div>
-
-<div class="chap s-note" id="lessons"><div class="no">13</div><div><div class="eb">Notes</div><h2>Lessons</h2></div></div>
+<div class="chap s-note" id="lessons"><div class="no">11</div><div><div class="eb">Notes</div><h2>Lessons</h2></div></div>
 <ol class="lessons">
-  <li><b>Test on real data, not just synthetic.</b> The detector scored a perfect 1.00 on held-out renders and still made 4.3 false detections per real photo. Unlabeled distractors in training cut that by 84%.</li>
-  <li><b>Read the units, don't tune by eye.</b> Depth of field was far too strong: USD lens values are in tenths of a scene unit, so on a meters stage &ldquo;50&rdquo; is a 5 m lens.</li>
-  <li><b>Look at a cross-section before believing an explanation.</b> The bowl's +82% volume looked like thick walls; slicing the solid showed an unseen underside filled into a pedestal. No line of sight, so carving can't fix it, but a stored "carved" hypothesis can.</li>
-  <li><b>Robot models need realistic actuators.</b> The stock Panda gripper squeezed a cup wall with 0.5–2 N and the mug slipped; a real Franka hand reaches 70 N.</li>
-  <li><b>Don't teleport a hand.</b> A mocap-driven forearm moves without velocity, and MuJoCo friction is velocity-based: 120 N of squeeze and the object stayed put. Welding a free forearm to the target fixed it.</li>
-  <li><b>Visible isn't reconstructable.</b> The capture guide aimed into the printed mug's white interior: in view, but nothing for stereo to match. Measuring the guide on three objects, not one, is what showed it.</li>
-  <li><b>Let the mesh help the splat.</b> Trained on raw photos, a splat spends its Gaussians on the background. Masking every photo with the mesh's silhouette raised held-out PSNR from 21.6 to 28.9 dB.</li>
-  <li><b>Control at the physics rate.</b> In Isaac Sim the hand kept dropping the controller: targets set once per 60 Hz frame moved it in jolts across 8 PhysX substeps. Setting them every substep took it from 0/4 to 12/12.</li>
-  <li><b>Meshes need UVs, even for flat colors.</b> In Unreal the hand rendered dark whatever its color: without UVs its tangents were degenerate, so even a flat normal map shaded it dark.</li>
-  <li><b>A wide lens makes the nearest thing look big.</b> The true-scale Shadow Hand looked oversized on MuJoCo's default 24 mm-equivalent view, because it's always nearest the camera. A 57 mm lens from farther back reads naturally.</li>
-  <li><b>Match the contact model, not just the friction number.</b> The Panda's corner pinch held 12/12 in MuJoCo and 1/12 in PhysX with the same friction coefficient. MuJoCo's pads also resist spinning about the pinch axis; once PhysX did too (a torsional patch radius), it held 12/12. A grasp far from the center of mass is where engines disagree first.</li>
-  <li><b>Score a new tool with the old yardsticks.</b> Generated meshes went through the same build and the same ground truth as the scans, so the comparison is fair. A sanity row caught a bug on our side: the scans' vertex colors are sRGB, but glTF reads them as linear, which washed them out.</li>
+  <li><b>Test on real data, not just synthetic.</b> The detector scored 1.00 on held-out renders and still made 4.3 false detections per real photo; unlabeled distractors in training cut that by 84%.</li>
+  <li><b>Match the contact model, not just the friction number.</b> The Panda's corner pinch held 12/12 in MuJoCo and 1/12 in PhysX at the same friction; giving PhysX MuJoCo's resistance to spin (a torsional patch radius) made it 12/12.</li>
+  <li><b>Control at the physics rate.</b> Hand targets set once per 60 Hz frame moved it in jolts across 8 PhysX substeps and it dropped the controller; setting them every substep took it from 0/4 to 12/12.</li>
+  <li><b>Vary what the network trains under, then test it on something new.</b> The first in-hand pose network, trained under 5 lightings, was 2 mm off on held-out frames but 4 mm off in the loop under a new one; 23 lightings closed the gap.</li>
+  <li><b>Score a new tool with the old yardsticks.</b> Generated meshes went through the same build and ground truth as the scans; a sanity row even caught a bug on our side (sRGB vertex colors read as linear).</li>
 </ol>
+<p class="small" style="color:var(--soft);margin-top:18px"><b>Timeline:</b> pipeline core → photos to USD, scored against ground truth → robot demos in MuJoCo and Isaac Sim, sim-to-real detector → path tracing and a USD asset library → grasps, uncertainty and splats in the asset → own phone scans, checked against the real pair and placed by a Panda and a Shadow Hand → Unreal Engine 5.8 → generated vs scanned assets → a learned hand, first from the simulator's state, then from two RGB-D cameras. <b>Next:</b> the scans located in real iPhone LiDAR recordings (FoundationPose); a ColorChecker in real phone captures; texture-aware capture guidance.</p>
 
-<div class="chap s-note" id="timeline"><div class="no">14</div><div><div class="eb">Notes</div><h2>Timeline</h2></div></div>
-<p class="small muted">Pipeline core → photos to USD, scored against ground truth → robot demos in MuJoCo and Isaac Sim, sim-to-real detector → path tracing and a USD asset library → grasps, uncertainty and splats in the asset → own phone scans, checked against the real pair and placed by a Panda and a Shadow Hand → Unreal Engine 5.8 → generated vs scanned assets → a learned hand, first from the simulator's state, then from two RGB-D cameras. <b>Next:</b> the scans located in real iPhone LiDAR recordings (FoundationPose); a ColorChecker in real phone captures; texture-aware capture guidance.</p>
-
-<div class="chap s-cap" id="capture"><div class="no">15</div><div><div class="eb">Capture</div><h2>Capture your own</h2></div></div>
-<div class="grid g2">
-  <div class="card small"><h3>Shoot</h3><ul>
-    <li><b>Start easy:</b> a matte, textured object (wooden toy, sneaker, speckled mug). Dark, glossy or plain surfaces are the hardest; masking tape with pen marks helps inside plain cups.</li>
-    <li><b>60–150 photos</b>: walk around it in 3 rings with 60–80% overlap; keep object and lights still; lock exposure, white balance and focus; no flash.</li>
-    <li>Put a newspaper under the object and a <b>ColorChecker</b> beside it in a few frames, plus one close-up.</li></ul></div>
-  <div class="card small"><h3>Measure, then run</h3><ul>
-    <li>Weigh it; <code>--mass</code> is in kilograms (360 g → <code>--mass 0.36</code>). A ruler measurement (mm) is optional if the ColorChecker is in the photos.</li>
-    <li><code>scan2usd scan photos\ -o out\ --chart-pitch-mm 16 --mass 0.36 --material ceramic</code> (photos → USD in one step; measure your chart's patch spacing once)</li>
-    <li><code>scan2usd guide out\asset\&lt;name&gt;.usda --workspace out\colmap</code> suggests extra shots.</li></ul></div>
-</div>
 <footer>Scan2USD · personal R&amp;D project · Yibo Liu · Oct 2026 · Ground-truth meshes: Google Scanned Objects (CC-BY 4.0) · Real photos: AliceVision Buddha (CC-BY 4.0) · Robots: MuJoCo Menagerie Franka Panda and Shadow Hand (Apache-2.0) · Figures: <code>scripts/</code></footer>
 </main></div>
 <script>
