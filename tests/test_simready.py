@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -159,8 +160,9 @@ def test_package_grasp_lines_cross_the_object(tmp_path):
 
 
 def test_bad_path_parts_and_qcode():
-    assert bad_path_parts("D:/Local Projects/x/a.usda") == ["Local Projects"]
-    assert bad_path_parts("D:/scan2usd_simready/a/b.usda") == []
+    root = Path(Path.cwd().anchor)  # D:\ on Windows, / elsewhere
+    assert bad_path_parts(root / "Local Projects" / "x" / "a.usda") == ["Local Projects"]
+    assert bad_path_parts(root / "scan2usd_simready" / "a" / "b.usda") == []
     with pytest.raises(ValueError):
         SimReadyInfo(category="mug", qcode="mug", material="ceramic", license="x")
 
