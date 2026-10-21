@@ -302,7 +302,7 @@ class HandUE(UE):
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--ue", type=Path, default=Path("C:/Program Files/Epic Games/UE_5.8"))
-    ap.add_argument("--project", type=Path, default=Path("D:/local_projects/UE/Scan2USD_UE"))
+    ap.add_argument("--project", type=Path, default=ROOT / "tools" / "UE" / "Scan2USD_UE")
     ap.add_argument("--stages", default="layout,build,preview")
     ap.add_argument("--grasp", choices=("pinch", "span"), default="pinch",
                     help="pinch: demo_hand_pinch.py (the overview's); span: demo_hand_place.py")

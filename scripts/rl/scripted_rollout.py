@@ -1,15 +1,15 @@
 """Scripted rollouts of the hand-place task in Isaac Lab: many cells at once, scored, optionally filmed.
 
 Setup (once; Isaac Lab v3.0.0-beta2.patch1 on Isaac Sim 6.0.1, Python 3.12, Windows):
-    uv venv --python 3.12 D:\\local_projects\\il\\venv
-    uv pip install --python D:\\local_projects\\il\\venv\\Scripts\\python.exe "isaacsim[all,extscache]==6.0.1.0" --extra-index-url https://pypi.nvidia.com
-    uv pip install --python D:\\local_projects\\il\\venv\\Scripts\\python.exe torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cu128
+    uv venv --python 3.12 tools\\il\\venv
+    uv pip install --python tools\\il\\venv\\Scripts\\python.exe "isaacsim[all,extscache]==6.0.1.0" --extra-index-url https://pypi.nvidia.com
+    uv pip install --python tools\\il\\venv\\Scripts\\python.exe torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cu128
     git clone --branch v3.0.0-beta2.patch1 https://github.com/isaac-sim/IsaacLab  (then, with VIRTUAL_ENV set: isaaclab.bat -i)
     python scripts/demo_hand_place.py --export-task output/hand_task.json   (main venv: the task spec)
 
     set OMNI_KIT_ACCEPT_EULA=YES
-    D:\\local_projects\\il\\venv\\Scripts\\python.exe scripts\\rl\\scripted_rollout.py --replay              # the 12 benchmark seeds
-    D:\\local_projects\\il\\venv\\Scripts\\python.exe scripts\\rl\\scripted_rollout.py --num_envs 100 --seed 0 --video
+    tools\\il\\venv\\Scripts\\python.exe scripts\\rl\\scripted_rollout.py --replay              # the 12 benchmark seeds
+    tools\\il\\venv\\Scripts\\python.exe scripts\\rl\\scripted_rollout.py --num_envs 100 --seed 0 --video
 
 --replay runs the exported benchmark plans (--plans, default output/hand_pinch_plans.json: MuJoCo's scenes, settled
 controller poses and waypoints), as scripts/isaac_hand_place.py does on CPU PhysX, here on GPU PhysX
