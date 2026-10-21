@@ -318,6 +318,7 @@
 </script>
 <!--arch:end-->
 <p class="cap">Four stages around one file. Photos and references become an OpenUSD asset; it is checked three ways, and the same file goes to every simulator and renderer. What the scan couldn't see feeds back into which photos to take next. Module-level detail: the README's <a href="https://github.com/VisualKnight/scan2usd#what-it-does">stage table</a>.</p>
+<p class="cap"><b>Industry standard:</b> every asset also ships as an NVIDIA <a href="https://github.com/NVIDIA/simready-foundation">SimReady</a> package, the open spec that turns "simulation-ready" into testable requirements, and <!--n:sr_pkg-->11/11<!--/n--> pass its Robotics-Prop profile (objects a robot handles) in NVIDIA's own validator. <code>scan2usd simready</code> adds the standard folder layout, semantic labels (class and Wikidata ID), provenance metadata and grasp lines; per-asset results are in the <a href="library/index.html">asset library</a>.</p>
 
 <div class="chap s-ver" id="real"><div class="no">02</div><div><div class="eb">Verify</div><h2>Real-world check: scan, simulate, compare</h2></div></div>
 <p class="muted" style="max-width:900px">My own iPhone photos of a controller holder and a controller, each scanned alone, then photographed together. The combined scan is the answer key: does the simulated controller settle where the real one sits?</p>
